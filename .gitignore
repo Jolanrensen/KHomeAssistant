@@ -1,0 +1,13 @@
+# Project exclude paths
+/.gradle/
+/build/
+/build/js/packages/KHomeAssistant-KHomeAssistant/kotlin/
+/build/js/packages/KHomeAssistant-KHomeAssistant-test/kotlin/
+/example/.gradle/
+/example/build/
+/KHomeAssistant/.gradle/
+/KHomeAssistant/build/
+/KHomeAssistant/build/classes/kotlin/jvm/main/
+/KHomeAssistant/build/classes/kotlin/jvm/test/
+/KHomeAssistant/build/classes/kotlin/linux/main/
+/KHomeAssistant/build/classes/kotlin/linux/test/
