@@ -11,3 +11,5 @@
 /KHomeAssistant/build/classes/kotlin/jvm/test/
 /KHomeAssistant/build/classes/kotlin/linux/main/
 /KHomeAssistant/build/classes/kotlin/linux/test/
+/.idea/
+/KHomeAssistant/.idea/
