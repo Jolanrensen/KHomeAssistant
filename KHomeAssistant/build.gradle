@@ -1,13 +1,18 @@
 plugins {
     id 'org.jetbrains.kotlin.multiplatform' version '1.3.70'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.3.70'
 }
 repositories {
     mavenCentral()
+    maven { url="https://kotlin.bintray.com/ktor" }
+    maven { url="https://kotlin.bintray.com/kotlinx" }
 }
 group 'nl.jolanrensen.kHomeAssistant'
 version '0.0.1'
 
 apply plugin: 'maven-publish'
+//apply plugin: 'kotlinx-serialization'
+
 
 kotlin {
     jvm()
@@ -21,11 +26,14 @@ kotlin {
     // For Linux, should be changed to e.g. linuxX64
     // For MacOS, should be changed to e.g. macosX64
     // For Windows, should be changed to e.g. mingwX64
-    linuxX64("linux")
+//    linuxX64("linux")
     sourceSets {
         commonMain {
             dependencies {
                 implementation kotlin('stdlib-common')
+                implementation("io.ktor:ktor-client-core:$ktor_version")
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serialization_version"
+
             }
         }
         commonTest {
@@ -37,6 +45,10 @@ kotlin {
         jvmMain {
             dependencies {
                 implementation kotlin('stdlib-jdk8')
+                implementation("io.ktor:ktor-client-cio:$ktor_version")
+//                implementation("io.ktor:ktor-client-apache:$ktor_version") // https://ktor.io/clients/http-client/engines.html#artifact-4
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
+
             }
         }
         jvmTest {
@@ -48,6 +60,9 @@ kotlin {
         jsMain {
             dependencies {
                 implementation kotlin('stdlib-js')
+                implementation("io.ktor:ktor-client-js:$ktor_version")
+                implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$serialization_version"
+
             }
         }
         jsTest {
@@ -55,9 +70,13 @@ kotlin {
                 implementation kotlin('test-js')
             }
         }
-        linuxMain {
-        }
-        linuxTest {
-        }
+//        linuxMain {
+//            dependencies {
+//                implementation("io.ktor:ktor-client-curl:$ktor_version")
+////                compile( "io.ktor:ktor-client-core-native:$ktor_version")
+//            }
+//        }
+//        linuxTest {
+//        }
     }
 }

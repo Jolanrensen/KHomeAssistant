@@ -1,4 +1,4 @@
-
+package nl.jolanrensen.kHomeAssistant
 
 open class Automation {
 
