@@ -1,27 +1,28 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.WithKHomeAssistant
-import nl.jolanrensen.kHomeAssistant.states.LightState
-import nl.jolanrensen.kHomeAssistant.states.OnOffState
+import nl.jolanrensen.kHomeAssistant.attributes.LightAttributes
 
 
 class Light(
         override val kHomeAssistant: KHomeAssistant,
         override val name: String
-) : Entity<LightState>(
+) : Entity<OnOff, LightAttributes>(
         kHomeAssistant = kHomeAssistant,
         domain = "light",
         name = name
 ), OnOffEntity, WithKHomeAssistant {
 
-    class State()
+    override fun getStateValue(state: OnOff) = state.stateValue
 
-//    override var state: LightState
-//        get() = TODO()
-//        set(value) {
-//
-//        }
+    override fun parseStateValue(stateValue: String) = try {
+        OnOff.values().find { it.stateValue == stateValue }
+    } catch (e: Exception) {
+        null
+    }
+
 
     override fun turnOn() {
         TODO("Not yet implemented")

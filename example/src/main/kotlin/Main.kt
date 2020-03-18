@@ -40,7 +40,7 @@ suspend fun main() {
                     automation("some automation") {
                         println("TEST inline automation")
 
-                        val internallyDefinedLight = Light("wall_lamp")
+                        val internallyDefinedLight = Light("wall_lamp").getState()
 
                     }
             )

@@ -1,9 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
-import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.states.OnOffState
-
-interface OnOffEntity  {
+interface OnOffEntity {
     fun turnOn()
 
     fun turnOff()

@@ -2,20 +2,27 @@ package nl.jolanrensen.kHomeAssistant.entities
 
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.WithKHomeAssistant
-import nl.jolanrensen.kHomeAssistant.states.State
+import nl.jolanrensen.kHomeAssistant.attributes.Attributes
 
-open class Entity<S : State<*>>(
+open class Entity<StateType : Any, AttributesType : Attributes>(
         override val kHomeAssistant: KHomeAssistant,
         val domain: String,
         open val name: String
 ) : WithKHomeAssistant {
 
-    suspend fun getState(): S? = kHomeAssistant.getState(this)
-    suspend fun setState(s: S): Unit = TODO()
 
-//    var state: S?
-//        get() = .await
-//        set(value) {}
+    /** Given a string stateValue, this method should return the correct StateType */
+    open fun parseStateValue(stateValue: String): StateType? = null
+
+    /** This method returns the state for this entity in the original String format */
+    open fun getStateValue(state: StateType): String? = null
+
+
+    suspend fun getState(): StateType? = kHomeAssistant.getState(this)
+    suspend fun setState(s: StateType): Unit = TODO()
+
+    suspend fun getAttributes(): AttributesType = TODO()
+
 
     constructor(kHomeAssistant: KHomeAssistant, entityID: String) : this(
             kHomeAssistant = kHomeAssistant,
@@ -35,13 +42,13 @@ open class Entity<S : State<*>>(
  * All entities can be created without KHomeAssistant instance from within an Automation
  * and other classes having an instance as kHomeAssistant can be accessed through there anyways.
  * */
-inline fun <reified S : State<*>> WithKHomeAssistant.Entity(domain: String, name: String) = Entity<S>(
+inline fun <reified StateType : Any, reified AttributesType : Attributes> WithKHomeAssistant.Entity(domain: String, name: String) = Entity<StateType, AttributesType>(
         kHomeAssistant = kHomeAssistant,
         domain = domain,
         name = name
 )
 
-inline fun <reified S : State<*>> WithKHomeAssistant.Entity(entityID: String) = Entity<S>(
+inline fun <reified StateType : Any, reified AttributesType : Attributes> WithKHomeAssistant.Entity(entityID: String) = Entity<StateType, AttributesType>(
         kHomeAssistant = kHomeAssistant,
         entityID = entityID
 )

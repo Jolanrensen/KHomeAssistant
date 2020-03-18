@@ -6,14 +6,14 @@ import io.ktor.client.features.websocket.wss
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.http.cio.websocket.send
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nl.jolanrensen.kHomeAssistant.WebsocketsHttpClient.httpClient
+import nl.jolanrensen.kHomeAssistant.attributes.Attributes
 import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.Switch
 import nl.jolanrensen.kHomeAssistant.helper.Queue
 import nl.jolanrensen.kHomeAssistant.messages.*
-import nl.jolanrensen.kHomeAssistant.states.State
-import nl.jolanrensen.kHomeAssistant.states.SwitchState
 
 /**
  * KHomeAssistant instance
@@ -27,7 +27,9 @@ class KHomeAssistant(
         val automations: HashSet<Automation> = hashSetOf(),
         val secure: Boolean = false,
         val debug: Boolean = false
-) {
+) : WithKHomeAssistant {
+
+    override val kHomeAssistant = this
 
     /** HA version reported by the connected instance */
     lateinit var haVersion: String
@@ -44,9 +46,10 @@ class KHomeAssistant(
 
     private val sendQueue = Queue<suspend DefaultClientWebSocketSession.() -> Unit>()
 
-    private suspend fun sendMessage(message: suspend DefaultClientWebSocketSession.() -> Unit) {
 
-    }
+//    private suspend fun <Send: Message, Response: Message> sendMessage(message: Message): Response {
+//
+//    }
 
     /** Run KHomeAssistant, this makes the connection, authenticates, initializes and runs the complete HA interaction */
     suspend fun run() {
@@ -55,23 +58,44 @@ class KHomeAssistant(
             initializeAutomations()
 
             // TODO get states
-            val id = ++messageID
+//            val id = ++messageID
+//            send(
+//                    FetchStateMessage(id).toJson()
+//                            .also { debugPrintln(it) }
+//            )
+//
+//            val response: FetchStateResponse = fromJson((incoming.receive() as Frame.Text).readText())
+//            val batik_json = response.result.first { it.entity_id == "light.batik" }
+//
+////            val batikState = LightState
+//            val batikAttributes = LightAttributes.fromJson(batik_json.attributes.toString())
+//
+//            val batikState = Light("").parseStateValue(batik_json.state)
+//
+//            println(batik_json)
+//            println(batikState)
+
+
+
+
+            // receive and put in queue
+            val receiver = launch {
+                while (true) {
+                    delay(1)
+                    val message = incoming.poll() ?: continue
+
+                    debugPrintln((message as Frame.Text).readText())
+                }
+            }
+
+
             send(
-                    FetchStateMessage(id).toJson()
+                    SubscribeToEventMessage(++messageID).toJson()
                             .also { debugPrintln(it) }
             )
 
-            val response: FetchStateResponse = fromJson((incoming.receive() as Frame.Text).readText())
+            receiver.join()
 
-            println(response)
-
-
-//            // receive and put in queue
-//            launch {
-//                while (true) {
-//
-//                }
-//            }
 //
 //            // send from queue
 //            while (true) {
@@ -131,7 +155,17 @@ class KHomeAssistant(
         }
     }
 
-    suspend fun <S : State<*>, E : Entity<S>> getState(entity: E): S? {
+    suspend fun <StateType : Any, AttributesType : Attributes, EntityType : Entity<StateType, AttributesType>>
+            getAttributes(entity: EntityType): AttributesType? {
+
+
+        return null
+    }
+
+    suspend fun <StateType : Any, AttributesType : Attributes, EntityType : Entity<StateType, AttributesType>>
+            getState(entity: EntityType): StateType? {
+
+
         // TODO remove test
         return when (entity) {
             is Switch -> {
@@ -140,11 +174,7 @@ class KHomeAssistant(
 
                 }
 
-
-                object : SwitchState {
-                    override val state: OnOff
-                        get() = OnOff.ON
-                } as S
+                OnOff.ON as StateType
             }
             else -> null
         }
