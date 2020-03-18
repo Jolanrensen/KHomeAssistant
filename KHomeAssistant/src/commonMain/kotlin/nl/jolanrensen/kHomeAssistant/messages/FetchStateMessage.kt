@@ -4,13 +4,13 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
 @Serializable
-class FetchStateMessage(
+data class FetchStateMessage(
         override val id: Int,
         val type: String = "get_states"
 ) : Message
 
 @Serializable
-class FetchStateResponse(
+data class FetchStateResponse(
         override val id: Int,
         val type: String = "result",
         val success: Boolean,
