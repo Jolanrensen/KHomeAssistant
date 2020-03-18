@@ -6,7 +6,12 @@ import io.ktor.client.features.websocket.wss
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.http.cio.websocket.send
+import kotlinx.coroutines.launch
 import nl.jolanrensen.kHomeAssistant.WebsocketsHttpClient.httpClient
+import nl.jolanrensen.kHomeAssistant.entities.Entity
+import nl.jolanrensen.kHomeAssistant.entities.Switch
+import nl.jolanrensen.kHomeAssistant.states.State
+import nl.jolanrensen.kHomeAssistant.states.SwitchState
 
 /**
  * KHomeAssistant instance
@@ -17,39 +22,30 @@ class KHomeAssistant(
         val host: String,
         val port: Int = 8123,
         val accessToken: String,
-        val automations: List<Automation>,
-        val secure: Boolean = false
+        val automations: HashSet<Automation> = hashSetOf(),
+        val secure: Boolean = false,
+        val debug: Boolean = false
 ) {
 
+    /** HA version reported by the connected instance */
+    lateinit var haVersion: String
+
+    /** ID to represent the number of interactions with the HA instance */
+    private var messageID: Int = 0
+
+    /** println's only executed if debug=true */
+    fun debugPrintln(message: Any?) {
+        if (debug) println("DEBUG: $message")
+    }
 
 //    val stateListeners
 
+
+    /** Run KHomeAssistant, this makes the connection, authenticates, initializes and runs the complete HA interaction */
     suspend fun run() {
-        connect()
-        initializeAutomations()
-
-    }
-
-
-    private suspend fun connect() {
         val block: suspend DefaultClientWebSocketSession.() -> Unit = {
-            session = this
-
-            var response = AuthResponse.fromJson(
-                    (incoming.receive() as Frame.Text).readText()
-            )
-
-            if (response.isAuthRequired) {
-                send(AuthMessage(access_token = accessToken).toJson())
-                response = AuthResponse.fromJson(
-                        (incoming.receive() as Frame.Text).readText()
-                )
-            }
-            if (!response.isAuthOk) {
-                throw IllegalArgumentException(response.message)
-            }
-
-            println("successfully logged in")
+            authenticate()
+            initializeAutomations()
 
             // TODO continue here
         }
@@ -67,16 +63,54 @@ class KHomeAssistant(
         )
     }
 
-    private fun initializeAutomations() {
-        session
-        for (it in automations) {
+    /** Authenticate  */
+    private suspend fun DefaultClientWebSocketSession.authenticate() {
+        var response = AuthResponse.fromJson(
+                (incoming.receive() as Frame.Text).readText()
+                        .also { debugPrintln(it) }
+        )
+
+        haVersion = response.ha_version
+
+        if (response.isAuthRequired) {
+            send(AuthMessage(access_token = accessToken).toJson())
+            response = AuthResponse.fromJson(
+                    (incoming.receive() as Frame.Text).readText()
+                            .also { debugPrintln(it) }
+            )
+        }
+        if (!response.isAuthOk) {
+            throw IllegalArgumentException(response.message)
+        }
+        println("successfully logged in, connected to HASS instance of version $haVersion")
+    }
+
+    /** Initialize all automations asynchronously */
+    private suspend fun DefaultClientWebSocketSession.initializeAutomations() {
+        for (it in automations) launch {
             try {
-                it.kHomeAssistant = this
+                it.kHomeAssistant = this@KHomeAssistant
                 it.initialize()
-                println("Successfully initialized automation ${it::class.simpleName}")
+                println("Successfully initialized automation ${it.automationName}")
             } catch (e: Exception) {
-                println("FAILED to initialize automation ${it::class.simpleName}: $e")
+                println("FAILED to initialize automation ${it.automationName}: $e")
             }
+        }
+    }
+
+    fun <S : State<*>, E : Entity<S>> getState(entity: E): S? {
+        // TODO remove test
+        return when (entity) {
+            is Switch -> {
+
+
+
+                object : SwitchState {
+                    override val state: OnOff
+                        get() = OnOff.ON
+                } as S
+            }
+            else -> null
         }
     }
 
