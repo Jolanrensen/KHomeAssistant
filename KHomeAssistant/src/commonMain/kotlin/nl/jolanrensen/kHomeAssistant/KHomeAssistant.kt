@@ -21,6 +21,7 @@ class KHomeAssistant(
         val secure: Boolean = false
 ) {
 
+
 //    val stateListeners
 
     suspend fun run() {
@@ -31,10 +32,9 @@ class KHomeAssistant(
 
 
     private suspend fun connect() {
-        val authMessage = AuthMessage(access_token = accessToken)
-        println(authMessage.toJson())
-
         val block: suspend DefaultClientWebSocketSession.() -> Unit = {
+            session = this
+
             var response = AuthResponse.fromJson(
                     (incoming.receive() as Frame.Text).readText()
             )
@@ -51,9 +51,7 @@ class KHomeAssistant(
 
             println("successfully logged in")
 
-
-
-
+            // TODO continue here
         }
 
         if (secure) httpClient.wss(
@@ -70,6 +68,7 @@ class KHomeAssistant(
     }
 
     private fun initializeAutomations() {
+        session
         for (it in automations) {
             try {
                 it.kHomeAssistant = this
