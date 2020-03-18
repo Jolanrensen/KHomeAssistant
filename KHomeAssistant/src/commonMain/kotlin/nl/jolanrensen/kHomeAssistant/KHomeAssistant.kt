@@ -10,6 +10,8 @@ import kotlinx.coroutines.launch
 import nl.jolanrensen.kHomeAssistant.WebsocketsHttpClient.httpClient
 import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.Switch
+import nl.jolanrensen.kHomeAssistant.helper.Queue
+import nl.jolanrensen.kHomeAssistant.messages.*
 import nl.jolanrensen.kHomeAssistant.states.State
 import nl.jolanrensen.kHomeAssistant.states.SwitchState
 
@@ -40,6 +42,11 @@ class KHomeAssistant(
 
 //    val stateListeners
 
+    private val sendQueue = Queue<suspend DefaultClientWebSocketSession.() -> Unit>()
+
+    private suspend fun sendMessage(message: suspend DefaultClientWebSocketSession.() -> Unit) {
+
+    }
 
     /** Run KHomeAssistant, this makes the connection, authenticates, initializes and runs the complete HA interaction */
     suspend fun run() {
@@ -47,6 +54,32 @@ class KHomeAssistant(
             authenticate()
             initializeAutomations()
 
+            // TODO get states
+            val id = ++messageID
+            send(
+                    FetchStateMessage(id).toJson()
+                            .also { debugPrintln(it) }
+            )
+
+            val response: FetchStateResponse = fromJson((incoming.receive() as Frame.Text).readText())
+
+            println(response)
+
+
+//            // receive and put in queue
+//            launch {
+//                while (true) {
+//
+//                }
+//            }
+//
+//            // send from queue
+//            while (true) {
+//                delay(1)
+//                if (!sendQueue.isEmpty()) {
+//
+//                }
+//            }
             // TODO continue here
         }
 
@@ -98,11 +131,14 @@ class KHomeAssistant(
         }
     }
 
-    fun <S : State<*>, E : Entity<S>> getState(entity: E): S? {
+    suspend fun <S : State<*>, E : Entity<S>> getState(entity: E): S? {
         // TODO remove test
         return when (entity) {
             is Switch -> {
 
+                sendQueue.enqueue {
+
+                }
 
 
                 object : SwitchState {

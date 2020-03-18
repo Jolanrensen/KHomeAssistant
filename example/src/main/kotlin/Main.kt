@@ -13,9 +13,9 @@ class Test : Automation() {
 
         val dreamWorld = Switch("10006b21d4")
 
-        val switchState = dreamWorld.state!!
-
-        println(switchState.state)
+//        val switchState = dreamWorld.getState()!!
+//
+//        println(switchState.state)
 
 
     }
@@ -50,7 +50,7 @@ suspend fun main() {
 
     kHomeAssistant.automations.add(
             automation("Some automation thing") {
-                externallyDefinedLight.turnOff()
+                //externallyDefinedLight.turnOff()
             }
     )
 

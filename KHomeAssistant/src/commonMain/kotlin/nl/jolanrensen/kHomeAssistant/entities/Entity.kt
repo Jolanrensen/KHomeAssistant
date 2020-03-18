@@ -10,9 +10,12 @@ open class Entity<S : State<*>>(
         open val name: String
 ) : WithKHomeAssistant {
 
-    var state: S?
-        get() = kHomeAssistant.getState(this)
-        set(value) {}
+    suspend fun getState(): S? = kHomeAssistant.getState(this)
+    suspend fun setState(s: S): Unit = TODO()
+
+//    var state: S?
+//        get() = .await
+//        set(value) {}
 
     constructor(kHomeAssistant: KHomeAssistant, entityID: String) : this(
             kHomeAssistant = kHomeAssistant,
