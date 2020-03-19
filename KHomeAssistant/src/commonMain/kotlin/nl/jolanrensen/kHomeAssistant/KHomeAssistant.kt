@@ -13,10 +13,7 @@ import nl.jolanrensen.kHomeAssistant.attributes.Attributes
 import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.Switch
 import nl.jolanrensen.kHomeAssistant.helper.Queue
-import nl.jolanrensen.kHomeAssistant.messages.AuthMessage
-import nl.jolanrensen.kHomeAssistant.messages.AuthResponse
-import nl.jolanrensen.kHomeAssistant.messages.SubscribeToEventMessage
-import nl.jolanrensen.kHomeAssistant.messages.toJson
+import nl.jolanrensen.kHomeAssistant.messages.*
 
 /**
  * KHomeAssistant instance
@@ -29,40 +26,40 @@ class KHomeAssistant(
         val accessToken: String,
         val secure: Boolean = false,
         val debug: Boolean = false,
-        val automations: MutableCollection<Automation>
+        val automations: Collection<Automation>
 ) : WithKHomeAssistant {
 
-    constructor(
-            host: String,
-            port: Int = 8123,
-            accessToken: String,
-            secure: Boolean = false,
-            debug: Boolean = false,
-            automations: Collection<Automation>
-    ) : this(
-            host = host,
-            port = port,
-            accessToken = accessToken,
-            secure = secure,
-            debug = debug,
-            automations = automations.toMutableList()
-    )
+//    constructor(
+//            host: String,
+//            port: Int = 8123,
+//            accessToken: String,
+//            secure: Boolean = false,
+//            debug: Boolean = false,
+//            automations: Collection<Automation>
+//    ) : this(
+//            host = host,
+//            port = port,
+//            accessToken = accessToken,
+//            secure = secure,
+//            debug = debug,
+//            automations = automations.toMutableList()
+//    )
 
-    constructor(
-            host: String,
-            port: Int = 8123,
-            accessToken: String,
-            secure: Boolean = false,
-            debug: Boolean = false,
-            vararg automations: Automation
-    ) : this(
-            host = host,
-            port = port,
-            accessToken = accessToken,
-            secure = secure,
-            debug = debug,
-            automations = automations.toMutableList()
-    )
+//    constructor(
+//            host: String,
+//            port: Int = 8123,
+//            accessToken: String,
+//            secure: Boolean = false,
+//            debug: Boolean = false,
+//            vararg automations: Automation
+//    ) : this(
+//            host = host,
+//            port = port,
+//            accessToken = accessToken,
+//            secure = secure,
+//            debug = debug,
+//            automations = automations.toMutableList()
+//    )
 
     constructor(
             host: String,
@@ -78,7 +75,7 @@ class KHomeAssistant(
             accessToken = accessToken,
             secure = secure,
             debug = debug,
-            automations = mutableListOf(automation(automationName, automation))
+            automations = listOf(automation(automationName, automation))
     )
 
 
@@ -99,6 +96,8 @@ class KHomeAssistant(
 
     private val sendQueue = Queue<suspend DefaultClientWebSocketSession.() -> Unit>()
 
+
+    private val responseAwaiters = hashMapOf<Int, (String) -> Unit>()
 
 //    private suspend fun <Send: Message, Response: Message> sendMessage(message: Message): Response {
 //
@@ -133,9 +132,42 @@ class KHomeAssistant(
             val receiver = launch {
                 while (true) {
                     delay(1)
-                    val message = incoming.poll() ?: continue
+                    val message = incoming.poll() as? Frame.Text? ?: continue
+                    val json = message.readText()
+                    debugPrintln(json)
 
-                    debugPrintln((message as Frame.Text).readText())
+                    val messageBase: MessageBase = fromJson(json)
+                    val id = messageBase.id
+                    val type = messageBase.type
+
+                    when (type) {
+                        "result" -> responseAwaiters[id]?.invoke(json)?.run { responseAwaiters.remove(id) }
+                        "event" -> {
+                            val eventMessage: EventMessage = fromJson(json)
+                            val event = eventMessage.event
+                            debugPrintln("Detected event firing: $event")
+
+                            when (event.event_type) {
+                                "state_changed" -> {
+                                    val eventDataStateChanged = EventDataStateChanged.fromJson(event.data.toString())
+                                    val entityID = eventDataStateChanged.entity_id
+                                    val newState = eventDataStateChanged.new_state
+
+                                    // TODO update listeners for this entityID with this state change
+                                    debugPrintln("Detected statechange $eventDataStateChanged")
+                                }
+                                "call_service" -> {
+                                    val eventDataCallService = EventDataCallService.fromJson(event.data.toString())
+
+                                    debugPrintln("Deteted call_service: $eventDataCallService")
+                                    // TODO
+                                }
+                                // TODO maybe add more in the future
+                            }
+
+                        }
+                    }
+
                 }
             }
 

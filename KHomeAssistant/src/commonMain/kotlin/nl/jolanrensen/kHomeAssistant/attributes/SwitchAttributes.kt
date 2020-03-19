@@ -10,7 +10,7 @@ import kotlinx.serialization.json.JsonObject
 @Serializable
 data class SwitchAttributes(
         override val friendly_name: String
-) : Attributes {
+) : Attributes() {
 
     override lateinit var jsonObject: JsonObject
 

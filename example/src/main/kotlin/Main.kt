@@ -57,11 +57,11 @@ suspend fun main() {
 
     val externallyDefinedLight = Light(kHomeAssistant, "some_light")
 
-    kHomeAssistant.automations.add(
-            automation("Some automation thing") {
-                //externallyDefinedLight.turnOff()
-            }
-    )
+//    kHomeAssistant.automations.add(
+//            automation("Some automation thing") {
+//                //externallyDefinedLight.turnOff()
+//            }
+//    )
 
     kHomeAssistant.run()
 }

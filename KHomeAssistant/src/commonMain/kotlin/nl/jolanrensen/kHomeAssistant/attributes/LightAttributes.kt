@@ -22,7 +22,7 @@ data class LightAttributes(
         val xy_color: XYColor? = null,
         val white_value: Int? = null,
         val supported_features: Int
-) : Attributes {
+) : Attributes() {
 
     override lateinit var jsonObject: JsonObject
 

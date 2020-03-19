@@ -1,4 +1,4 @@
-package nl.jolanrensen.kHomeAssistant
+package nl.jolanrensen.kHomeAssistant.messages
 
 import kotlinx.serialization.Serializable
 

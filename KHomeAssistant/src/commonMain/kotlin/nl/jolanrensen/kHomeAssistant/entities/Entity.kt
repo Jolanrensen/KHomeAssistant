@@ -3,12 +3,14 @@ package nl.jolanrensen.kHomeAssistant.entities
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.WithKHomeAssistant
 import nl.jolanrensen.kHomeAssistant.attributes.Attributes
+import nl.jolanrensen.kHomeAssistant.messages.Context
 
 open class Entity<StateType : Any, AttributesType : Attributes>(
         override val kHomeAssistant: KHomeAssistant,
         val domain: String,
         open val name: String
 ) : WithKHomeAssistant {
+
 
 
     /** Given a string stateValue, this method should return the correct StateType */
@@ -22,6 +24,10 @@ open class Entity<StateType : Any, AttributesType : Attributes>(
     suspend fun setState(s: StateType): Unit = TODO()
 
     suspend fun getAttributes(): AttributesType = TODO()
+
+    suspend fun getLastChanged(): String = TODO("last_changed uit State")
+    suspend fun getLastUpdated(): String = TODO("last_updated uit State")
+    suspend fun getContext(): Context = TODO("context uit State")
 
 
     constructor(kHomeAssistant: KHomeAssistant, entityID: String) : this(
