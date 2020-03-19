@@ -13,7 +13,10 @@ import nl.jolanrensen.kHomeAssistant.attributes.Attributes
 import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.Switch
 import nl.jolanrensen.kHomeAssistant.helper.Queue
-import nl.jolanrensen.kHomeAssistant.messages.*
+import nl.jolanrensen.kHomeAssistant.messages.AuthMessage
+import nl.jolanrensen.kHomeAssistant.messages.AuthResponse
+import nl.jolanrensen.kHomeAssistant.messages.SubscribeToEventMessage
+import nl.jolanrensen.kHomeAssistant.messages.toJson
 
 /**
  * KHomeAssistant instance
@@ -24,10 +27,60 @@ class KHomeAssistant(
         val host: String,
         val port: Int = 8123,
         val accessToken: String,
-        val automations: HashSet<Automation> = hashSetOf(),
         val secure: Boolean = false,
-        val debug: Boolean = false
+        val debug: Boolean = false,
+        val automations: MutableCollection<Automation>
 ) : WithKHomeAssistant {
+
+    constructor(
+            host: String,
+            port: Int = 8123,
+            accessToken: String,
+            secure: Boolean = false,
+            debug: Boolean = false,
+            automations: Collection<Automation>
+    ) : this(
+            host = host,
+            port = port,
+            accessToken = accessToken,
+            secure = secure,
+            debug = debug,
+            automations = automations.toMutableList()
+    )
+
+    constructor(
+            host: String,
+            port: Int = 8123,
+            accessToken: String,
+            secure: Boolean = false,
+            debug: Boolean = false,
+            vararg automations: Automation
+    ) : this(
+            host = host,
+            port = port,
+            accessToken = accessToken,
+            secure = secure,
+            debug = debug,
+            automations = automations.toMutableList()
+    )
+
+    constructor(
+            host: String,
+            port: Int = 8123,
+            accessToken: String,
+            secure: Boolean = false,
+            debug: Boolean = false,
+            automationName: String = "Single Automation",
+            automation: suspend Automation.() ->  Unit
+    ) : this(
+            host = host,
+            port = port,
+            accessToken = accessToken,
+            secure = secure,
+            debug = debug,
+            automations = mutableListOf(automation(automationName, automation))
+    )
+
 
     override val kHomeAssistant = this
 
@@ -74,8 +127,6 @@ class KHomeAssistant(
 //
 //            println(batik_json)
 //            println(batikState)
-
-
 
 
             // receive and put in queue

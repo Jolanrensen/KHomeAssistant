@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.json.JsonObject
 import nl.jolanrensen.kHomeAssistant.helper.HSColor
 import nl.jolanrensen.kHomeAssistant.helper.RGBColor
 import nl.jolanrensen.kHomeAssistant.helper.XYColor
@@ -23,12 +24,16 @@ data class LightAttributes(
         val supported_features: Int
 ) : Attributes {
 
+    override lateinit var jsonObject: JsonObject
+
     companion object {
         @OptIn(ImplicitReflectionSerializer::class, UnstableDefault::class)
         fun fromJson(json: String): LightAttributes = Json(JsonConfiguration(
                 ignoreUnknownKeys = true,
                 isLenient = true
-        )).parse(serializer(), json)
+        )).parse(serializer(), json).apply {
+            jsonObject = Json.parseJson(json).jsonObject
+        }
     }
 
 }
