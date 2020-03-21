@@ -1,7 +1,9 @@
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.automation
-import nl.jolanrensen.kHomeAssistant.entities.Light
+import nl.jolanrensen.kHomeAssistant.domains.Domain
+import nl.jolanrensen.kHomeAssistant.domains.Light
+import nl.jolanrensen.kHomeAssistant.entities.LightEntity
 
 
 class Test : Automation() {
@@ -9,6 +11,9 @@ class Test : Automation() {
 
     override suspend fun initialize() {
         val a: String? = null
+
+        Domain("Hass")
+        val test = Light.createEntity(this, "wall_lamp")
 
 //        val dreamWorld = Switch("10006b21d4").getAttributes()["friendly_name"]!!.primitive.content
 
@@ -49,13 +54,13 @@ suspend fun main() {
                     automation("some automation") {
                         println("TEST inline automation")
 
-                        val internallyDefinedLight = Light("wall_lamp").getState()
+                        val internallyDefinedLight = LightEntity("wall_lamp").getState()
 
                     }
             )
     )
 
-    val externallyDefinedLight = Light(kHomeAssistant, "some_light")
+    val externallyDefinedLight = LightEntity(kHomeAssistant, "some_light")
 
 //    kHomeAssistant.automations.add(
 //            automation("Some automation thing") {

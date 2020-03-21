@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
-interface OnOffEntity {
+interface ToggleEntity {
     fun turnOn()
 
     fun turnOff()
@@ -9,9 +9,9 @@ interface OnOffEntity {
 
 
     /** HelperFunctions */
-    val isOn: Boolean
+    fun isOn(): Boolean
 
-    val ifOff: Boolean
+    fun ifOff(): Boolean
 
-    val isUnavailable: Boolean
+    fun isUnavailable(): Boolean
 }

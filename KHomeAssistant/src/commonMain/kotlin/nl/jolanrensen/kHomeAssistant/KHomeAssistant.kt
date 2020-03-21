@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 import nl.jolanrensen.kHomeAssistant.WebsocketsHttpClient.httpClient
 import nl.jolanrensen.kHomeAssistant.attributes.Attributes
 import nl.jolanrensen.kHomeAssistant.entities.Entity
-import nl.jolanrensen.kHomeAssistant.entities.Switch
+import nl.jolanrensen.kHomeAssistant.entities.SwitchEntity
 import nl.jolanrensen.kHomeAssistant.helper.Queue
 import nl.jolanrensen.kHomeAssistant.messages.*
 
@@ -251,7 +251,7 @@ class KHomeAssistant(
 
         // TODO remove test
         return when (entity) {
-            is Switch -> {
+            is SwitchEntity -> {
 
                 sendQueue.enqueue {
 

@@ -3,17 +3,17 @@ package nl.jolanrensen.kHomeAssistant.entities
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.WithKHomeAssistant
-import nl.jolanrensen.kHomeAssistant.attributes.LightAttributes
+import nl.jolanrensen.kHomeAssistant.attributes.SwitchAttributes
+import nl.jolanrensen.kHomeAssistant.domains.Switch
 
-
-class Light(
+class SwitchEntity(
         override val kHomeAssistant: KHomeAssistant,
         override val name: String
-) : Entity<OnOff, LightAttributes>(
+) : Entity<OnOff, SwitchAttributes>(
         kHomeAssistant = kHomeAssistant,
-        domain = "light",
+        domain = Switch,
         name = name
-), OnOffEntity, WithKHomeAssistant {
+), ToggleEntity, WithKHomeAssistant {
 
     override fun getStateValue(state: OnOff) = state.stateValue
 
@@ -28,10 +28,6 @@ class Light(
         TODO("Not yet implemented")
     }
 
-    fun turnOn(brightness: Int? = null /* TODO ETC */) {
-
-    }
-
     override fun turnOff() {
         TODO("Not yet implemented")
     }
@@ -40,16 +36,22 @@ class Light(
         TODO("Not yet implemented")
     }
 
-    override val isOn: Boolean
-        get() = TODO("Not yet implemented")
-    override val ifOff: Boolean
-        get() = TODO("Not yet implemented")
-    override val isUnavailable: Boolean
-        get() = TODO("Not yet implemented")
+    override fun isOn(): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun ifOff(): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun isUnavailable(): Boolean {
+        TODO("Not yet implemented")
+    }
+
 }
 
-/**  Instantiate Light from a WithKHomeAssistant context without having to specify it. */
-fun WithKHomeAssistant.Light(name: String) = Light(
+/**  Instantiate Switch from a WithKHomeAssistant context without having to specify it. */
+fun WithKHomeAssistant.SwitchEntity(name: String) = SwitchEntity(
         kHomeAssistant = kHomeAssistant,
         name = name
 )

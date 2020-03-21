@@ -3,16 +3,18 @@ package nl.jolanrensen.kHomeAssistant.entities
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.WithKHomeAssistant
-import nl.jolanrensen.kHomeAssistant.attributes.SwitchAttributes
+import nl.jolanrensen.kHomeAssistant.attributes.LightAttributes
+import nl.jolanrensen.kHomeAssistant.domains.Light
 
-class Switch(
+
+class LightEntity(
         override val kHomeAssistant: KHomeAssistant,
         override val name: String
-) : Entity<OnOff, SwitchAttributes>(
+) : Entity<OnOff, LightAttributes>(
         kHomeAssistant = kHomeAssistant,
-        domain = "switch",
-        name = name
-), OnOffEntity, WithKHomeAssistant {
+        name = name,
+        domain = Light
+), ToggleEntity, WithKHomeAssistant {
 
     override fun getStateValue(state: OnOff) = state.stateValue
 
@@ -27,6 +29,10 @@ class Switch(
         TODO("Not yet implemented")
     }
 
+    fun turnOn(brightness: Int? = null /* TODO ETC */) {
+
+    }
+
     override fun turnOff() {
         TODO("Not yet implemented")
     }
@@ -35,16 +41,23 @@ class Switch(
         TODO("Not yet implemented")
     }
 
-    override val isOn: Boolean
-        get() = TODO("Not yet implemented")
-    override val ifOff: Boolean
-        get() = TODO("Not yet implemented")
-    override val isUnavailable: Boolean
-        get() = TODO("Not yet implemented")
+    override fun isOn(): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun ifOff(): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun isUnavailable(): Boolean {
+        TODO("Not yet implemented")
+    }
+
+
 }
 
-/**  Instantiate Switch from a WithKHomeAssistant context without having to specify it. */
-fun WithKHomeAssistant.Switch(name: String) = Switch(
+/**  Instantiate Light from a WithKHomeAssistant context without having to specify it. */
+fun WithKHomeAssistant.LightEntity(name: String) = LightEntity(
         kHomeAssistant = kHomeAssistant,
         name = name
 )
