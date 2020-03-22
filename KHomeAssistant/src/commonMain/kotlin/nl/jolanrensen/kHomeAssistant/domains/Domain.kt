@@ -9,8 +9,17 @@ interface Domain : KHomeAssistantContext {
     val domainName: String
 
     /** Helper function to create an Entity in a domain, alternative to YourDomainEntity("name") */
-    /** TODO not sure about this one yet */
-    fun Entity(name: String): Entity<*,*>
+    fun Entity(name: String): Entity<*, *> = throw DomainHasNoEntityException("This domain does not have an associated Entity")
+
+    /** Helper function to check whether the context is present */
+    fun checkContext()
+}
+
+class DomainHasNoEntityException : Exception {
+    constructor()
+    constructor(message: String?)
+    constructor(message: String?, cause: Throwable?)
+    constructor(cause: Throwable?)
 }
 
 /** Create a temporary Domain. Useful for quick service calls. */
@@ -18,6 +27,7 @@ fun <E : Entity<*, *>> KHomeAssistantContext.DomainWithEntity(domainName: String
     override val domainName = domainName
     override val kHomeAssistant: KHomeAssistant = this@DomainWithEntity.kHomeAssistant
     override fun Entity(name: String) = invoke(name)
+    override fun checkContext() = Unit // context is always present
 }
 
 /** Create a temporary Domain. Useful for quick service calls. */
@@ -25,6 +35,7 @@ fun KHomeAssistantContext.Domain(domainName: String) = object : Domain {
     override val domainName = domainName
     override val kHomeAssistant: KHomeAssistant = this@Domain.kHomeAssistant
     override fun Entity(name: String) = throw Exception("This is a temporary domain and thus has no associated Entity.")
+    override fun checkContext() = Unit // context is always present
 }
 
 

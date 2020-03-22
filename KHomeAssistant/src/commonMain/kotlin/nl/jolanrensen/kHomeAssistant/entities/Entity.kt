@@ -46,11 +46,11 @@ inline fun <reified StateType : Any, reified AttributesType : Attributes> KHomeA
                 name = name
         )
 
-fun KHomeAssistantContext.Entity(domain: Domain, name: String) =
-        Entity<Any, Attributes>(
-                domain = domain,
-                name = name
-        )
+//fun KHomeAssistantContext.Entity(domain: Domain, name: String) =
+//        Entity<Any, Attributes>(
+//                domain = domain,
+//                name = name
+//        )
 
 
 inline fun <reified StateType : Any, reified AttributesType : Attributes>
@@ -66,11 +66,11 @@ inline fun <reified StateType : Any, reified AttributesType : Attributes>
     return e
 }
 
-fun KHomeAssistantContext.Entity(domainName: String, name: String) =
-        Entity<Any, Attributes>(
-                domainName = domainName,
-                name = name
-        )
+//fun KHomeAssistantContext.Entity(domainName: String, name: String) =
+//        Entity<Any, Attributes>(
+//                domainName = domainName,
+//                name = name
+//        )
 
 
 inline fun <reified StateType : Any, reified AttributesType : Attributes> KHomeAssistantContext.Entity(entityID: String): Entity<StateType, AttributesType> {
@@ -86,4 +86,4 @@ inline fun <reified StateType : Any, reified AttributesType : Attributes> KHomeA
     )
 }
 
-fun KHomeAssistantContext.Entity(entityID: String) = Entity<Any, Attributes>(entityID = entityID)
+//fun KHomeAssistantContext.Entity(entityID: String) = Entity<Any, Attributes>(entityID = entityID)

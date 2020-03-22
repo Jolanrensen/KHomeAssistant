@@ -2,6 +2,8 @@ import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.Domain
+import nl.jolanrensen.kHomeAssistant.domains.Hassio
+import nl.jolanrensen.kHomeAssistant.domains.HassioDomain
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.entities.LightEntity
 
@@ -10,12 +12,11 @@ class Test : Automation() {
 
 
     override suspend fun initialize() {
-        val a: String? = null
 
-        Domain("Hass")
+        val c = Domain("Hass")
         val test = Light.Entity("wall_lamp")
 
-        Light.test()
+        val b = HassioDomain
 
 //        val dreamWorld = Switch("10006b21d4").getAttributes()["friendly_name"]!!.primitive.content
 

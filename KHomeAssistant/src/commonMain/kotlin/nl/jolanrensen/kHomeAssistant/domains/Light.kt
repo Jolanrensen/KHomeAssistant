@@ -4,22 +4,25 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.entities.LightEntity
 
+/** Do not use directly! Always use Light. */
 object LightDomain : Domain {
     override lateinit var kHomeAssistant: KHomeAssistant
     override val domainName = "light"
 
-    fun test() {}
+    override fun checkContext() = require(::kHomeAssistant.isInitialized) {
+        """ Please initialize kHomeAssistant before calling this.
+            Make sure to use the helper function 'Light.' from a KHomeAssistantContext instead of using LightDomain directly.""".trimMargin()
+    }
 
+    /** Does the same as LightEntity() */
     override fun Entity(name: String): LightEntity {
-        require(::kHomeAssistant.isInitialized) { "Please initialize kHomeAssistant before calling this. This can be easily done by using 'Light.' from a KHomeAssistantContext instead of using 'LightDomain.'." }
-        return kHomeAssistant.LightEntity(name = name)
+        checkContext()
+        return LightEntity(name = name)
     }
 }
 
-val KHomeAssistantContext.Light: LightDomain
-    get() = LightDomain.also {
-        it.kHomeAssistant = kHomeAssistant
-    }
+/** Access the Light Domain */
+val KHomeAssistantContext.Light get() = LightDomain.also { it.kHomeAssistant = kHomeAssistant }
 
 //val WithKHomeAssistant.Light: Domain
 //    get() {
