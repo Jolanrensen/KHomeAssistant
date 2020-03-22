@@ -2,7 +2,7 @@ package nl.jolanrensen.kHomeAssistant.entities
 
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.WithKHomeAssistant
+import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.attributes.LightAttributes
 import nl.jolanrensen.kHomeAssistant.domains.Light
 
@@ -13,8 +13,8 @@ class LightEntity(
 ) : Entity<OnOff, LightAttributes>(
         kHomeAssistant = kHomeAssistant,
         name = name,
-        domain = Light
-), ToggleEntity, WithKHomeAssistant {
+        domain = kHomeAssistant.Light
+), ToggleEntity, KHomeAssistantContext {
 
     override fun getStateValue(state: OnOff) = state.stateValue
 
@@ -57,7 +57,7 @@ class LightEntity(
 }
 
 /**  Instantiate Light from a WithKHomeAssistant context without having to specify it. */
-fun WithKHomeAssistant.LightEntity(name: String) = LightEntity(
+fun KHomeAssistantContext.LightEntity(name: String) = LightEntity(
         kHomeAssistant = kHomeAssistant,
         name = name
 )

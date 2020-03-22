@@ -13,7 +13,9 @@ class Test : Automation() {
         val a: String? = null
 
         Domain("Hass")
-        val test = Light.createEntity(this, "wall_lamp")
+        val test = Light.Entity("wall_lamp")
+
+        Light.test()
 
 //        val dreamWorld = Switch("10006b21d4").getAttributes()["friendly_name"]!!.primitive.content
 

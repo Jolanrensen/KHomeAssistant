@@ -2,7 +2,7 @@ package nl.jolanrensen.kHomeAssistant.entities
 
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.WithKHomeAssistant
+import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.attributes.SwitchAttributes
 import nl.jolanrensen.kHomeAssistant.domains.Switch
 
@@ -13,7 +13,7 @@ class SwitchEntity(
         kHomeAssistant = kHomeAssistant,
         domain = Switch,
         name = name
-), ToggleEntity, WithKHomeAssistant {
+), ToggleEntity, KHomeAssistantContext {
 
     override fun getStateValue(state: OnOff) = state.stateValue
 
@@ -51,7 +51,7 @@ class SwitchEntity(
 }
 
 /**  Instantiate Switch from a WithKHomeAssistant context without having to specify it. */
-fun WithKHomeAssistant.SwitchEntity(name: String) = SwitchEntity(
+fun KHomeAssistantContext.SwitchEntity(name: String) = SwitchEntity(
         kHomeAssistant = kHomeAssistant,
         name = name
 )

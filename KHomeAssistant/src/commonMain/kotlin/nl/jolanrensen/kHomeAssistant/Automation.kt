@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant
 
-open class Automation : WithKHomeAssistant {
+open class Automation : KHomeAssistantContext {
 
     open val automationName: String
         get() = this::class.simpleName.toString()

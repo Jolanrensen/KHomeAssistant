@@ -1,5 +1,5 @@
 package nl.jolanrensen.kHomeAssistant
 
-interface WithKHomeAssistant {
+interface KHomeAssistantContext {
     val kHomeAssistant: KHomeAssistant
 }

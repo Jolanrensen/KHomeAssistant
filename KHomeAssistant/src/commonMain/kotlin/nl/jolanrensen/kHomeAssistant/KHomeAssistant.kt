@@ -27,7 +27,7 @@ class KHomeAssistant(
         val secure: Boolean = false,
         val debug: Boolean = false,
         val automations: Collection<Automation>
-) : WithKHomeAssistant {
+) : KHomeAssistantContext {
 
 //    constructor(
 //            host: String,
