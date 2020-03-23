@@ -5,7 +5,7 @@ open class Automation : KHomeAssistantContext {
     open val automationName: String
         get() = this::class.simpleName.toString()
 
-    override lateinit var kHomeAssistant: KHomeAssistant
+    override var kHomeAssistant: () -> KHomeAssistant? = { null }
 
     /**
      * This method is called to start the automation

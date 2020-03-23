@@ -6,9 +6,9 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 object HassioDomain : Domain {
     override val domainName = "hassio"
 
-    override lateinit var kHomeAssistant: KHomeAssistant
+    override var kHomeAssistant: () -> KHomeAssistant? = { null }
 
-    override fun checkContext() = require(::kHomeAssistant.isInitialized) {
+    override fun checkContext() = require(kHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'Hassio.' from a KHomeAssistantContext instead of using HassioDomain directly.""".trimMargin()
     }

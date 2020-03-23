@@ -1,7 +1,7 @@
 package nl.jolanrensen.kHomeAssistant
 
 interface KHomeAssistantContext {
-    val kHomeAssistant: KHomeAssistant
+    val kHomeAssistant: () -> KHomeAssistant?
 
 }
 

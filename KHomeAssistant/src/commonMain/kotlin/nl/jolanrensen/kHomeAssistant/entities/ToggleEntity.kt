@@ -7,6 +7,8 @@ interface ToggleEntity {
 
     fun toggle()
 
+    fun onTurnOn(callback: ToggleEntity.() -> Unit)
+
 
     /** HelperFunctions */
     fun isOn(): Boolean

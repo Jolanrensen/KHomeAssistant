@@ -8,11 +8,11 @@ import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.domains.SwitchDomain
 
 class SwitchEntity(
-        override val kHomeAssistant: KHomeAssistant,
+        override val kHomeAssistant: () -> KHomeAssistant?,
         override val name: String
 ) : Entity<OnOff, SwitchAttributes>(
         kHomeAssistant = kHomeAssistant,
-        domain = kHomeAssistant.Switch,
+        domain = SwitchDomain,
         name = name
 ), ToggleEntity, KHomeAssistantContext {
 
@@ -24,17 +24,21 @@ class SwitchEntity(
         null
     }
 
+    override fun onTurnOn(callback: ToggleEntity.() -> Unit) {
+//        TODO("Not yet implemented")
+    }
+
 
     override fun turnOn() {
-        TODO("Not yet implemented")
+//        TODO("Not yet implemented")
     }
 
     override fun turnOff() {
-        TODO("Not yet implemented")
+//        TODO("Not yet implemented")
     }
 
     override fun toggle() {
-        TODO("Not yet implemented")
+//        TODO("Not yet implemented")
     }
 
     override fun isOn(): Boolean {

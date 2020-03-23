@@ -25,7 +25,7 @@ class DomainHasNoEntityException : Exception {
 /** Create a temporary Domain. Useful for quick service calls. */
 fun <E : Entity<*, *>> KHomeAssistantContext.DomainWithEntity(domainName: String, invoke: KHomeAssistantContext.(name: String) -> E) = object : Domain {
     override val domainName = domainName
-    override val kHomeAssistant: KHomeAssistant = this@DomainWithEntity.kHomeAssistant
+    override val kHomeAssistant: () -> KHomeAssistant? = this@DomainWithEntity.kHomeAssistant
     override fun Entity(name: String) = invoke(name)
     override fun checkContext() = Unit // context is always present
 }
@@ -33,7 +33,7 @@ fun <E : Entity<*, *>> KHomeAssistantContext.DomainWithEntity(domainName: String
 /** Create a temporary Domain. Useful for quick service calls. */
 fun KHomeAssistantContext.Domain(domainName: String) = object : Domain {
     override val domainName = domainName
-    override val kHomeAssistant: KHomeAssistant = this@Domain.kHomeAssistant
+    override val kHomeAssistant: () -> KHomeAssistant? = this@Domain.kHomeAssistant
     override fun Entity(name: String) = throw Exception("This is a temporary domain and thus has no associated Entity.")
     override fun checkContext() = Unit // context is always present
 }

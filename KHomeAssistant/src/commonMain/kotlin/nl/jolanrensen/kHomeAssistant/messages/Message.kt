@@ -5,17 +5,17 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.serializer
+import nl.jolanrensen.kHomeAssistant.JsonSerializable
 
-@Serializable
-abstract class Message {
-    abstract val id: Int
+abstract class Message : JsonSerializable {
+    abstract var id: Int
     abstract val type: String
 }
 
-@Serializable
-abstract class ResultMessage : Message() {
-    // type: String = "result"
+abstract class ResultMessage : Message(), JsonSerializable {
+    abstract override val type: String
     abstract val success: Boolean
     abstract val result: Any?
     // maybe more
@@ -23,19 +23,14 @@ abstract class ResultMessage : Message() {
 
 @Serializable
 data class MessageBase(
-        override val id: Int,
+        override var id: Int = 0,
         override val type: String
-) : Message()
+) : Message(), JsonSerializable
 
-@OptIn(ImplicitReflectionSerializer::class, UnstableDefault::class)
-inline fun <reified M : Message> M.toJson() = Json(JsonConfiguration(
-        ignoreUnknownKeys = true,
-        isLenient = true
-)).stringify(serializer(), this)
-
-
-@OptIn(ImplicitReflectionSerializer::class, UnstableDefault::class)
-inline fun <reified M : Message> fromJson(json: String): M = Json(JsonConfiguration(
-        ignoreUnknownKeys = true,
-        isLenient = true
-)).parse(M::class.serializer(), json)
+@Serializable
+data class ResultMessageBase(
+        override var id: Int = 0,
+        override val success: Boolean,
+        override val result: JsonObject? = null,
+        override val type: String
+) : ResultMessage(), JsonSerializable

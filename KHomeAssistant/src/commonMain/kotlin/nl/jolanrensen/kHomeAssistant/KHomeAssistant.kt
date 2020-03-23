@@ -6,8 +6,12 @@ import io.ktor.client.features.websocket.wss
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.http.cio.websocket.send
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.serializer
 import nl.jolanrensen.kHomeAssistant.WebsocketsHttpClient.httpClient
 import nl.jolanrensen.kHomeAssistant.attributes.Attributes
 import nl.jolanrensen.kHomeAssistant.entities.Entity
@@ -79,7 +83,9 @@ class KHomeAssistant(
     )
 
 
-    override val kHomeAssistant = this
+    override val kHomeAssistant = { this }
+
+    lateinit var coroutineScope: CoroutineScope
 
     /** HA version reported by the connected instance */
     lateinit var haVersion: String
@@ -96,16 +102,33 @@ class KHomeAssistant(
 
     private val sendQueue = Queue<suspend DefaultClientWebSocketSession.() -> Unit>()
 
-
     private val responseAwaiters = hashMapOf<Int, (String) -> Unit>()
 
-//    private suspend fun <Send: Message, Response: Message> sendMessage(message: Message): Response {
-//
-//    }
+    @OptIn(ImplicitReflectionSerializer::class)
+    private suspend inline fun <reified Send: Message, reified Response: ResultMessage> sendMessage(message: Send): Response {
+        val thisMessageID = ++messageID
+        sendQueue.enqueue {
+            message.id = thisMessageID
+            val json = message.toJson()
+            send(json)
+            debugPrintln("Sent message: $json")
+        }
+        var response: Response? = null
+        responseAwaiters[thisMessageID] = {
+            debugPrintln("Received result response: $it")
+            response = fromJson(it) // TODO fix
+        }
+
+        return withContext(coroutineScope.coroutineContext) {
+            while (response == null) delay(1)
+            response!!
+        }
+    }
 
     /** Run KHomeAssistant, this makes the connection, authenticates, initializes and runs the complete HA interaction */
     suspend fun run() {
         val block: suspend DefaultClientWebSocketSession.() -> Unit = {
+            coroutineScope = this
             authenticate()
             initializeAutomations()
 
@@ -149,7 +172,7 @@ class KHomeAssistant(
 
                             when (event.event_type) {
                                 "state_changed" -> {
-                                    val eventDataStateChanged = EventDataStateChanged.fromJson(event.data.toString())
+                                    val eventDataStateChanged: EventDataStateChanged = fromJson(event.data.toString())
                                     val entityID = eventDataStateChanged.entity_id
                                     val newState = eventDataStateChanged.new_state
 
@@ -157,7 +180,7 @@ class KHomeAssistant(
                                     debugPrintln("Detected statechange $eventDataStateChanged")
                                 }
                                 "call_service" -> {
-                                    val eventDataCallService = EventDataCallService.fromJson(event.data.toString())
+                                    val eventDataCallService: EventDataCallService = fromJson(event.data.toString())
 
                                     debugPrintln("Deteted call_service: $eventDataCallService")
                                     // TODO
@@ -171,13 +194,26 @@ class KHomeAssistant(
                 }
             }
 
+            val sender = launch {
+                while (true) {
+                    delay(1)
+                    val message = sendQueue.dequeue() ?: continue
+                    message()
+                }
+            }
 
-            send(
-                    SubscribeToEventMessage(++messageID).toJson()
-                            .also { debugPrintln(it) }
+
+            // TODO move, this is just for a test
+            // registering for event messages:
+
+            val res: ResultMessageBase = sendMessage(
+                    SubscribeToEventMessage().also { debugPrintln(it) }
             )
+            debugPrintln(res)
+
 
             receiver.join()
+            sender.join()
 
 //
 //            // send from queue
@@ -205,7 +241,7 @@ class KHomeAssistant(
 
     /** Authenticate  */
     private suspend fun DefaultClientWebSocketSession.authenticate() {
-        var response = AuthResponse.fromJson(
+        var response: AuthResponse = fromJson(
                 (incoming.receive() as Frame.Text).readText()
                         .also { debugPrintln(it) }
         )
@@ -214,7 +250,7 @@ class KHomeAssistant(
 
         if (response.isAuthRequired) {
             send(AuthMessage(access_token = accessToken).toJson())
-            response = AuthResponse.fromJson(
+            response = fromJson(
                     (incoming.receive() as Frame.Text).readText()
                             .also { debugPrintln(it) }
             )
@@ -229,7 +265,7 @@ class KHomeAssistant(
     private suspend fun DefaultClientWebSocketSession.initializeAutomations() {
         for (it in automations) launch {
             try {
-                it.kHomeAssistant = this@KHomeAssistant
+                it.kHomeAssistant = { this@KHomeAssistant }
                 it.initialize()
                 println("Successfully initialized automation ${it.automationName}")
             } catch (e: Exception) {

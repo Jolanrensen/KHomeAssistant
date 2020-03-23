@@ -8,10 +8,14 @@ import nl.jolanrensen.kHomeAssistant.domains.DomainWithEntity
 import nl.jolanrensen.kHomeAssistant.messages.Context
 
 open class Entity<StateType : Any, AttributesType : Attributes>(
-        override val kHomeAssistant: KHomeAssistant,
+        override val kHomeAssistant: () -> KHomeAssistant?,
         open val name: String,
         open val domain: Domain
 ) : KHomeAssistantContext {
+
+    init {
+        // TODO check whether this entity_id exists and throw an exception if not
+    }
 
     /** Given a string stateValue, this method should return the correct StateType */
     open fun parseStateValue(stateValue: String): StateType? = null
@@ -20,10 +24,10 @@ open class Entity<StateType : Any, AttributesType : Attributes>(
     open fun getStateValue(state: StateType): String? = null
 
 
-    suspend fun getState(): StateType? = kHomeAssistant.getState(this)
+    suspend fun getState(): StateType? = kHomeAssistant()!!.getState(this)
     suspend fun setState(s: StateType): Unit = TODO()
 
-    suspend fun getAttributes(): AttributesType = TODO()
+    suspend fun getAttributes(): AttributesType? = kHomeAssistant()!!.getAttributes(this)
 
     suspend fun getLastChanged(): String = TODO("last_changed uit State")
     suspend fun getLastUpdated(): String = TODO("last_updated uit State")

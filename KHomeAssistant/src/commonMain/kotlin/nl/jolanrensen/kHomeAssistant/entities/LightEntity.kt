@@ -5,15 +5,16 @@ import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.attributes.LightAttributes
 import nl.jolanrensen.kHomeAssistant.domains.Light
+import nl.jolanrensen.kHomeAssistant.domains.LightDomain
 
 
 class LightEntity(
-        override val kHomeAssistant: KHomeAssistant,
+        override val kHomeAssistant: () -> KHomeAssistant?,
         override val name: String
 ) : Entity<OnOff, LightAttributes>(
         kHomeAssistant = kHomeAssistant,
         name = name,
-        domain = kHomeAssistant.Light
+        domain = LightDomain // TODO check?
 ), ToggleEntity, KHomeAssistantContext {
 
     override fun getStateValue(state: OnOff) = state.stateValue
@@ -24,6 +25,9 @@ class LightEntity(
         null
     }
 
+    override fun onTurnOn(callback: ToggleEntity.() -> Unit) {
+        TODO("Not yet implemented")
+    }
 
     override fun turnOn() {
         TODO("Not yet implemented")
@@ -57,6 +61,7 @@ class LightEntity(
 }
 
 /**  Instantiate Light from a WithKHomeAssistant context without having to specify it. */
+// TODO not sure whether to keep this or to just use Light.Entity
 fun KHomeAssistantContext.LightEntity(name: String) = LightEntity(
         kHomeAssistant = kHomeAssistant,
         name = name
