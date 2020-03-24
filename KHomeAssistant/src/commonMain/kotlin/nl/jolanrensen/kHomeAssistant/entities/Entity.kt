@@ -5,14 +5,16 @@ import kotlinx.serialization.serializer
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.attributes.Attributes
+import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.domains.DomainWithEntity
 import nl.jolanrensen.kHomeAssistant.messages.Context
+
+typealias DefaultEntity = Entity<String, BaseAttributes>
 
 open class Entity<StateType : Any, AttributesType : Attributes>(
         override val kHomeAssistant: () -> KHomeAssistant?,
         open val name: String,
-        open val domain: Domain
+        open val domain: Domain<out Entity<out StateType, out AttributesType>>
 ) : KHomeAssistantContext {
 
     open val attributesSerializer: KSerializer<AttributesType>? = null
@@ -47,12 +49,12 @@ open class Entity<StateType : Any, AttributesType : Attributes>(
  * All entities can be created without KHomeAssistant instance from within an Automation
  * and other classes having an instance as kHomeAssistant can be accessed through there anyways.
  * */
-inline fun <reified StateType : Any, reified AttributesType : Attributes> KHomeAssistantContext.Entity(domain: Domain, name: String): Entity<StateType, AttributesType> =
-        Entity(
-                kHomeAssistant = kHomeAssistant,
-                domain = domain,
-                name = name
-        )
+//inline fun <reified StateType : Any, reified AttributesType : Attributes> KHomeAssistantContext.Entity(domain: Domain<out Entity<out StateType, out AttributesType>>, name: String): Entity<StateType, AttributesType> =
+//        Entity<StateType, AttributesType>(
+//                kHomeAssistant = kHomeAssistant,
+//                domain = domain,
+//                name = name
+//        )
 
 //fun KHomeAssistantContext.Entity(domain: Domain, name: String) =
 //        Entity<Any, Attributes>(
@@ -61,18 +63,17 @@ inline fun <reified StateType : Any, reified AttributesType : Attributes> KHomeA
 //        )
 
 
-inline fun <reified StateType : Any, reified AttributesType : Attributes>
-        KHomeAssistantContext.Entity(domainName: String, name: String): Entity<StateType, AttributesType> {
-    var e: Entity<StateType, AttributesType>? = null
-    e = Entity(
-            kHomeAssistant = kHomeAssistant,
-            name = name,
-            domain = DomainWithEntity(domainName) {
-                e!! //tODO check if this works
-            }
-    )
-    return e
-}
+// TODO probably remove this
+//inline fun <reified StateType : Any, reified AttributesType : Attributes>
+//        KHomeAssistantContext.Entity(domainName: String, name: String): Entity<StateType, AttributesType> {
+//    var e: Entity<StateType, AttributesType>? = null
+//    e = Entity(
+//            kHomeAssistant = kHomeAssistant,
+//            name = name,
+//            domain = Domain(domainName)
+//    )
+//    return e
+//}
 
 //fun KHomeAssistantContext.Entity(domainName: String, name: String) =
 //        Entity<Any, Attributes>(
@@ -81,17 +82,17 @@ inline fun <reified StateType : Any, reified AttributesType : Attributes>
 //        )
 
 
-inline fun <reified StateType : Any, reified AttributesType : Attributes> KHomeAssistantContext.Entity(entityID: String): Entity<StateType, AttributesType> {
-    if ('.' !in entityID)
-        throw IllegalArgumentException("entityID must be of type 'domain.name'")
-
-    val (domainName, name) = entityID.split('.')
-
-    return Entity(
-            kHomeAssistant = kHomeAssistant,
-            name = name,
-            domain = Domain(domainName)
-    )
-}
+//inline fun <reified StateType : Any, reified AttributesType : Attributes> KHomeAssistantContext.Entity(entityID: String): Entity<StateType, AttributesType> {
+//    if ('.' !in entityID)
+//        throw IllegalArgumentException("entityID must be of type 'domain.name'")
+//
+//    val (domainName, name) = entityID.split('.')
+//
+//    return Entity(
+//            kHomeAssistant = kHomeAssistant,
+//            name = name,
+//            domain = Domain(domainName)
+//    )
+//}
 
 //fun KHomeAssistantContext.Entity(entityID: String) = Entity<Any, Attributes>(entityID = entityID)

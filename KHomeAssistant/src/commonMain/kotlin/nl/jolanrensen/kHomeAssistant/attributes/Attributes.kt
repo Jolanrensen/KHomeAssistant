@@ -14,6 +14,13 @@ abstract class Attributes {
     operator fun get(attribute_id: String) = fullJsonObject[attribute_id]
 }
 
+@Serializable
+data class BaseAttributes(
+        override val friendly_name: String
+) : Attributes() {
+    override var fullJsonObject = JsonObject(mapOf())
+}
+
 @OptIn(ImplicitReflectionSerializer::class, UnstableDefault::class)
 fun <A: Attributes> attributesFromJson(json: String, serializer: KSerializer<A>): A = Json(JsonConfiguration(
         ignoreUnknownKeys = true,

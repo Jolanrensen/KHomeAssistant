@@ -5,7 +5,7 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.entities.LightEntity
 
 /** Do not use directly! Always use Light. */
-object LightDomain : Domain {
+object LightDomain : Domain<LightEntity> {
     override var kHomeAssistant: () -> KHomeAssistant? = { null }
     override val domainName = "light"
 

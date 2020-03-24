@@ -1,8 +1,10 @@
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.automation
+import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
+import nl.jolanrensen.kHomeAssistant.entities.Entity
 
 
 class Test : Automation() {
@@ -57,6 +59,10 @@ suspend fun main() {
 
                         val attrs = batik.getAttributes()
                         println("attributes are: $attrs")
+
+                        val test = Domain("light").Entity("wall_lamp").getAttributes()
+
+                        println("Wall lamp default test, state: ${test.fullJsonObject}")
 
 
                     }

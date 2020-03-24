@@ -5,7 +5,7 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.entities.SwitchEntity
 
 /** Do not use directly! Always use Switch. */
-object SwitchDomain : Domain {
+object SwitchDomain : Domain<SwitchEntity> {
     override var kHomeAssistant: () -> KHomeAssistant? = { null }
     override val domainName = "switch"
 
