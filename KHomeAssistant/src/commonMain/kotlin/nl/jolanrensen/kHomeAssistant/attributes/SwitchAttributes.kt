@@ -12,15 +12,15 @@ data class SwitchAttributes(
         override val friendly_name: String
 ) : Attributes() {
 
-    override lateinit var jsonObject: JsonObject
+    override var fullJsonObject = JsonObject(mapOf())
 
-    companion object {
-        @OptIn(ImplicitReflectionSerializer::class, UnstableDefault::class)
-        fun fromJson(json: String): SwitchAttributes = Json(JsonConfiguration(
-                ignoreUnknownKeys = true,
-                isLenient = true
-        )).parse(serializer(), json).apply {
-            jsonObject = Json.parseJson(json).jsonObject
-        }
-    }
+//    companion object {
+//        @OptIn(ImplicitReflectionSerializer::class, UnstableDefault::class)
+//        fun fromJson(json: String): SwitchAttributes = Json(JsonConfiguration(
+//                ignoreUnknownKeys = true,
+//                isLenient = true
+//        )).parse(serializer(), json).apply {
+//            jsonObject = Json.parseJson(json).jsonObject
+//        }
+//    }
 }

@@ -3,8 +3,6 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
-import nl.jolanrensen.kHomeAssistant.entities.LightEntity
-import nl.jolanrensen.kHomeAssistant.entities.SwitchEntity
 
 
 class Test : Automation() {
@@ -49,14 +47,17 @@ suspend fun main() {
             host = "home.jolanrensen.nl",
             port = 8123,
             secure = true,
-            debug = true,
+            debug = false,
             accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
             automations = listOf(
                     Test(),
                     automation("some automation") {
-                        println("TEST inline automation")
+                        val batik = Light.Entity("batik")
+                        println("wall lamp is currently ${batik.getState()}")
 
-                        val internallyDefinedLight = Light.Entity("wall_lamp").getState()
+                        val attrs = batik.getAttributes()
+                        println("attributes are: $attrs")
+
 
                     }
             )

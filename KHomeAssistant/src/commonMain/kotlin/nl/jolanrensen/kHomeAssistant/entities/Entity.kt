@@ -1,5 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.serializer
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.attributes.Attributes
@@ -13,6 +15,8 @@ open class Entity<StateType : Any, AttributesType : Attributes>(
         open val domain: Domain
 ) : KHomeAssistantContext {
 
+    open val attributesSerializer: KSerializer<AttributesType>? = null
+
     init {
         // TODO check whether this entity_id exists and throw an exception if not
     }
@@ -24,10 +28,10 @@ open class Entity<StateType : Any, AttributesType : Attributes>(
     open fun getStateValue(state: StateType): String? = null
 
 
-    suspend fun getState(): StateType? = kHomeAssistant()!!.getState(this)
+    suspend fun getState(): StateType = kHomeAssistant()!!.getState(this)
     suspend fun setState(s: StateType): Unit = TODO()
 
-    suspend fun getAttributes(): AttributesType? = kHomeAssistant()!!.getAttributes(this)
+    suspend fun getAttributes(): AttributesType = kHomeAssistant()!!.getAttributes(this, attributesSerializer!!)
 
     suspend fun getLastChanged(): String = TODO("last_changed uit State")
     suspend fun getLastUpdated(): String = TODO("last_updated uit State")

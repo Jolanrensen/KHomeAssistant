@@ -1,6 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.attributes
 
 import kotlinx.serialization.ImplicitReflectionSerializer
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
@@ -24,16 +25,16 @@ data class LightAttributes(
         val supported_features: Int
 ) : Attributes() {
 
-    override lateinit var jsonObject: JsonObject
+    override var fullJsonObject = JsonObject(mapOf())
 
-    companion object {
-        @OptIn(ImplicitReflectionSerializer::class, UnstableDefault::class)
-        fun fromJson(json: String): LightAttributes = Json(JsonConfiguration(
-                ignoreUnknownKeys = true,
-                isLenient = true
-        )).parse(serializer(), json).apply {
-            jsonObject = Json.parseJson(json).jsonObject
-        }
-    }
+//    companion object {
+//        @OptIn(ImplicitReflectionSerializer::class, UnstableDefault::class)
+//        fun fromJson(json: String): LightAttributes = Json(JsonConfiguration(
+//                ignoreUnknownKeys = true,
+//                isLenient = true
+//        )).parse(serializer(), json).apply {
+//            jsonObject = Json.parseJson(json).jsonObject
+//        }
+//    }
 
 }

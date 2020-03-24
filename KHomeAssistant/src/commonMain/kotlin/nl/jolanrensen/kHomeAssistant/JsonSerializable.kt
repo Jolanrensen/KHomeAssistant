@@ -6,7 +6,6 @@ import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.serializer
-import kotlin.reflect.KClass
 
 interface JsonSerializable
 
@@ -23,8 +22,8 @@ inline fun <reified S : JsonSerializable> fromJson(json: String): S = Json(JsonC
         isLenient = true
 )).parse(S::class.serializer(), json)
 
-//@OptIn(ImplicitReflectionSerializer::class, UnstableDefault::class)
-//inline fun <reified S : JsonSerializable>  fromJson(json: String, serializer: KSerializer<S>): S = Json(JsonConfiguration(
-//        ignoreUnknownKeys = true,
-//        isLenient = true
-//)).parse(serializer, json)
+@OptIn(ImplicitReflectionSerializer::class, UnstableDefault::class)
+fun <S : JsonSerializable> fromJson(json: String, serializer: KSerializer<S>): S = Json(JsonConfiguration(
+        ignoreUnknownKeys = true,
+        isLenient = true
+)).parse(serializer, json)

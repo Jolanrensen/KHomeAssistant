@@ -1,5 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
+import kotlinx.serialization.KSerializer
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
@@ -16,6 +17,8 @@ class LightEntity(
         name = name,
         domain = LightDomain // TODO check?
 ), ToggleEntity, KHomeAssistantContext {
+
+    override val attributesSerializer = LightAttributes.serializer()
 
     override fun getStateValue(state: OnOff) = state.stateValue
 

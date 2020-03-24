@@ -11,13 +11,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ImplicitReflectionSerializer
-import kotlinx.serialization.serializer
+import kotlinx.serialization.KSerializer
 import nl.jolanrensen.kHomeAssistant.WebsocketsHttpClient.httpClient
 import nl.jolanrensen.kHomeAssistant.attributes.Attributes
+import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
 import nl.jolanrensen.kHomeAssistant.entities.Entity
-import nl.jolanrensen.kHomeAssistant.entities.SwitchEntity
 import nl.jolanrensen.kHomeAssistant.helper.Queue
 import nl.jolanrensen.kHomeAssistant.messages.*
+import kotlin.reflect.KClass
 
 /**
  * KHomeAssistant instance
@@ -72,7 +73,7 @@ class KHomeAssistant(
             secure: Boolean = false,
             debug: Boolean = false,
             automationName: String = "Single Automation",
-            automation: suspend Automation.() ->  Unit
+            automation: suspend Automation.() -> Unit
     ) : this(
             host = host,
             port = port,
@@ -105,7 +106,7 @@ class KHomeAssistant(
     private val responseAwaiters = hashMapOf<Int, (String) -> Unit>()
 
     @OptIn(ImplicitReflectionSerializer::class)
-    private suspend inline fun <reified Send: Message, reified Response: ResultMessage> sendMessage(message: Send): Response {
+    private suspend inline fun <reified Send : Message, reified Response : ResultMessage> sendMessage(message: Send): Response {
         val thisMessageID = ++messageID
         sendQueue.enqueue {
             message.id = thisMessageID
@@ -131,25 +132,6 @@ class KHomeAssistant(
             coroutineScope = this
             authenticate()
             initializeAutomations()
-
-            // TODO get states
-//            val id = ++messageID
-//            send(
-//                    FetchStateMessage(id).toJson()
-//                            .also { debugPrintln(it) }
-//            )
-//
-//            val response: FetchStateResponse = fromJson((incoming.receive() as Frame.Text).readText())
-//            val batik_json = response.result.first { it.entity_id == "light.batik" }
-//
-////            val batikState = LightState
-//            val batikAttributes = LightAttributes.fromJson(batik_json.attributes.toString())
-//
-//            val batikState = Light("").parseStateValue(batik_json.state)
-//
-//            println(batik_json)
-//            println(batikState)
-
 
             // receive and put in queue
             val receiver = launch {
@@ -206,10 +188,7 @@ class KHomeAssistant(
             // TODO move, this is just for a test
             // registering for event messages:
 
-            val res: ResultMessageBase = sendMessage(
-                    SubscribeToEventMessage().also { debugPrintln(it) }
-            )
-            debugPrintln(res)
+            registerToEventBus()
 
 
             receiver.join()
@@ -274,30 +253,50 @@ class KHomeAssistant(
         }
     }
 
-    suspend fun <StateType : Any, AttributesType : Attributes, EntityType : Entity<StateType, AttributesType>>
-            getAttributes(entity: EntityType): AttributesType? {
 
-
-        return null
-    }
-
-    suspend fun <StateType : Any, AttributesType : Attributes, EntityType : Entity<StateType, AttributesType>>
-            getState(entity: EntityType): StateType? {
-
-
-        // TODO remove test
-        return when (entity) {
-            is SwitchEntity -> {
-
-                sendQueue.enqueue {
-
-                }
-
-                OnOff.ON as StateType
-            }
-            else -> null
-        }
+    /** Registering to Event bus */
+    private suspend fun registerToEventBus() {
+        val res: ResultMessageBase = sendMessage(
+                SubscribeToEventMessage().also { debugPrintln(it) }
+        )
+        if (res.success)
+            debugPrintln("Successfully registered to event bus!")
+        else
+            debugPrintln("Error registering to event bus: ${res.result}")
     }
 
 
+    suspend fun <StateType : Any, AttributesType : Attributes, EntityType : Entity<StateType, AttributesType>> getAttributes(entity: EntityType, serializer: KSerializer<AttributesType>): AttributesType {
+        val response: FetchStateResponse = sendMessage(FetchStateMessage())
+        val entityJson = response.result!!.first { it.entity_id == entity.entityID }
+
+        return attributesFromJson(entityJson.attributes.toString(), serializer)
+    }
+
+    suspend fun <StateType : Any, AttributesType : Attributes, EntityType : Entity<StateType, AttributesType>> getState(entity: EntityType): StateType {
+
+//            val id = ++messageID
+//            send(
+//                    FetchStateMessage(id).toJson()
+//                            .also { debugPrintln(it) }
+//            )
+//
+//            val response: FetchStateResponse = fromJson((incoming.receive() as Frame.Text).readText())
+//            val batik_json = response.result.first { it.entity_id == "light.batik" }
+//
+////            val batikState = LightState
+//            val batikAttributes = LightAttributes.fromJson(batik_json.attributes.toString())
+//
+//            val batikState = Light("").parseStateValue(batik_json.state)
+//
+//            println(batik_json)
+//            println(batikState)
+
+
+        val response: FetchStateResponse = sendMessage(FetchStateMessage())
+        val entityJson = response.result!!.first { it.entity_id == entity.entityID }
+
+        return entity.parseStateValue(entityJson.state)!!
+
+    }
 }
