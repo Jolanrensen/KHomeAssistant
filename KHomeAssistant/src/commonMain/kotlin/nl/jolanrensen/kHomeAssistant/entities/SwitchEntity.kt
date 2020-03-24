@@ -27,32 +27,32 @@ class SwitchEntity(
         null
     }
 
-    override fun onTurnOn(callback: ToggleEntity.() -> Unit) {
+    override fun onTurnOn(callback: suspend ToggleEntity.() -> Unit) {
 //        TODO("Not yet implemented")
     }
 
 
-    override fun turnOn() {
+    override suspend fun turnOn() {
 //        TODO("Not yet implemented")
     }
 
-    override fun turnOff() {
+    override suspend fun turnOff() {
 //        TODO("Not yet implemented")
     }
 
-    override fun toggle() {
+    override suspend fun toggle() {
 //        TODO("Not yet implemented")
     }
 
-    override fun isOn(): Boolean {
+    override suspend fun isOn(): Boolean {
         TODO("Not yet implemented")
     }
 
-    override fun ifOff(): Boolean {
+    override suspend fun isOff(): Boolean {
         TODO("Not yet implemented")
     }
 
-    override fun isUnavailable(): Boolean {
+    override suspend fun isUnavailable(): Boolean {
         TODO("Not yet implemented")
     }
 

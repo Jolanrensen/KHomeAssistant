@@ -1,19 +1,19 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
 interface ToggleEntity {
-    fun turnOn()
+    suspend fun turnOn()
 
-    fun turnOff()
+    suspend fun turnOff()
 
-    fun toggle()
+    suspend fun toggle()
 
-    fun onTurnOn(callback: ToggleEntity.() -> Unit)
+    fun onTurnOn(callback: suspend ToggleEntity.() -> Unit)
 
 
     /** HelperFunctions */
-    fun isOn(): Boolean
+    suspend fun isOn(): Boolean
 
-    fun ifOff(): Boolean
+    suspend fun isOff(): Boolean
 
-    fun isUnavailable(): Boolean
+    suspend fun isUnavailable(): Boolean
 }

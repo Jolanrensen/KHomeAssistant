@@ -1,6 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.serializer
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
@@ -8,14 +9,15 @@ import nl.jolanrensen.kHomeAssistant.attributes.Attributes
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.messages.Context
+import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
 typealias DefaultEntity = Entity<String, BaseAttributes>
 
 open class Entity<StateType : Any, AttributesType : Attributes>(
-        override val kHomeAssistant: () -> KHomeAssistant?,
+        open val kHomeAssistant: () -> KHomeAssistant?,
         open val name: String,
-        open val domain: Domain<out Entity<out StateType, out AttributesType>>
-) : KHomeAssistantContext {
+        val domain: Domain<out Entity<out StateType, out AttributesType>>
+) {
 
     open val attributesSerializer: KSerializer<AttributesType>? = null
 
@@ -29,7 +31,6 @@ open class Entity<StateType : Any, AttributesType : Attributes>(
     /** This method returns the state for this entity in the original String format */
     open fun getStateValue(state: StateType): String? = null
 
-
     suspend fun getState(): StateType = kHomeAssistant()!!.getState(this)
     suspend fun setState(s: StateType): Unit = TODO()
 
@@ -39,6 +40,12 @@ open class Entity<StateType : Any, AttributesType : Attributes>(
     suspend fun getLastUpdated(): String = TODO("last_updated uit State")
     suspend fun getContext(): Context = TODO("context uit State")
 
+    suspend fun callService(serviceName: String, data: Map<String, JsonElement> = mapOf()) =
+            kHomeAssistant()!!.callService(
+                    entity = this,
+                    serviceName = serviceName,
+                    data = data
+            )
 
     val entityID: String
         get() = "${domain.domainName}.$name"

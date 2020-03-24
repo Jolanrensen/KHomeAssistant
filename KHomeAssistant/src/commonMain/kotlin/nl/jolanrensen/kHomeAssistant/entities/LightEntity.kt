@@ -1,6 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
@@ -16,7 +17,7 @@ class LightEntity(
         kHomeAssistant = kHomeAssistant,
         name = name,
         domain = LightDomain // TODO check?
-), ToggleEntity, KHomeAssistantContext {
+), ToggleEntity {
 
     override val attributesSerializer = LightAttributes.serializer()
 
@@ -28,37 +29,36 @@ class LightEntity(
         null
     }
 
-    override fun onTurnOn(callback: ToggleEntity.() -> Unit) {
-        TODO("Not yet implemented")
-    }
-
-    override fun turnOn() {
-        TODO("Not yet implemented")
-    }
-
-    fun turnOn(brightness: Int? = null /* TODO ETC */) {
+    override fun onTurnOn(callback: suspend ToggleEntity.() -> Unit) {
 
     }
 
-    override fun turnOff() {
-        TODO("Not yet implemented")
+    override suspend fun turnOn() {
+        callService("turn_on")
     }
 
-    override fun toggle() {
-        TODO("Not yet implemented")
+    suspend fun turnOn(brightness: Int /* TODO ETC */) {
+        callService(
+                serviceName = "turn_on",
+                data = mapOf(
+                        "brightness" to JsonPrimitive(brightness)
+                )
+        )
     }
 
-    override fun isOn(): Boolean {
-        TODO("Not yet implemented")
+    override suspend fun turnOff() {
+        callService("turn_off")
     }
 
-    override fun ifOff(): Boolean {
-        TODO("Not yet implemented")
+    override suspend fun toggle() {
+        if (isOn()) turnOff() else turnOn()
     }
 
-    override fun isUnavailable(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override suspend fun isOn() = getState() == OnOff.ON
+
+    override suspend fun isOff() = getState() == OnOff.OFF
+
+    override suspend fun isUnavailable() = getState() == OnOff.UNAVAILABLE
 
 
 }

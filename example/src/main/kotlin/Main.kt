@@ -1,3 +1,4 @@
+import kotlinx.coroutines.delay
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.automation
@@ -49,10 +50,10 @@ suspend fun main() {
             host = "home.jolanrensen.nl",
             port = 8123,
             secure = true,
-            debug = false,
+            debug = true,
             accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
             automations = listOf(
-                    Test(),
+//                    Test(),
                     automation("some automation") {
                         val batik = Light.Entity("batik")
                         println("wall lamp is currently ${batik.getState()}")
@@ -64,12 +65,15 @@ suspend fun main() {
 
                         println("Wall lamp default test, state: ${test.fullJsonObject}")
 
-
+                        while (true) {
+                            delay(1000)
+                            batik.toggle()
+                        }
                     }
             )
     )
 
-    val externallyDefinedLight = Light(kHomeAssistant).Entity("some_light")
+//    val externallyDefinedLight = Light(kHomeAssistant).Entity("some_light")
 
 //    kHomeAssistant.automations.add(
 //            automation("Some automation thing") {

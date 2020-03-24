@@ -15,10 +15,7 @@ object SwitchDomain : Domain<SwitchEntity> {
     }
 
     /** Does the same as SwitchEntity() */
-    override fun Entity(name: String): SwitchEntity {
-//        checkContext()
-        return SwitchEntity(name = name)
-    }
+    override fun Entity(name: String) = SwitchEntity(kHomeAssistant = kHomeAssistant, name = name)
 }
 
 /** Access the SwitchDomain */

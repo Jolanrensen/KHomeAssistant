@@ -25,12 +25,12 @@ abstract class ResultMessage : Message(), JsonSerializable {
 data class MessageBase(
         override var id: Int = 0,
         override val type: String
-) : Message(), JsonSerializable
+) : Message()
 
 @Serializable
 data class ResultMessageBase(
         override var id: Int = 0,
+        override val type: String,
         override val success: Boolean,
-        override val result: JsonObject? = null,
-        override val type: String
-) : ResultMessage(), JsonSerializable
+        override val result: JsonObject? = null
+) : ResultMessage()

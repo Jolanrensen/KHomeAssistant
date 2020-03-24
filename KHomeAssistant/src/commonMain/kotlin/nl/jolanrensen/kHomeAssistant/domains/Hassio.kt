@@ -1,5 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
+import kotlinx.serialization.json.JsonPrimitive
+import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
@@ -18,12 +20,12 @@ object HassioDomain : Domain<DefaultEntity> {
 
     suspend fun addOnRestart(addOn: String) {
         checkContext()
-        callService(service = "addon_restart", data = mapOf("addon" to addOn))
+        callService(serviceName = "addon_restart", data = mapOf("addon" to JsonPrimitive(addOn)))
     }
 
     suspend fun addOnStart(addOn: String) {
         checkContext()
-        callService(service = "addon_start", data = mapOf("addon" to addOn))
+        callService(serviceName = "addon_start", data = mapOf("addon" to JsonPrimitive(addOn)))
     }
 
     override fun Entity(name: String): Entity<String, BaseAttributes> = throw DomainHasNoEntityException()

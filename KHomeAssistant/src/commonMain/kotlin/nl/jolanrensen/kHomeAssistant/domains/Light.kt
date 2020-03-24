@@ -15,17 +15,13 @@ object LightDomain : Domain<LightEntity> {
     }
 
     /** Does the same as LightEntity() */
-    override fun Entity(name: String): LightEntity {
-//        checkContext()
-        return LightEntity(kHomeAssistant = kHomeAssistant, name = name)
-    }
+    override fun Entity(name: String) = LightEntity(kHomeAssistant = kHomeAssistant, name = name)
 }
 
 /** Access the Light Domain */
 val KHomeAssistantContext.Light get() = LightDomain.also { it.kHomeAssistant = kHomeAssistant }
 
 // TODO do I want this?
-fun Light(kHomeAssistantContext: KHomeAssistantContext) = kHomeAssistantContext.Light
 
 //val WithKHomeAssistant.Light: Domain
 //    get() {

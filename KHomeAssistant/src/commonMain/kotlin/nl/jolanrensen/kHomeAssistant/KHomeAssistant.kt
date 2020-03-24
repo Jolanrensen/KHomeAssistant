@@ -12,13 +12,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.WebsocketsHttpClient.httpClient
 import nl.jolanrensen.kHomeAssistant.attributes.Attributes
 import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
+import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.helper.Queue
 import nl.jolanrensen.kHomeAssistant.messages.*
-import kotlin.reflect.KClass
 
 /**
  * KHomeAssistant instance
@@ -265,6 +268,36 @@ class KHomeAssistant(
             debugPrintln("Error registering to event bus: ${res.result}")
     }
 
+    /** Calls the given service */
+    suspend fun callService(domain: Domain<*>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
+            callService(
+                    domain = domain.domainName,
+                    serviceName = serviceName,
+                    data = data
+            )
+
+    /** Calls the given service */
+    suspend fun callService(entity: Entity<*,*>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
+            callService(
+                    domain = entity.domain.domainName,
+                    entityName = entity.name,
+                    serviceName = serviceName,
+                    data = data
+            )
+
+    /** Calls the given service */
+    suspend fun callService(domain: String, entityName: String? = null, serviceName: String, data: Map<String, JsonElement> = mapOf()): ResultMessage =
+            sendMessage<CallServiceMessage, ResultMessageBase>(
+                    CallServiceMessage(
+                            domain = domain,
+                            service = serviceName,
+                            service_data = JsonObject(
+                                    entityName?.let {
+                                        data + ("entity_id" to JsonPrimitive("$domain.$it"))
+                                    } ?: data
+                            )
+                    ).also { debugPrintln(it) }
+            ).also { debugPrintln(it) }
 
     suspend fun <StateType : Any, AttributesType : Attributes, EntityType : Entity<StateType, AttributesType>> getAttributes(entity: EntityType, serializer: KSerializer<AttributesType>): AttributesType {
         val response: FetchStateResponse = sendMessage(FetchStateMessage())
@@ -274,29 +307,9 @@ class KHomeAssistant(
     }
 
     suspend fun <StateType : Any, AttributesType : Attributes, EntityType : Entity<StateType, AttributesType>> getState(entity: EntityType): StateType {
-
-//            val id = ++messageID
-//            send(
-//                    FetchStateMessage(id).toJson()
-//                            .also { debugPrintln(it) }
-//            )
-//
-//            val response: FetchStateResponse = fromJson((incoming.receive() as Frame.Text).readText())
-//            val batik_json = response.result.first { it.entity_id == "light.batik" }
-//
-////            val batikState = LightState
-//            val batikAttributes = LightAttributes.fromJson(batik_json.attributes.toString())
-//
-//            val batikState = Light("").parseStateValue(batik_json.state)
-//
-//            println(batik_json)
-//            println(batikState)
-
-
         val response: FetchStateResponse = sendMessage(FetchStateMessage())
         val entityJson = response.result!!.first { it.entity_id == entity.entityID }
 
         return entity.parseStateValue(entityJson.state)!!
-
     }
 }
