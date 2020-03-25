@@ -1,12 +1,11 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.json.JsonPrimitive
-import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
-import nl.jolanrensen.kHomeAssistant.entities.Entity
+import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 
 object HassioDomain : Domain<DefaultEntity> {
     override val domainName = "hassio"
@@ -28,7 +27,7 @@ object HassioDomain : Domain<DefaultEntity> {
         callService(serviceName = "addon_start", data = mapOf("addon" to JsonPrimitive(addOn)))
     }
 
-    override fun Entity(name: String): Entity<String, BaseAttributes> = throw DomainHasNoEntityException()
+    override fun Entity(name: String): BaseEntity<String, BaseAttributes> = throw DomainHasNoEntityException()
 }
 
 val KHomeAssistantContext.Hassio get() = HassioDomain.also { it.kHomeAssistant = kHomeAssistant }

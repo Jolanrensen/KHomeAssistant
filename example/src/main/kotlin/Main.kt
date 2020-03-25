@@ -5,7 +5,6 @@ import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
-import nl.jolanrensen.kHomeAssistant.entities.Entity
 
 
 class Test : Automation() {
@@ -50,25 +49,24 @@ suspend fun main() {
             host = "home.jolanrensen.nl",
             port = 8123,
             secure = true,
-            debug = true,
+            debug = false,
             accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
             automations = listOf(
-//                    Test(),
+//                    automation("example test") {
+//                        val example = Example.Entity("test")
+//                        val state = example.getState()
+//                    },
                     automation("some automation") {
                         val batik = Light.Entity("batik")
                         println("wall lamp is currently ${batik.getState()}")
 
-                        val attrs = batik.getAttributes()
+                        val attrs = batik.getAttributes()[""]!!
                         println("attributes are: $attrs")
 
                         val test = Domain("light").Entity("wall_lamp").getAttributes()
 
                         println("Wall lamp default test, state: ${test.fullJsonObject}")
 
-                        while (true) {
-                            delay(1000)
-                            batik.toggle()
-                        }
                     }
             )
     )

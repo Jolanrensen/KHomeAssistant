@@ -1,16 +1,14 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.json.JsonElement
-import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
-import nl.jolanrensen.kHomeAssistant.attributes.Attributes
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
-import nl.jolanrensen.kHomeAssistant.entities.Entity
+import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 
 
-interface Domain<E: Entity<out Any, out Attributes>> {
+interface Domain<E: BaseEntity<out Any, out BaseAttributes>> {
     val domainName: String
 
     var kHomeAssistant: () -> KHomeAssistant?
@@ -43,18 +41,10 @@ class DomainHasNoEntityException : Exception {
 }
 
 /** Create a temporary Domain. Useful for quick service calls. */
-//fun <E : Entity<*, *>> KHomeAssistantContext.DomainWithEntity(domainName: String, invoke: KHomeAssistantContext.(name: String) -> E) = object : Domain {
-//    override val domainName = domainName
-//    override val kHomeAssistant: () -> KHomeAssistant? = this@DomainWithEntity.kHomeAssistant
-//    override fun Entity(name: String) = invoke(name)
-//    override fun checkContext() = Unit // context is always present
-//}
-
-/** Create a temporary Domain. Useful for quick service calls. */
 fun KHomeAssistantContext.Domain(domainName: String) = object : Domain<DefaultEntity> {
     override val domainName = domainName
     override var kHomeAssistant = this@Domain.kHomeAssistant
-    override fun Entity(name: String): Entity<String, BaseAttributes> = object : Entity<String, BaseAttributes>(kHomeAssistant = kHomeAssistant, name = name, domain = this) {
+    override fun Entity(name: String): DefaultEntity = object : DefaultEntity(kHomeAssistant = kHomeAssistant, name = name, domain = this) {
         override val attributesSerializer = BaseAttributes.serializer()
         override fun parseStateValue(stateValue: String) = stateValue
         override fun getStateValue(state: String) = state

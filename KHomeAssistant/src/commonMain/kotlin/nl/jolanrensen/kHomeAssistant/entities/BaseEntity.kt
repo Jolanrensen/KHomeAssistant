@@ -2,21 +2,17 @@ package nl.jolanrensen.kHomeAssistant.entities
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.serializer
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
-import nl.jolanrensen.kHomeAssistant.attributes.Attributes
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.messages.Context
-import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
-typealias DefaultEntity = Entity<String, BaseAttributes>
+typealias DefaultEntity = BaseEntity<String, BaseAttributes>
 
-open class Entity<StateType : Any, AttributesType : Attributes>(
+open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
         open val kHomeAssistant: () -> KHomeAssistant?,
         open val name: String,
-        val domain: Domain<out Entity<out StateType, out AttributesType>>
+        val domain: Domain<out BaseEntity<out StateType, out AttributesType>>
 ) {
 
     open val attributesSerializer: KSerializer<AttributesType>? = null

@@ -1,19 +1,17 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.attributes.LightAttributes
-import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.LightDomain
 
 
 class LightEntity(
         override val kHomeAssistant: () -> KHomeAssistant?,
         override val name: String
-) : Entity<OnOff, LightAttributes>(
+) : BaseEntity<OnOff, LightAttributes>(
         kHomeAssistant = kHomeAssistant,
         name = name,
         domain = LightDomain // TODO check?

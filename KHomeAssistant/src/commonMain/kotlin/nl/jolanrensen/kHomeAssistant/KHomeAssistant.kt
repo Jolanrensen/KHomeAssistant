@@ -3,6 +3,7 @@ package nl.jolanrensen.kHomeAssistant
 import io.ktor.client.features.websocket.DefaultClientWebSocketSession
 import io.ktor.client.features.websocket.ws
 import io.ktor.client.features.websocket.wss
+import io.ktor.client.utils.unwrapCancellationException
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.http.cio.websocket.send
@@ -16,10 +17,10 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.WebsocketsHttpClient.httpClient
-import nl.jolanrensen.kHomeAssistant.attributes.Attributes
+import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.entities.Entity
+import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.helper.Queue
 import nl.jolanrensen.kHomeAssistant.messages.*
 
@@ -251,7 +252,7 @@ class KHomeAssistant(
                 it.initialize()
                 println("Successfully initialized automation ${it.automationName}")
             } catch (e: Exception) {
-                println("FAILED to initialize automation ${it.automationName}: $e")
+                PrintException.print("FAILED to initialize automation \"${it.automationName}\" because of: $e", e)
             }
         }
     }
@@ -277,7 +278,7 @@ class KHomeAssistant(
             )
 
     /** Calls the given service */
-    suspend fun callService(entity: Entity<*,*>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
+    suspend fun callService(entity: BaseEntity<*,*>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
             callService(
                     domain = entity.domain.domainName,
                     entityName = entity.name,
@@ -299,14 +300,14 @@ class KHomeAssistant(
                     ).also { debugPrintln(it) }
             ).also { debugPrintln(it) }
 
-    suspend fun <StateType : Any, AttributesType : Attributes, EntityType : Entity<StateType, AttributesType>> getAttributes(entity: EntityType, serializer: KSerializer<AttributesType>): AttributesType {
+    suspend fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getAttributes(entity: EntityType, serializer: KSerializer<AttributesType>): AttributesType {
         val response: FetchStateResponse = sendMessage(FetchStateMessage())
         val entityJson = response.result!!.first { it.entity_id == entity.entityID }
 
         return attributesFromJson(entityJson.attributes.toString(), serializer)
     }
 
-    suspend fun <StateType : Any, AttributesType : Attributes, EntityType : Entity<StateType, AttributesType>> getState(entity: EntityType): StateType {
+    suspend fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getState(entity: EntityType): StateType {
         val response: FetchStateResponse = sendMessage(FetchStateMessage())
         val entityJson = response.result!!.first { it.entity_id == entity.entityID }
 

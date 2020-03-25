@@ -1,17 +1,15 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
-import kotlinx.serialization.KSerializer
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.attributes.SwitchAttributes
-import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.domains.SwitchDomain
 
 class SwitchEntity(
         override val kHomeAssistant: () -> KHomeAssistant?,
         override val name: String
-) : Entity<OnOff, SwitchAttributes>(
+) : BaseEntity<OnOff, SwitchAttributes>(
         kHomeAssistant = kHomeAssistant,
         domain = SwitchDomain,
         name = name
