@@ -6,10 +6,7 @@ import io.ktor.client.features.websocket.wss
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.http.cio.websocket.send
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
@@ -35,6 +32,7 @@ class KHomeAssistant(
         val accessToken: String,
         val secure: Boolean = false,
         val debug: Boolean = false,
+        val justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations TODO
         val automations: Collection<Automation>
 ) : KHomeAssistantContext {
 
@@ -90,7 +88,7 @@ class KHomeAssistant(
 
     override val kHomeAssistant = { this }
 
-    lateinit var coroutineScope: CoroutineScope
+    var coroutineScope: CoroutineScope? = null
 
     /** HA version reported by the connected instance */
     lateinit var haVersion: String
@@ -124,7 +122,7 @@ class KHomeAssistant(
             response = fromJson(it) // TODO fix
         }
 
-        return withContext(coroutineScope.coroutineContext) {
+        return withContext(coroutineScope!!.coroutineContext) {
             while (response == null) delay(1)
             response!!
         }
@@ -137,80 +135,68 @@ class KHomeAssistant(
             authenticate()
             initializeAutomations()
 
+            var receiver: Job? = null
+
             // receive and put in queue
-            val receiver = launch {
-                while (true) {
-                    delay(1)
-                    val message = incoming.poll() as? Frame.Text? ?: continue
-                    val json = message.readText()
-                    debugPrintln(json)
+            if (!justExecute) {
+                receiver = launch {
+                    while (true) {
+                        delay(1)
+                        val message = incoming.poll() as? Frame.Text? ?: continue
+                        val json = message.readText()
+                        debugPrintln(json)
 
-                    val messageBase: MessageBase = fromJson(json)
-                    val id = messageBase.id
-                    val type = messageBase.type
+                        val messageBase: MessageBase = fromJson(json)
+                        val id = messageBase.id
+                        val type = messageBase.type
 
-                    when (type) {
-                        "result" -> responseAwaiters[id]?.invoke(json)?.run { responseAwaiters.remove(id) }
-                        "event" -> {
-                            val eventMessage: EventMessage = fromJson(json)
-                            val event = eventMessage.event
-                            debugPrintln("Detected event firing: $event")
+                        when (type) {
+                            "result" -> responseAwaiters[id]?.invoke(json)?.run { responseAwaiters.remove(id) }
+                            "event" -> {
+                                val eventMessage: EventMessage = fromJson(json)
+                                val event = eventMessage.event
+                                debugPrintln("Detected event firing: $event")
 
-                            when (event.event_type) {
-                                "state_changed" -> {
-                                    val eventDataStateChanged: EventDataStateChanged = fromJson(event.data)
-                                    val entityID = eventDataStateChanged.entity_id
-                                    val newState = eventDataStateChanged.new_state
+                                when (event.event_type) {
+                                    "state_changed" -> {
+                                        val eventDataStateChanged: EventDataStateChanged = fromJson(event.data)
+                                        val entityID = eventDataStateChanged.entity_id
+                                        val newState = eventDataStateChanged.new_state
 
-                                    stateListeners[entityID]?.forEach {
-                                        launch { it(newState) }
+                                        stateListeners[entityID]?.forEach {
+                                            launch { it(newState) }
+                                        }
+
+                                        // TODO update listeners for this entityID with this state change
+                                        debugPrintln("Detected statechange $eventDataStateChanged")
                                     }
+                                    "call_service" -> {
+                                        val eventDataCallService: EventDataCallService = fromJson(event.data)
 
-                                    // TODO update listeners for this entityID with this state change
-                                    debugPrintln("Detected statechange $eventDataStateChanged")
+                                        debugPrintln("Deteted call_service: $eventDataCallService")
+                                        // TODO
+                                    }
+                                    // TODO maybe add more in the future
                                 }
-                                "call_service" -> {
-                                    val eventDataCallService: EventDataCallService = fromJson(event.data)
-
-                                    debugPrintln("Deteted call_service: $eventDataCallService")
-                                    // TODO
-                                }
-                                // TODO maybe add more in the future
                             }
-
                         }
                     }
-
                 }
             }
 
             val sender = launch {
                 while (true) {
                     delay(1)
-                    val message = sendQueue.dequeue() ?: continue
+                    val message = sendQueue.dequeue() ?: if (justExecute) break else continue
                     message()
                 }
+                println("Sent all messages in the queue to Home Assistant!")
             }
 
+            if (!justExecute) registerToEventBus()
 
-            // TODO move, this is just for a test
-            // registering for event messages:
-
-            registerToEventBus()
-
-
-            receiver.join()
+            receiver?.join()
             sender.join()
-
-//
-//            // send from queue
-//            while (true) {
-//                delay(1)
-//                if (!sendQueue.isEmpty()) {
-//
-//                }
-//            }
-            // TODO continue here
         }
 
         if (secure) httpClient.wss(

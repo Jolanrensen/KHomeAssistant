@@ -4,9 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
-import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
-import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 
 /** Do not use directly! Always use Switch. */
@@ -25,52 +23,19 @@ object Switch : Domain<Switch.Entity> {
     class Entity(
             override val kHomeAssistant: () -> KHomeAssistant?,
             override val name: String
-    ) : BaseEntity<OnOff, Entity.Attributes>(
+    ) : ToggleEntity<Entity.Attributes>(
             kHomeAssistant = kHomeAssistant,
             domain = Switch,
             name = name
-    ), ToggleEntity, KHomeAssistantContext {
-
+    ) {
         @Serializable
-        open class Attributes(
+        data class Attributes(
                 override val friendly_name: String
         ) : BaseAttributes {
             override var fullJsonObject: JsonObject = JsonObject(mapOf())
         }
 
         override val attributesSerializer = Attributes.serializer()
-
-        override fun getStateValue(state: OnOff) = state.stateValue
-
-        override fun parseStateValue(stateValue: String) = try {
-            OnOff.values().find { it.stateValue == stateValue }
-        } catch (e: Exception) {
-            null
-        }
-
-        fun onTurnOn(callback: suspend Entity.() -> Unit) {
-            registerStateListener({ it == OnOff.ON }, callback)
-        }
-
-
-        override suspend fun turnOn() {
-            callService("turn_on")
-        }
-
-        override suspend fun turnOff() {
-            callService("turn_off")
-        }
-
-        override suspend fun toggle() {
-            callService("toggle")
-        }
-
-        override suspend fun isOn() = getState() == OnOff.ON
-
-        override suspend fun isOff() = getState() == OnOff.OFF
-
-        override suspend fun isUnavailable() = getState() == OnOff.UNAVAILABLE
-
     }
 }
 

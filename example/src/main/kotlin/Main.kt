@@ -4,6 +4,9 @@ import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
+import nl.jolanrensen.kHomeAssistant.entities.onStateChange
+import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
+import nl.jolanrensen.kHomeAssistant.helper.RGBColor
 
 
 class Test : Automation() {
@@ -56,10 +59,10 @@ suspend fun main() {
 //                        val state = example.getState()
 //                    },
                     automation("some automation") {
-//                        val batik = Light.Entity("jdsnfjsf").isOn()
-
-
-
+                        Light.Entity("batik").turnOn(
+                                brightness = 255,
+                                rgb_color = RGBColor(255, 0, 0)
+                        )
 
                     }
             )
