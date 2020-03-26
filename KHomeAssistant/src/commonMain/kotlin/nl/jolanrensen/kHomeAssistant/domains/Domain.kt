@@ -4,6 +4,7 @@ import kotlinx.serialization.json.JsonElement
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
+import nl.jolanrensen.kHomeAssistant.attributes.SerializableBaseAttributes
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 
@@ -45,7 +46,7 @@ fun KHomeAssistantContext.Domain(domainName: String) = object : Domain<DefaultEn
     override val domainName = domainName
     override var kHomeAssistant = this@Domain.kHomeAssistant
     override fun Entity(name: String): DefaultEntity = object : DefaultEntity(kHomeAssistant = kHomeAssistant, name = name, domain = this) {
-        override val attributesSerializer = BaseAttributes.serializer()
+        override val attributesSerializer = SerializableBaseAttributes.serializer()
         override fun parseStateValue(stateValue: String) = stateValue
         override fun getStateValue(state: String) = state
     }

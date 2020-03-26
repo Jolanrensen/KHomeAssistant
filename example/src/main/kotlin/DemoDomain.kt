@@ -1,5 +1,6 @@
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
@@ -11,7 +12,7 @@ enum class ExampleState(val stateValue: String) {
     STATE1("state1"), STATE2("state1")
 }
 
-object ExampleDomain : Domain<ExampleDomain.Entity> {
+object Example : Domain<Example.Entity> {
     override val domainName: String = "example"
     override var kHomeAssistant: () -> KHomeAssistant? = { null }
 
@@ -38,15 +39,17 @@ object ExampleDomain : Domain<ExampleDomain.Entity> {
     ) : BaseEntity<ExampleState, Entity.Attributes>(
             kHomeAssistant = kHomeAssistant,
             name = name,
-            domain = ExampleDomain
+            domain = Example
     ) {
         /** These are the attributes that get parsed from Home Assistant for your entity when calling getAttributes() */
         @Serializable
         data class Attributes(
-//                override val friendly_name: String = ""
+                override val friendly_name: String = "",
                 val testAttribute: Int? = null
                 /** Add attributes here like `val Attribute: Type? = null` */
-        ) : BaseAttributes()
+        ) : BaseAttributes {
+            override var fullJsonObject: JsonObject = JsonObject(mapOf())
+        }
 
         /** This is used to deserialize your attributes from Home Assistant */
         override val attributesSerializer: KSerializer<Attributes> = Attributes.serializer()
@@ -77,4 +80,6 @@ object ExampleDomain : Domain<ExampleDomain.Entity> {
 }
 
 /** Access your domain, and set the context correctly */
-val KHomeAssistantContext.Example get() = ExampleDomain.also { it.kHomeAssistant = kHomeAssistant }
+typealias ExampleDomain = Example
+val KHomeAssistantContext.Example: ExampleDomain
+    get() = ExampleDomain.also { it.kHomeAssistant = kHomeAssistant }

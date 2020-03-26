@@ -4,10 +4,11 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
+import nl.jolanrensen.kHomeAssistant.attributes.SerializableBaseAttributes
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.messages.Context
 
-typealias DefaultEntity = BaseEntity<String, BaseAttributes>
+typealias DefaultEntity = BaseEntity<String, SerializableBaseAttributes>
 
 open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
         open val kHomeAssistant: () -> KHomeAssistant?,

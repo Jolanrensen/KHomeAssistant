@@ -158,7 +158,7 @@ class KHomeAssistant(
 
                             when (event.event_type) {
                                 "state_changed" -> {
-                                    val eventDataStateChanged: EventDataStateChanged = fromJson(event.data.toString())
+                                    val eventDataStateChanged: EventDataStateChanged = fromJson(event.data)
                                     val entityID = eventDataStateChanged.entity_id
                                     val newState = eventDataStateChanged.new_state
 
@@ -166,7 +166,7 @@ class KHomeAssistant(
                                     debugPrintln("Detected statechange $eventDataStateChanged")
                                 }
                                 "call_service" -> {
-                                    val eventDataCallService: EventDataCallService = fromJson(event.data.toString())
+                                    val eventDataCallService: EventDataCallService = fromJson(event.data)
 
                                     debugPrintln("Deteted call_service: $eventDataCallService")
                                     // TODO
@@ -303,14 +303,14 @@ class KHomeAssistant(
     suspend fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getAttributes(entity: EntityType, serializer: KSerializer<AttributesType>): AttributesType {
         val response: FetchStateResponse = sendMessage(FetchStateMessage())
         val entityJson = response.result!!.first { it.entity_id == entity.entityID }
-
-        return attributesFromJson(entityJson.attributes.toString(), serializer)
+        debugPrintln("received entity's (${entity.name}) attributes: ${entityJson.attributes}")
+        return attributesFromJson(entityJson.attributes, serializer)
     }
 
     suspend fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getState(entity: EntityType): StateType {
         val response: FetchStateResponse = sendMessage(FetchStateMessage())
         val entityJson = response.result!!.first { it.entity_id == entity.entityID }
-
+        debugPrintln("received entity's (${entity.name}) state: ${entityJson.attributes}")
         return entity.parseStateValue(entityJson.state)!!
     }
 }
