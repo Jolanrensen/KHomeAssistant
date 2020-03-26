@@ -37,6 +37,16 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
     suspend fun getLastUpdated(): String = TODO("last_updated uit State")
     suspend fun getContext(): Context = TODO("context uit State")
 
+    // TODO make this better lol
+    fun <E: BaseEntity<*, *>> registerStateListener(callback: suspend E.() -> Unit, condition: (StateType?) -> Boolean) {
+        kHomeAssistant()!!.stateListeners
+                .getOrPut(entityID) { hashSetOf() }
+                .add {
+                    if (condition(parseStateValue(it.state)))
+                        callback(this as E)
+                }
+    }
+
     suspend fun callService(serviceName: String, data: Map<String, JsonElement> = mapOf()) =
             kHomeAssistant()!!.callService(
                     entity = this,

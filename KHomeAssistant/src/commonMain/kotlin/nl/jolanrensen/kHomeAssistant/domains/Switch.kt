@@ -48,39 +48,34 @@ object Switch : Domain<Switch.Entity> {
             null
         }
 
-        override fun onTurnOn(callback: suspend ToggleEntity.() -> Unit) {
+        fun onTurnOn(callback: suspend ToggleEntity.() -> Unit) {
 //        TODO("Not yet implemented")
         }
 
 
         override suspend fun turnOn() {
-//        TODO("Not yet implemented")
+            callService("turn_on")
         }
 
         override suspend fun turnOff() {
-//        TODO("Not yet implemented")
+            callService("turn_off")
         }
 
         override suspend fun toggle() {
-//        TODO("Not yet implemented")
+            callService("toggle")
         }
 
-        override suspend fun isOn(): Boolean {
-            TODO("Not yet implemented")
-        }
+        override suspend fun isOn() = getState() == OnOff.ON
 
-        override suspend fun isOff(): Boolean {
-            TODO("Not yet implemented")
-        }
+        override suspend fun isOff() = getState() == OnOff.OFF
 
-        override suspend fun isUnavailable(): Boolean {
-            TODO("Not yet implemented")
-        }
+        override suspend fun isUnavailable() = getState() == OnOff.UNAVAILABLE
 
     }
 }
 
 /** Access the SwitchDomain */
 typealias SwitchDomain = Switch
+
 val KHomeAssistantContext.Switch: SwitchDomain
     get() = SwitchDomain.also { it.kHomeAssistant = kHomeAssistant }

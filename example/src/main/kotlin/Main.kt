@@ -1,5 +1,6 @@
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
@@ -55,26 +56,13 @@ suspend fun main() {
 //                        val state = example.getState()
 //                    },
                     automation("some automation") {
-
-                        val testw = Switch.Entity("bedroom_switch")
-
-                        println("bedroomSwitch attrs: ${testw.getAttributes().friendly_name}")
-
                         val wallLamp = Light.Entity("wall_lamp")
-                        println("wallLamp is currently ${wallLamp.getState()}")
-
-                        val attrs = wallLamp.getAttributes()
-
-                        println("test")
-
-
-                        println("attributes are: $attrs")
-
-//                        val test = Domain("light").Entity("wall_lamp").getAttributes()
-//
-//                        println("Wall lamp default test, state: ${test.fullJsonObject}")
-
-                        wallLamp.toggle()
+                        wallLamp.onTurnOn {
+                            println("wohoo lamp turned on!")
+                        }
+                        wallLamp.registerStateListener<Light.Entity>(condition = { it == OnOff.OFF }, callback = {
+                            println("wohoo lamp turned off!")
+                        })
 
                     }
             )

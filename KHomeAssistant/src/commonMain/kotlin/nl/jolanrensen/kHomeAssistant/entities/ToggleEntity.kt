@@ -7,7 +7,7 @@ interface ToggleEntity {
 
     suspend fun toggle()
 
-    fun onTurnOn(callback: suspend ToggleEntity.() -> Unit)
+//    fun onTurnOn(callback: suspend ToggleEntity.() -> Unit)
 
 
     /** HelperFunctions */

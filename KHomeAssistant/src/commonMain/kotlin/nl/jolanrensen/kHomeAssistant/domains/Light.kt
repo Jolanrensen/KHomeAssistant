@@ -2,7 +2,6 @@ package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonDecodingException
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
@@ -49,7 +48,7 @@ object Light : Domain<Light.Entity> {
                 val xy_color: XYColor? = null,
                 val white_value: Int? = null,
                 val supported_features: Int
-        ) : BaseAttributes{
+        ) : BaseAttributes {
             override var fullJsonObject: JsonObject = JsonObject(mapOf())
         }
 
@@ -63,9 +62,7 @@ object Light : Domain<Light.Entity> {
             null
         }
 
-        override fun onTurnOn(callback: suspend ToggleEntity.() -> Unit) {
-
-        }
+        fun onTurnOn(callback: suspend Entity.() -> Unit) = registerStateListener(callback) { it == OnOff.ON }
 
         override suspend fun turnOn() {
             callService("turn_on")
@@ -85,7 +82,7 @@ object Light : Domain<Light.Entity> {
         }
 
         override suspend fun toggle() {
-            if (isOn()) turnOff() else turnOn()
+            callService("toggle")
         }
 
         override suspend fun isOn() = getState() == OnOff.ON
@@ -98,5 +95,6 @@ object Light : Domain<Light.Entity> {
 
 /** Access the Light Domain */
 typealias LightDomain = Light
+
 val KHomeAssistantContext.Light: LightDomain
     get() = LightDomain.also { it.kHomeAssistant = kHomeAssistant }

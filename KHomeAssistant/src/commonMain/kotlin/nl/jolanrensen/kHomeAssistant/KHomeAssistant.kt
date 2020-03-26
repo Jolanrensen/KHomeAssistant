@@ -103,10 +103,10 @@ class KHomeAssistant(
         if (debug) println("DEBUG: $message")
     }
 
-//    val stateListeners
+    /** stateListeners["entity_id"] = set of listeners for this entity_id */
+    val stateListeners: HashMap<String, HashSet<suspend (StateResult) -> Unit>> = hashMapOf()
 
     private val sendQueue = Queue<suspend DefaultClientWebSocketSession.() -> Unit>()
-
     private val responseAwaiters = hashMapOf<Int, (String) -> Unit>()
 
     @OptIn(ImplicitReflectionSerializer::class)
@@ -161,6 +161,10 @@ class KHomeAssistant(
                                     val eventDataStateChanged: EventDataStateChanged = fromJson(event.data)
                                     val entityID = eventDataStateChanged.entity_id
                                     val newState = eventDataStateChanged.new_state
+
+                                    stateListeners[entityID]?.forEach {
+                                        launch { it(newState) }
+                                    }
 
                                     // TODO update listeners for this entityID with this state change
                                     debugPrintln("Detected statechange $eventDataStateChanged")
