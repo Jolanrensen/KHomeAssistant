@@ -16,6 +16,7 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
         val domain: Domain<out BaseEntity<out StateType, out AttributesType>>
 ) {
 
+
     open val attributesSerializer: KSerializer<AttributesType>? = null
 
     init {
@@ -38,7 +39,7 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
     suspend fun getContext(): Context = TODO("context uit State")
 
     // TODO make this better lol
-    fun <E: BaseEntity<*, *>> registerStateListener(callback: suspend E.() -> Unit, condition: (StateType?) -> Boolean) {
+    inline fun <reified E : BaseEntity<StateType, AttributesType>> registerStateListener(crossinline condition: (StateType?) -> Boolean, crossinline callback: suspend E.() -> Unit) {
         kHomeAssistant()!!.stateListeners
                 .getOrPut(entityID) { hashSetOf() }
                 .add {

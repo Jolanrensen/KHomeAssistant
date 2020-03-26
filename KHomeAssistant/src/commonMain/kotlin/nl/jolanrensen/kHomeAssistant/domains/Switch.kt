@@ -48,8 +48,8 @@ object Switch : Domain<Switch.Entity> {
             null
         }
 
-        fun onTurnOn(callback: suspend ToggleEntity.() -> Unit) {
-//        TODO("Not yet implemented")
+        fun onTurnOn(callback: suspend Entity.() -> Unit) {
+            registerStateListener({ it == OnOff.ON }, callback)
         }
 
 

@@ -3,7 +3,6 @@ package nl.jolanrensen.kHomeAssistant
 import io.ktor.client.features.websocket.DefaultClientWebSocketSession
 import io.ktor.client.features.websocket.ws
 import io.ktor.client.features.websocket.wss
-import io.ktor.client.utils.unwrapCancellationException
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.http.cio.websocket.send
@@ -21,6 +20,7 @@ import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
 import nl.jolanrensen.kHomeAssistant.helper.Queue
 import nl.jolanrensen.kHomeAssistant.messages.*
 
@@ -256,7 +256,7 @@ class KHomeAssistant(
                 it.initialize()
                 println("Successfully initialized automation ${it.automationName}")
             } catch (e: Exception) {
-                PrintException.print("FAILED to initialize automation \"${it.automationName}\" because of: $e", e)
+                PrintException.print("FAILED to initialize automation \"${it.automationName}\" because of: $e\n${e.message}\n${e.cause}", e)
             }
         }
     }
@@ -282,7 +282,7 @@ class KHomeAssistant(
             )
 
     /** Calls the given service */
-    suspend fun callService(entity: BaseEntity<*,*>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
+    suspend fun callService(entity: BaseEntity<*, *>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
             callService(
                     domain = entity.domain.domainName,
                     entityName = entity.name,
@@ -306,14 +306,22 @@ class KHomeAssistant(
 
     suspend fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getAttributes(entity: EntityType, serializer: KSerializer<AttributesType>): AttributesType {
         val response: FetchStateResponse = sendMessage(FetchStateMessage())
-        val entityJson = response.result!!.first { it.entity_id == entity.entityID }
+        val entityJson = try {
+            response.result!!.first { it.entity_id == entity.entityID }
+        } catch (e: NoSuchElementException) {
+            throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
+        }
         debugPrintln("received entity's (${entity.name}) attributes: ${entityJson.attributes}")
         return attributesFromJson(entityJson.attributes, serializer)
     }
 
     suspend fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getState(entity: EntityType): StateType {
         val response: FetchStateResponse = sendMessage(FetchStateMessage())
-        val entityJson = response.result!!.first { it.entity_id == entity.entityID }
+        val entityJson = try {
+            response.result!!.first { it.entity_id == entity.entityID }
+        } catch (e: NoSuchElementException) {
+            throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
+        }
         debugPrintln("received entity's (${entity.name}) state: ${entityJson.attributes}")
         return entity.parseStateValue(entityJson.state)!!
     }

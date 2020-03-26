@@ -56,13 +56,10 @@ suspend fun main() {
 //                        val state = example.getState()
 //                    },
                     automation("some automation") {
-                        val wallLamp = Light.Entity("wall_lamp")
-                        wallLamp.onTurnOn {
-                            println("wohoo lamp turned on!")
-                        }
-                        wallLamp.registerStateListener<Light.Entity>(condition = { it == OnOff.OFF }, callback = {
-                            println("wohoo lamp turned off!")
-                        })
+//                        val batik = Light.Entity("jdsnfjsf").isOn()
+
+
+
 
                     }
             )

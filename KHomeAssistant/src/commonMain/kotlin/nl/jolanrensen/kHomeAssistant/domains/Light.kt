@@ -62,7 +62,9 @@ object Light : Domain<Light.Entity> {
             null
         }
 
-        fun onTurnOn(callback: suspend Entity.() -> Unit) = registerStateListener(callback) { it == OnOff.ON }
+        fun onTurnOn(callback: suspend Entity.() -> Unit) {
+            registerStateListener({ it == OnOff.ON }, callback)
+        }
 
         override suspend fun turnOn() {
             callService("turn_on")
