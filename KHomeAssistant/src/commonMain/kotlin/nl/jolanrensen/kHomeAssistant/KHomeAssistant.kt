@@ -6,13 +6,12 @@ import io.ktor.client.features.websocket.wss
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.http.cio.websocket.send
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.channels.receiveOrNull
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
@@ -25,6 +24,7 @@ import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
 import nl.jolanrensen.kHomeAssistant.messages.*
+import kotlin.coroutines.CoroutineContext
 
 /**
  * KHomeAssistant instance
@@ -79,6 +79,7 @@ class KHomeAssistant(
             accessToken: String,
             secure: Boolean = false,
             debug: Boolean = false,
+            justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations TODO
             automationName: String = "Single Automation",
             automation: suspend Automation.() -> Unit
     ) : this(
@@ -87,19 +88,25 @@ class KHomeAssistant(
             accessToken = accessToken,
             secure = secure,
             debug = debug,
+            justExecute = justExecute,
             automations = listOf(automation(automationName, automation))
     )
 
 
     override val kHomeAssistant = { this }
 
-    var coroutineScope: CoroutineScope? = null
+    private var _coroutineContext: CoroutineContext? = null
+
+    override val coroutineContext: CoroutineContext
+        get() = _coroutineContext!!
+
 
     /** HA version reported by the connected instance */
     lateinit var haVersion: String
 
     /** ID to represent the number of interactions with the HA instance */
     private var messageID: Int = 0
+    private val messageIDMutex = Mutex()
 
     /** println's only executed if debug=true */
     fun debugPrintln(message: Any?) {
@@ -115,18 +122,22 @@ class KHomeAssistant(
 
     @OptIn(ImplicitReflectionSerializer::class)
     private suspend inline fun <reified Send : Message, reified Response : ResultMessage> sendMessage(message: Send): Response {
-        val thisMessageID = ++messageID
-        sendQueue.send {
-            message.id = thisMessageID
-            val json = message.toJson()
-            send(json)
-            debugPrintln("Sent message: $json")
+        var thisMessageID: Int? = null
+        messageIDMutex.withLock {
+            thisMessageID = ++messageID
+
+            sendQueue.send {
+                message.id = thisMessageID!!
+                val json = message.toJson()
+                send(json)
+                debugPrintln("Sent message: $json")
+            }
         }
 
+        // TODO if not wait for response, skip here
+
         val receiveChannel = Channel<String>(1)
-
-        responseAwaiters[thisMessageID] = receiveChannel
-
+        responseAwaiters[thisMessageID!!] = receiveChannel
         val responseString = receiveChannel.receive()
         debugPrintln("Received result response: $responseString")
 
@@ -137,78 +148,79 @@ class KHomeAssistant(
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun run() {
         val block: suspend DefaultClientWebSocketSession.() -> Unit = {
-            coroutineScope = this
+            _coroutineContext = coroutineContext
             authenticate()
-            initializeAutomations()
 
-            var receiver: Job? = null
 
             // receive and put in queue
-            if (!justExecute) {
-                receiver = launch {
-                    while (true) {
-                        debugPrintln("receiver running!")
-                        // receive or wait, break if connection closed
-                        val message = incoming.receiveOrNull() as? Frame.Text ?: break
-                        launch {
-                            val json = message.readText()
-                            debugPrintln(json)
+            val receiver = launch {
+                while (true) {
+                    debugPrintln("receiver running!")
+                    // receive or wait, break if connection closed
+                    val message = incoming.receiveOrNull() as? Frame.Text ?: break
+                    launch {
+                        val json = message.readText()
+                        debugPrintln(json)
 
-                            val messageBase: MessageBase = fromJson(json)
-                            val id = messageBase.id
-                            val type = messageBase.type
+                        val messageBase: MessageBase = fromJson(json)
+                        val id = messageBase.id
+                        val type = messageBase.type
 
-                            when (type) {
-                                "result" -> responseAwaiters[id]?.send(json)?.run { responseAwaiters.remove(id) }
-                                "event" -> {
-                                    val eventMessage: EventMessage = fromJson(json)
-                                    val event = eventMessage.event
-                                    debugPrintln("Detected event firing: $event")
+                        when (type) {
+                            "result" -> responseAwaiters[id]?.send(json)?.run { responseAwaiters.remove(id) }
+                            "event" -> {
+                                val eventMessage: EventMessage = fromJson(json)
+                                val event = eventMessage.event
+                                debugPrintln("Detected event firing: $event")
 
-                                    when (event.event_type) {
-                                        "state_changed" -> {
-                                            val eventDataStateChanged: EventDataStateChanged = fromJson(event.data)
-                                            val entityID = eventDataStateChanged.entity_id
-                                            val newState = eventDataStateChanged.new_state
+                                when (event.event_type) {
+                                    "state_changed" -> {
+                                        val eventDataStateChanged: EventDataStateChanged = fromJson(event.data)
+                                        val entityID = eventDataStateChanged.entity_id
+                                        val newState = eventDataStateChanged.new_state
 
-                                            stateListeners[entityID]?.forEach {
-                                                launch { it(newState) }
-                                            }
-
-                                            // TODO update listeners for this entityID with this state change
-                                            debugPrintln("Detected statechange $eventDataStateChanged")
+                                        stateListeners[entityID]?.forEach {
+                                            launch { it(newState) }
                                         }
-                                        "call_service" -> {
-                                            val eventDataCallService: EventDataCallService = fromJson(event.data)
 
-                                            debugPrintln("Deteted call_service: $eventDataCallService")
-                                            // TODO
-                                        }
-                                        // TODO maybe add more in the future
+                                        // TODO update listeners for this entityID with this state change
+                                        debugPrintln("Detected statechange $eventDataStateChanged")
                                     }
+                                    "call_service" -> {
+                                        val eventDataCallService: EventDataCallService = fromJson(event.data)
+
+                                        debugPrintln("Deteted call_service: $eventDataCallService")
+                                        // TODO
+                                    }
+                                    // TODO maybe add more in the future
                                 }
                             }
                         }
                     }
-                    println("Receiver channel closed")
                 }
+                println("Receiver channel closed")
             }
+
 
             val sender = launch {
                 while (true) {
                     // receive from the sendQueue and send out
-                    val message = sendQueue.receive() // TODO?: if (justExecute) break else continue
-                    launch {
-                        message()
-                    }
+                    val message = sendQueue.receive()
+                    message()
                 }
-                println("Sent all messages in the queue to Home Assistant!")
             }
 
-            if (!justExecute) registerToEventBus()
+            initializeAutomations()
 
-            receiver?.join()
-            sender.join()
+            if (justExecute) {
+                receiver.cancelAndJoin()
+                sender.cancelAndJoin()
+            } else {
+                registerToEventBus()
+
+                receiver.join()
+                sender.join()
+            }
         }
 
         if (secure) httpClient.wss(
@@ -248,6 +260,7 @@ class KHomeAssistant(
 
     /** Initialize all automations asynchronously */
     private suspend fun DefaultClientWebSocketSession.initializeAutomations() {
+        val automationInitialisations = hashSetOf<Job>()
         for (it in automations) launch {
             try {
                 it.kHomeAssistant = { this@KHomeAssistant }
@@ -256,7 +269,9 @@ class KHomeAssistant(
             } catch (e: Exception) {
                 PrintException.print("FAILED to initialize automation \"${it.automationName}\" because of: $e\n${e.message}\n${e.cause}", e)
             }
-        }
+        }.also { automationInitialisations.add(it) }
+
+        automationInitialisations.joinAll()
     }
 
 

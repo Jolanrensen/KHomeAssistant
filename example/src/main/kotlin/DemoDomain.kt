@@ -116,7 +116,7 @@ object Example : Domain<Example.Entity> {
                 val val4: Int? = null
         ) {
             init {
-                kHomeAssistant()!!.coroutineScope!!.launch{
+                kHomeAssistant()!!.launch{
                     run()
                 }
             }

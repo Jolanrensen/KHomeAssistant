@@ -78,7 +78,7 @@ object Light : Domain<Light.Entity> {
                 val effect: String? = null
         ) {
             init {
-                kHomeAssistant()!!.coroutineScope!!.launch{
+                kHomeAssistant()!!.launch{
                     run()
                 }
             }

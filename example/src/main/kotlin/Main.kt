@@ -1,3 +1,6 @@
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
@@ -52,29 +55,15 @@ suspend fun main() {
             port = 8123,
             secure = true,
             debug = true,
-            accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
-            automations = listOf(
-//                    automation("example test") {
-//                        val example = Example.Entity("test")
-//                        val state = example.getState()
-//                    },
-                    automation("some automation") {
-                        println("some autonatuiobsndjsdbng")
-//                        Light.Entity("batik").toggle()
-                        (0..10).forEach {
-                            println("batik: ${Light.Entity("batik").getState()}")
-                        }
-                    }
-            )
-    )
+            justExecute = true,
+            accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI"
+    ) {
+        val allAutomations = hashSetOf<Job>()
+        for (i in 0..10) launch {
+            Light.Entity("dream_world").toggle()
+        }.also { allAutomations += it }
 
-//    val externallyDefinedLight = Light(kHomeAssistant).Entity("some_light")
+        allAutomations.joinAll()
+    }.run()
 
-//    kHomeAssistant.automations.add(
-//            automation("Some automation thing") {
-//                //externallyDefinedLight.turnOff()
-//            }
-//    )
-
-    kHomeAssistant.run()
 }

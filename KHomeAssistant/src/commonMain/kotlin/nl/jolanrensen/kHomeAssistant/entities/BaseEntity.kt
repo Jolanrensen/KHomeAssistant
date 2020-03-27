@@ -24,7 +24,7 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
     fun checkEntityExists() {
         return // TODO
         if (entityExists) return
-        kHomeAssistant?.invoke()?.coroutineScope?.launch {
+        kHomeAssistant?.invoke()?.launch {
             getState() // throws error if entity does not exist
             entityExists = true
         }

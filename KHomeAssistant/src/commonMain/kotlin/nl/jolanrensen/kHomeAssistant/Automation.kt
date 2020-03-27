@@ -1,11 +1,16 @@
 package nl.jolanrensen.kHomeAssistant
 
+import kotlin.coroutines.CoroutineContext
+
 open class Automation : KHomeAssistantContext {
 
     open val automationName: String
         get() = this::class.simpleName.toString()
 
     override var kHomeAssistant: () -> KHomeAssistant? = { null }
+
+    override val coroutineContext: CoroutineContext
+        get() = kHomeAssistant()!!.coroutineContext
 
     /**
      * This method is called to start the automation
