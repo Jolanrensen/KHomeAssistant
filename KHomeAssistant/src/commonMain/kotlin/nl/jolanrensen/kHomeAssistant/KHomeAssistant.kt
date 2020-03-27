@@ -6,11 +6,13 @@ import io.ktor.client.features.websocket.wss
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.http.cio.websocket.send
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.receiveOrNull
+import kotlinx.coroutines.launch
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
@@ -148,40 +150,42 @@ class KHomeAssistant(
                         debugPrintln("receiver running!")
                         // receive or wait, break if connection closed
                         val message = incoming.receiveOrNull() as? Frame.Text ?: break
-                        val json = message.readText()
-                        debugPrintln(json)
+                        launch {
+                            val json = message.readText()
+                            debugPrintln(json)
 
-                        val messageBase: MessageBase = fromJson(json)
-                        val id = messageBase.id
-                        val type = messageBase.type
+                            val messageBase: MessageBase = fromJson(json)
+                            val id = messageBase.id
+                            val type = messageBase.type
 
-                        when (type) {
-                            "result" -> responseAwaiters[id]?.send(json)?.run { responseAwaiters.remove(id) }
-                            "event" -> {
-                                val eventMessage: EventMessage = fromJson(json)
-                                val event = eventMessage.event
-                                debugPrintln("Detected event firing: $event")
+                            when (type) {
+                                "result" -> responseAwaiters[id]?.send(json)?.run { responseAwaiters.remove(id) }
+                                "event" -> {
+                                    val eventMessage: EventMessage = fromJson(json)
+                                    val event = eventMessage.event
+                                    debugPrintln("Detected event firing: $event")
 
-                                when (event.event_type) {
-                                    "state_changed" -> {
-                                        val eventDataStateChanged: EventDataStateChanged = fromJson(event.data)
-                                        val entityID = eventDataStateChanged.entity_id
-                                        val newState = eventDataStateChanged.new_state
+                                    when (event.event_type) {
+                                        "state_changed" -> {
+                                            val eventDataStateChanged: EventDataStateChanged = fromJson(event.data)
+                                            val entityID = eventDataStateChanged.entity_id
+                                            val newState = eventDataStateChanged.new_state
 
-                                        stateListeners[entityID]?.forEach {
-                                            launch { it(newState) }
+                                            stateListeners[entityID]?.forEach {
+                                                launch { it(newState) }
+                                            }
+
+                                            // TODO update listeners for this entityID with this state change
+                                            debugPrintln("Detected statechange $eventDataStateChanged")
                                         }
+                                        "call_service" -> {
+                                            val eventDataCallService: EventDataCallService = fromJson(event.data)
 
-                                        // TODO update listeners for this entityID with this state change
-                                        debugPrintln("Detected statechange $eventDataStateChanged")
+                                            debugPrintln("Deteted call_service: $eventDataCallService")
+                                            // TODO
+                                        }
+                                        // TODO maybe add more in the future
                                     }
-                                    "call_service" -> {
-                                        val eventDataCallService: EventDataCallService = fromJson(event.data)
-
-                                        debugPrintln("Deteted call_service: $eventDataCallService")
-                                        // TODO
-                                    }
-                                    // TODO maybe add more in the future
                                 }
                             }
                         }
