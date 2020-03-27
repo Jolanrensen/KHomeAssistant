@@ -7,6 +7,10 @@ import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.http.cio.websocket.send
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.receiveOrNull
 import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
@@ -18,7 +22,6 @@ import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
-import nl.jolanrensen.kHomeAssistant.helper.Queue
 import nl.jolanrensen.kHomeAssistant.messages.*
 
 /**
@@ -104,31 +107,32 @@ class KHomeAssistant(
     /** stateListeners["entity_id"] = set of listeners for this entity_id */
     val stateListeners: HashMap<String, HashSet<suspend (StateResult) -> Unit>> = hashMapOf()
 
-    private val sendQueue = Queue<suspend DefaultClientWebSocketSession.() -> Unit>()
-    private val responseAwaiters = hashMapOf<Int, (String) -> Unit>()
+    private val sendQueue: Channel<suspend DefaultClientWebSocketSession.() -> Unit> = Channel(UNLIMITED)
+
+    private val responseAwaiters: HashMap<Int, Channel<String>> = hashMapOf()
 
     @OptIn(ImplicitReflectionSerializer::class)
     private suspend inline fun <reified Send : Message, reified Response : ResultMessage> sendMessage(message: Send): Response {
         val thisMessageID = ++messageID
-        sendQueue.enqueue {
+        sendQueue.send {
             message.id = thisMessageID
             val json = message.toJson()
             send(json)
             debugPrintln("Sent message: $json")
         }
-        var response: Response? = null
-        responseAwaiters[thisMessageID] = {
-            debugPrintln("Received result response: $it")
-            response = fromJson(it) // TODO fix
-        }
 
-        return withContext(coroutineScope!!.coroutineContext) {
-            while (response == null) delay(1)
-            response!!
-        }
+        val receiveChannel = Channel<String>(1)
+
+        responseAwaiters[thisMessageID] = receiveChannel
+
+        val responseString = receiveChannel.receive()
+        debugPrintln("Received result response: $responseString")
+
+        return fromJson(responseString)
     }
 
     /** Run KHomeAssistant, this makes the connection, authenticates, initializes and runs the complete HA interaction */
+    @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun run() {
         val block: suspend DefaultClientWebSocketSession.() -> Unit = {
             coroutineScope = this
@@ -141,8 +145,9 @@ class KHomeAssistant(
             if (!justExecute) {
                 receiver = launch {
                     while (true) {
-                        delay(1)
-                        val message = incoming.poll() as? Frame.Text? ?: continue
+                        debugPrintln("receiver running!")
+                        // receive or wait, break if connection closed
+                        val message = incoming.receiveOrNull() as? Frame.Text ?: break
                         val json = message.readText()
                         debugPrintln(json)
 
@@ -151,7 +156,7 @@ class KHomeAssistant(
                         val type = messageBase.type
 
                         when (type) {
-                            "result" -> responseAwaiters[id]?.invoke(json)?.run { responseAwaiters.remove(id) }
+                            "result" -> responseAwaiters[id]?.send(json)?.run { responseAwaiters.remove(id) }
                             "event" -> {
                                 val eventMessage: EventMessage = fromJson(json)
                                 val event = eventMessage.event
@@ -181,14 +186,17 @@ class KHomeAssistant(
                             }
                         }
                     }
+                    println("Receiver channel closed")
                 }
             }
 
             val sender = launch {
                 while (true) {
-                    delay(1)
-                    val message = sendQueue.dequeue() ?: if (justExecute) break else continue
-                    message()
+                    // receive from the sendQueue and send out
+                    val message = sendQueue.receive() // TODO?: if (justExecute) break else continue
+                    launch {
+                        message()
+                    }
                 }
                 println("Sent all messages in the queue to Home Assistant!")
             }

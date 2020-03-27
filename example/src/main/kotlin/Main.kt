@@ -51,7 +51,7 @@ suspend fun main() {
             host = "home.jolanrensen.nl",
             port = 8123,
             secure = true,
-            debug = false,
+            debug = true,
             accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
             automations = listOf(
 //                    automation("example test") {
@@ -59,11 +59,11 @@ suspend fun main() {
 //                        val state = example.getState()
 //                    },
                     automation("some automation") {
-                        Light.Entity("batik").turnOn(
-                                brightness = 255,
-                                rgb_color = RGBColor(255, 0, 0)
-                        )
-
+                        println("some autonatuiobsndjsdbng")
+//                        Light.Entity("batik").toggle()
+                        (0..10).forEach {
+                            println("batik: ${Light.Entity("batik").getState()}")
+                        }
                     }
             )
     )

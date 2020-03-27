@@ -1,10 +1,12 @@
+import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.*
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.domains.Domain
+import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 
 // The state can be any type, including enums. Just make sure to implement the getStateValue() and parseStateValue() in your Entity class.
@@ -41,12 +43,14 @@ object Example : Domain<Example.Entity> {
             name = name,
             domain = Example
     ) {
-        /** These are the attributes that get parsed from Home Assistant for your entity when calling getAttributes() */
+        /** These are the attributes that get parsed from Home Assistant for your entity when calling getAttributes()
+         * The names must thus exactly match those of Home Assistant. */
         @Serializable
         data class Attributes(
                 override val friendly_name: String = "",
-                val testAttribute: Int? = null
-                /** Add attributes here like `val Attribute: Type? = null` */
+                val test_attribute: Int? = null,
+                val some_other_attribute: List<String>? = null
+                /** Add attributes here like `val attribute: Type? = null` */
         ) : BaseAttributes {
             override var fullJsonObject: JsonObject = JsonObject(mapOf())
         }
@@ -68,8 +72,70 @@ object Example : Domain<Example.Entity> {
 
         }
 
+        /** Simple service calls can be defined like this */
         suspend fun exampleEntityServiceCall() {
             callService("")
+        }
+
+        /** Want to add data? sure! */
+        suspend fun exampleEntityServiceCallWithData(someValue: Int? = null, someOtherValue: String? = null) {
+            val attributes = getAttributes()
+
+            // Don't forget to check the data if you want more redundancy, otherwise just add it to a Map<String, JsonElement> or JsonObject
+            val data = hashMapOf<String, JsonElement>().apply {
+
+                // if someValue isn't null, check and add it to the data
+                someValue?.let {
+                    if (it !in 0..100)
+                        throw IllegalArgumentException("incorrect someValue $it")
+                    this["some_value"] = JsonPrimitive(it)
+                }
+
+                // same story for the other value
+                someOtherValue?.let {
+
+                    // you can also perform checks with the attributes
+                    // for instance checking whether some string is supported by the device
+                    if (it.isEmpty() || it !in attributes.some_other_attribute!!)
+                        throw IllegalArgumentException("incorrect someOtherValue $it")
+                    this["some_other_value"] = JsonPrimitive(it)
+                }
+            }
+            callService(
+                    serviceName = "some_service",
+                    data = data
+            )
+        }
+
+        /** Want to add a whole lot of options and you want to type less? Sure, let's just use Serialization again */
+        @Serializable
+        inner class callSomeService(
+                val val1: Int? = null,
+                val val2: Int? = null,
+                val val3: Int? = null,
+                val val4: Int? = null
+        ) {
+            init {
+                kHomeAssistant()!!.coroutineScope!!.launch{
+                    run()
+                }
+            }
+            private suspend fun run() {
+                val1?.let {
+                    // Check
+                }
+                // .. check all values
+
+                // Serialize and call the service
+                val data = Json(
+                        JsonConfiguration.Stable.copy(encodeDefaults = false)
+                ).toJson(serializer(), this)
+
+                callService(
+                        serviceName = "some_service_thing",
+                        data = data.jsonObject
+                )
+            }
         }
 
         // Example function that uses the state

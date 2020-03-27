@@ -2,7 +2,9 @@ package nl.jolanrensen.kHomeAssistant.entities
 
 import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.attributes.SerializableBaseAttributes
