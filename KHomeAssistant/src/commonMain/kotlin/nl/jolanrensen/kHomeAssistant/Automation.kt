@@ -1,6 +1,7 @@
 package nl.jolanrensen.kHomeAssistant
 
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.ExperimentalTime
 
 open class Automation : KHomeAssistantContext {
 
@@ -16,6 +17,7 @@ open class Automation : KHomeAssistantContext {
      * This method is called to start the automation
      * and it should thus contain the setup of all listeners.
      */
+    @OptIn(ExperimentalTime::class)
     open suspend fun initialize() = Unit
 
 }

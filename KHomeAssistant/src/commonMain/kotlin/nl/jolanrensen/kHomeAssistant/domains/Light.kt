@@ -60,7 +60,7 @@ object Light : Domain<Light.Entity> {
 
 
         @Serializable
-        inner class turnOn(
+        inner class turnOn( // TODO on js this causes issues due to the name being the same as the function
                 val transition: Int? = null,
                 val profile: String? = null,
                 val hs_color: HSColor? = null,
@@ -81,6 +81,8 @@ object Light : Domain<Light.Entity> {
                 kHomeAssistant()!!.launch{
                     run()
                 }
+
+
             }
             private suspend fun run() {
                 // First check input
