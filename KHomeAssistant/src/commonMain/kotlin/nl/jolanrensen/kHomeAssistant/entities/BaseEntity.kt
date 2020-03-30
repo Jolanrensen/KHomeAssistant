@@ -2,9 +2,7 @@ package nl.jolanrensen.kHomeAssistant.entities
 
 import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.attributes.SerializableBaseAttributes
@@ -14,9 +12,9 @@ import nl.jolanrensen.kHomeAssistant.messages.Context
 typealias DefaultEntity = BaseEntity<String, SerializableBaseAttributes>
 
 open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
-        open val kHomeAssistant: () -> KHomeAssistant? = { null },
-        open val name: String,
-        open val domain: Domain<out BaseEntity<out StateType, out AttributesType>>
+    open val kHomeAssistant: () -> KHomeAssistant? = { null },
+    open val name: String,
+    open val domain: Domain<out BaseEntity<out StateType, out AttributesType>>
 ) {
     private var entityExists = false
 
@@ -53,31 +51,37 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
     suspend fun getContext(): Context = TODO("context uit State")
 
 
-    suspend fun callService(serviceName: String, data: Map<String, JsonElement> = mapOf()) =
-            kHomeAssistant()!!.callService(
-                    entity = this,
-                    serviceName = serviceName,
-                    data = data
-            )
+    suspend fun callService(
+        serviceName: String,
+        data: Map<String, JsonElement> = mapOf()
+    ) =
+        kHomeAssistant()!!.callService(
+            entity = this,
+            serviceName = serviceName,
+            data = data
+        )
 
     val entityID: String
         get() = "${domain.domainName}.$name"
 
 }
 
-fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChange(condition: (newState: S?) -> Boolean, callback: suspend E.() -> Unit) =
-        onStateChange { newState ->
-            if (condition(newState))
-                callback()
-        }
+fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChange(
+    condition: (newState: S?) -> Boolean,
+    callback: suspend E.() -> Unit
+) =
+    onStateChange { newState ->
+        if (condition(newState))
+            callback()
+    }
 
 fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChange(callback: suspend E.(newState: S?) -> Unit) {
     checkEntityExists()
     kHomeAssistant()!!.stateListeners
-            .getOrPut(entityID) { hashSetOf() }
-            .add {
-                callback(parseStateValue(it.state))
-            }
+        .getOrPut(entityID) { hashSetOf() }
+        .add {
+            callback(parseStateValue(it.state))
+        }
 }
 
 /**

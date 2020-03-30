@@ -24,26 +24,26 @@ object Light : Domain<Light.Entity> {
     override fun Entity(name: String): Entity = Entity(kHomeAssistant = kHomeAssistant, name = name)
 
     class Entity(
-            override val kHomeAssistant: () -> KHomeAssistant?,
-            override val name: String
+        override val kHomeAssistant: () -> KHomeAssistant?,
+        override val name: String
     ) : ToggleEntity<Entity.Attributes>(
-            kHomeAssistant = kHomeAssistant,
-            name = name,
-            domain = Light // TODO check?
+        kHomeAssistant = kHomeAssistant,
+        name = name,
+        domain = Light // TODO check?
     ) {
 
         @Serializable
         data class Attributes(
-                override val friendly_name: String,
-                val min_mireds: Int? = null,
-                val max_mireds: Int? = null,
-                val effect_list: List<String>? = null,
-                val brightness: Int? = null,
-                val hs_color: HSColor? = null,
-                val rgb_color: RGBColor? = null,
-                val xy_color: XYColor? = null,
-                val white_value: Int? = null,
-                val supported_features: Int
+            override val friendly_name: String,
+            val min_mireds: Int? = null,
+            val max_mireds: Int? = null,
+            val effect_list: List<String>? = null,
+            val brightness: Int? = null,
+            val hs_color: HSColor? = null,
+            val rgb_color: RGBColor? = null,
+            val xy_color: XYColor? = null,
+            val white_value: Int? = null,
+            val supported_features: Int
         ) : BaseAttributes {
             override var fullJsonObject: JsonObject = JsonObject(mapOf())
         }
@@ -60,30 +60,31 @@ object Light : Domain<Light.Entity> {
 
 
         @Serializable
-        inner class turnOn( // TODO on js this causes issues due to the name being the same as the function
-                val transition: Int? = null,
-                val profile: String? = null,
-                val hs_color: HSColor? = null,
-                val xy_color: XYColor? = null,
-                val rgb_color: RGBColor? = null,
-                val white_value: Int? = null,
-                val color_temp: Int? = null,
-                val kelvin: Int? = null,
-                val color_name: String? = null,
-                val brightness: Int? = null,
-                val brightness_pct: Float? = null,
-                val brightness_step: Float? = null,
-                val brightness_step_pct: Float? = null,
-                val flash: Flash? = null,
-                val effect: String? = null
+        inner class turnOn( // TODO on js this causes issues due to the name being the same as the function, add getResult
+            val transition: Int? = null,
+            val profile: String? = null,
+            val hs_color: HSColor? = null,
+            val xy_color: XYColor? = null,
+            val rgb_color: RGBColor? = null,
+            val white_value: Int? = null,
+            val color_temp: Int? = null,
+            val kelvin: Int? = null,
+            val color_name: String? = null,
+            val brightness: Int? = null,
+            val brightness_pct: Float? = null,
+            val brightness_step: Float? = null,
+            val brightness_step_pct: Float? = null,
+            val flash: Flash? = null,
+            val effect: String? = null
         ) {
             init {
-                kHomeAssistant()!!.launch{
+                kHomeAssistant()!!.launch {
                     run()
                 }
 
 
             }
+
             private suspend fun run() {
                 // First check input
                 val attributes = getAttributes()
@@ -147,27 +148,27 @@ object Light : Domain<Light.Entity> {
 
                 // Then serialize the json and call the service with the data
                 val data = Json(
-                        JsonConfiguration.Stable.copy(encodeDefaults = false)
+                    JsonConfiguration.Stable.copy(encodeDefaults = false)
                 ).toJson(serializer(), this)
 
                 callService(
-                        serviceName = "turn_on",
-                        data = data.jsonObject
+                    serviceName = "turn_on",
+                    data = data.jsonObject
                 )
             }
         }
 
-        suspend fun turnOff(transition: Int? = null) {
+        suspend fun turnOff(transition: Int) {
             val data = hashMapOf<String, JsonElement>().apply {
-                transition?.let {
+                transition.let {
                     if (it < 0)
                         throw IllegalArgumentException("incorrect transition $it")
                     this["transition"] = JsonPrimitive(it)
                 }
             }
             callService(
-                    serviceName = "turn_off",
-                    data = data
+                serviceName = "turn_off",
+                data = data
             )
         }
 

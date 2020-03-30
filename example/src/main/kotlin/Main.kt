@@ -1,8 +1,3 @@
-import com.soywiz.klock.TimeSpan
-import com.soywiz.klock.seconds
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Light
@@ -38,11 +33,7 @@ suspend fun main() {
 
 //    val test = Entity()
     println("running!")
-
-    val test: TimeSpan = 5.seconds
-
-
-    val kHomeAssistant = KHomeAssistant(
+    KHomeAssistant(
         host = "home.jolanrensen.nl",
         port = 8123,
         secure = true,
@@ -50,12 +41,10 @@ suspend fun main() {
         justExecute = true,
         accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI"
     ) {
-        val allAutomations = hashSetOf<Job>()
-        for (i in 0..10) launch {
-            Light.Entity("dream_world").toggle()
-        }.also { allAutomations += it }
+        listOf("piano", "wall_lamp", "batik", "dream_world")
+            .map { Light.Entity(it) }
+            .forEach { it.toggle() }
 
-        allAutomations.joinAll()
     }.run()
 
 }

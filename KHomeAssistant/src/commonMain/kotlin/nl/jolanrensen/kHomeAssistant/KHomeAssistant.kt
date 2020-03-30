@@ -32,13 +32,13 @@ import kotlin.coroutines.CoroutineContext
  * run run() to make the instance run
  */
 class KHomeAssistant(
-        val host: String,
-        val port: Int = 8123,
-        val accessToken: String,
-        val secure: Boolean = false,
-        val debug: Boolean = false,
-        val justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations TODO
-        val automations: Collection<Automation>
+    val host: String,
+    val port: Int = 8123,
+    val accessToken: String,
+    val secure: Boolean = false,
+    val debug: Boolean = false,
+    val justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations TODO
+    val automations: Collection<Automation>
 ) : KHomeAssistantContext {
 
 //    constructor(
@@ -74,22 +74,22 @@ class KHomeAssistant(
 //    )
 
     constructor(
-            host: String,
-            port: Int = 8123,
-            accessToken: String,
-            secure: Boolean = false,
-            debug: Boolean = false,
-            justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations TODO
-            automationName: String = "Single Automation",
-            automation: suspend Automation.() -> Unit
+        host: String,
+        port: Int = 8123,
+        accessToken: String,
+        secure: Boolean = false,
+        debug: Boolean = false,
+        justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations TODO
+        automationName: String = "Single Automation",
+        automation: suspend Automation.() -> Unit
     ) : this(
-            host = host,
-            port = port,
-            accessToken = accessToken,
-            secure = secure,
-            debug = debug,
-            justExecute = justExecute,
-            automations = listOf(automation(automationName, automation))
+        host = host,
+        port = port,
+        accessToken = accessToken,
+        secure = secure,
+        debug = debug,
+        justExecute = justExecute,
+        automations = listOf(automation(automationName, automation))
     )
 
 
@@ -134,7 +134,7 @@ class KHomeAssistant(
             }
         }
 
-        // TODO if not wait for response, skip here
+        // must wait for the results, or it's too fast for hass
 
         val receiveChannel = Channel<String>(1)
         responseAwaiters[thisMessageID!!] = receiveChannel
@@ -207,6 +207,7 @@ class KHomeAssistant(
                     // receive from the sendQueue and send out
                     val message = sendQueue.receive()
                     message()
+                    delay(1) // just to give hass some peace of mind
                 }
             }
 
@@ -224,23 +225,23 @@ class KHomeAssistant(
         }
 
         if (secure) httpClient.wss(
-                host = host,
-                port = port,
-                path = "/api/websocket",
-                block = block
+            host = host,
+            port = port,
+            path = "/api/websocket",
+            block = block
         ) else httpClient.ws(
-                host = host,
-                port = port,
-                path = "/api/websocket",
-                block = block
+            host = host,
+            port = port,
+            path = "/api/websocket",
+            block = block
         )
     }
 
     /** Authenticate  */
     private suspend fun DefaultClientWebSocketSession.authenticate() {
         var response: AuthResponse = fromJson(
-                (incoming.receive() as Frame.Text).readText()
-                        .also { debugPrintln(it) }
+            (incoming.receive() as Frame.Text).readText()
+                .also { debugPrintln(it) }
         )
 
         haVersion = response.ha_version
@@ -248,8 +249,8 @@ class KHomeAssistant(
         if (response.isAuthRequired) {
             send(AuthMessage(access_token = accessToken).toJson())
             response = fromJson(
-                    (incoming.receive() as Frame.Text).readText()
-                            .also { debugPrintln(it) }
+                (incoming.receive() as Frame.Text).readText()
+                    .also { debugPrintln(it) }
             )
         }
         if (!response.isAuthOk) {
@@ -267,7 +268,10 @@ class KHomeAssistant(
                 it.initialize()
                 println("Successfully initialized automation ${it.automationName}")
             } catch (e: Exception) {
-                PrintException.print("FAILED to initialize automation \"${it.automationName}\" because of: $e\n${e.message}\n${e.cause}", e)
+                PrintException.print(
+                    "FAILED to initialize automation \"${it.automationName}\" because of: $e\n${e.message}\n${e.cause}",
+                    e
+                )
             }
         }.also { automationInitialisations.add(it) }
 
@@ -278,7 +282,7 @@ class KHomeAssistant(
     /** Registering to Event bus */
     private suspend fun registerToEventBus() {
         val res: ResultMessageBase = sendMessage(
-                SubscribeToEventMessage().also { debugPrintln(it) }
+            SubscribeToEventMessage().also { debugPrintln(it) }
         )
         if (res.success)
             debugPrintln("Successfully registered to event bus!")
@@ -288,36 +292,44 @@ class KHomeAssistant(
 
     /** Calls the given service */
     suspend fun callService(domain: Domain<*>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
-            callService(
-                    domain = domain.domainName,
-                    serviceName = serviceName,
-                    data = data
-            )
+        callService(
+            domain = domain.domainName,
+            serviceName = serviceName,
+            data = data
+        )
 
     /** Calls the given service */
     suspend fun callService(entity: BaseEntity<*, *>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
-            callService(
-                    domain = entity.domain.domainName,
-                    entityName = entity.name,
-                    serviceName = serviceName,
-                    data = data
-            )
+        callService(
+            domain = entity.domain.domainName,
+            entityName = entity.name,
+            serviceName = serviceName,
+            data = data
+        )
 
     /** Calls the given service */
-    suspend fun callService(domain: String, entityName: String? = null, serviceName: String, data: Map<String, JsonElement> = mapOf()): ResultMessage =
-            sendMessage<CallServiceMessage, ResultMessageBase>(
-                    CallServiceMessage(
-                            domain = domain,
-                            service = serviceName,
-                            service_data = JsonObject(
-                                    entityName?.let {
-                                        data + ("entity_id" to JsonPrimitive("$domain.$it"))
-                                    } ?: data
-                            )
-                    ).also { debugPrintln(it) }
+    suspend fun callService(
+        domain: String,
+        entityName: String? = null,
+        serviceName: String,
+        data: Map<String, JsonElement> = mapOf()
+    ): ResultMessage =
+        sendMessage<CallServiceMessage, ResultMessageBase>(
+            CallServiceMessage(
+                domain = domain,
+                service = serviceName,
+                service_data = JsonObject(
+                    entityName?.let {
+                        data + ("entity_id" to JsonPrimitive("$domain.$it"))
+                    } ?: data
+                )
             ).also { debugPrintln(it) }
+        ).also { debugPrintln(it) }
 
-    suspend fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getAttributes(entity: EntityType, serializer: KSerializer<AttributesType>): AttributesType {
+    suspend fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getAttributes(
+        entity: EntityType,
+        serializer: KSerializer<AttributesType>
+    ): AttributesType {
         val response: FetchStateResponse = sendMessage(FetchStateMessage())
         val entityJson = try {
             response.result!!.first { it.entity_id == entity.entityID }
@@ -328,7 +340,9 @@ class KHomeAssistant(
         return attributesFromJson(entityJson.attributes, serializer)
     }
 
-    suspend fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getState(entity: EntityType): StateType {
+    suspend fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getState(
+        entity: EntityType
+    ): StateType {
         val response: FetchStateResponse = sendMessage(FetchStateMessage())
         val entityJson = try {
             response.result!!.first { it.entity_id == entity.entityID }

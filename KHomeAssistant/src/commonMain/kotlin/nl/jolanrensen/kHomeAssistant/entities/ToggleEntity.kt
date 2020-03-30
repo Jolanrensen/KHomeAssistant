@@ -6,13 +6,13 @@ import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 
 open class ToggleEntity<AttributesType : BaseAttributes>(
-        override val kHomeAssistant: () -> KHomeAssistant?,
-        override val name: String,
-        override val domain: Domain<out BaseEntity<OnOff, out AttributesType>>
+    override val kHomeAssistant: () -> KHomeAssistant?,
+    override val name: String,
+    override val domain: Domain<out BaseEntity<OnOff, out AttributesType>>
 ) : BaseEntity<OnOff, AttributesType>(
-        kHomeAssistant = kHomeAssistant,
-        name = name,
-        domain = domain
+    kHomeAssistant = kHomeAssistant,
+    name = name,
+    domain = domain
 ) {
 
     override fun getStateValue(state: OnOff): String = state.stateValue
@@ -23,18 +23,11 @@ open class ToggleEntity<AttributesType : BaseAttributes>(
         null
     }
 
-    suspend inline fun turnOn() {
-        callService("turn_on")
-    }
+    suspend inline fun turnOn() = callService("turn_on")
 
+    suspend inline fun turnOff() = callService("turn_off")
 
-    suspend inline fun turnOff() {
-        callService("turn_off")
-    }
-
-    suspend inline fun toggle() {
-        callService("toggle")
-    }
+    suspend inline fun toggle() = callService("toggle")
 
 
     /** HelperFunctions */
@@ -46,10 +39,10 @@ open class ToggleEntity<AttributesType : BaseAttributes>(
 }
 
 fun <A : BaseAttributes, E : ToggleEntity<A>> E.onTurnOn(callback: suspend E.() -> Unit) =
-        onStateChange({ it == OnOff.ON }, callback)
+    onStateChange({ it == OnOff.ON }, callback)
 
 fun <A : BaseAttributes, E : ToggleEntity<A>> E.onTurnOff(callback: suspend E.() -> Unit) =
-        onStateChange({ it == OnOff.OFF }, callback)
+    onStateChange({ it == OnOff.OFF }, callback)
 
 fun <A : BaseAttributes, E : ToggleEntity<A>> E.onUnavailable(callback: suspend E.() -> Unit) =
-        onStateChange({ it == OnOff.UNAVAILABLE }, callback)
+    onStateChange({ it == OnOff.UNAVAILABLE }, callback)
