@@ -25,19 +25,24 @@ import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
 import nl.jolanrensen.kHomeAssistant.messages.*
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.minutes
 
 /**
  * KHomeAssistant instance
  *
  * run run() to make the instance run
  */
+@OptIn(ExperimentalTime::class)
 class KHomeAssistant(
     val host: String,
     val port: Int = 8123,
     val accessToken: String,
     val secure: Boolean = false,
     val debug: Boolean = false,
-    val justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations TODO
+    val justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations
+    val useCache: Boolean = true,
     val automations: Collection<Automation>
 ) : KHomeAssistantContext {
 
@@ -79,7 +84,8 @@ class KHomeAssistant(
         accessToken: String,
         secure: Boolean = false,
         debug: Boolean = false,
-        justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations TODO
+        justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations
+        useCache: Boolean = true,
         automationName: String = "Single Automation",
         automation: suspend Automation.() -> Unit
     ) : this(
@@ -89,6 +95,7 @@ class KHomeAssistant(
         secure = secure,
         debug = debug,
         justExecute = justExecute,
+        useCache = useCache,
         automations = listOf(automation(automationName, automation))
     )
 
@@ -99,6 +106,19 @@ class KHomeAssistant(
 
     override val coroutineContext: CoroutineContext
         get() = _coroutineContext!!
+
+    private val maxCacheAge: Duration = 15.minutes
+    private val cache: HashMap<String, StateResult> = hashMapOf()
+//    private var cacheAge: TimeMark = TimeSource.Monotonic.markNow() todo
+
+    private suspend fun updateCache() {
+        val response: FetchStateResponse = sendMessage(FetchStateMessage())
+        response.result!!.forEach {
+            cache[it.entity_id] = it
+        }
+//        cacheAge = TimeSource.Monotonic.markNow() todo
+        debugPrintln("Updated cache!")
+    }
 
 
     /** HA version reported by the connected instance */
@@ -179,6 +199,8 @@ class KHomeAssistant(
                                         val entityID = eventDataStateChanged.entity_id
                                         val newState = eventDataStateChanged.new_state
 
+                                        if (useCache) cache[entityID]!!.state = newState.state
+
                                         stateListeners[entityID]?.forEach {
                                             launch { it(newState) }
                                         }
@@ -210,6 +232,8 @@ class KHomeAssistant(
                     delay(1) // just to give hass some peace of mind
                 }
             }
+
+            if (useCache) updateCache()
 
             initializeAutomations()
 
@@ -275,7 +299,7 @@ class KHomeAssistant(
             }
         }.also { automationInitialisations.add(it) }
 
-        automationInitialisations.joinAll()
+        if (justExecute) automationInitialisations.joinAll()
     }
 
 
@@ -330,26 +354,43 @@ class KHomeAssistant(
         entity: EntityType,
         serializer: KSerializer<AttributesType>
     ): AttributesType {
-        val response: FetchStateResponse = sendMessage(FetchStateMessage())
-        val entityJson = try {
-            response.result!!.first { it.entity_id == entity.entityID }
-        } catch (e: NoSuchElementException) {
+        val attributesValue = try {
+            if (useCache) {
+//                if (cacheAge.elapsedNow() > maxCacheAge) updateCache() todo
+                cache[entity.entityID]!!.attributes
+            } else {
+                val response: FetchStateResponse = sendMessage(FetchStateMessage())
+                val entityJson = response.result!!.first { it.entity_id == entity.entityID }
+
+                debugPrintln("received entity's (${entity.name}) attributes: ${entityJson.attributes}")
+
+                entityJson.attributes
+            }
+        } catch (e: Exception) {
             throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
         }
-        debugPrintln("received entity's (${entity.name}) attributes: ${entityJson.attributes}")
-        return attributesFromJson(entityJson.attributes, serializer)
+        return attributesFromJson(attributesValue, serializer)
     }
 
     suspend fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getState(
         entity: EntityType
     ): StateType {
-        val response: FetchStateResponse = sendMessage(FetchStateMessage())
-        val entityJson = try {
-            response.result!!.first { it.entity_id == entity.entityID }
-        } catch (e: NoSuchElementException) {
+        val stateValue = try {
+            if (useCache) {
+//                if (cacheAge.elapsedNow() > maxCacheAge) updateCache() todo
+                cache[entity.entityID]!!.state
+            } else {
+                val response: FetchStateResponse = sendMessage(FetchStateMessage())
+                val entityJson = response.result!!.first { it.entity_id == entity.entityID }
+
+                debugPrintln("received entity's (${entity.name}) state: ${entityJson.state}")
+
+                entityJson.state
+            }
+        } catch (e: Exception) {
             throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
         }
-        debugPrintln("received entity's (${entity.name}) state: ${entityJson.attributes}")
-        return entity.parseStateValue(entityJson.state)!!
+
+        return entity.parseStateValue(stateValue)!!
     }
 }

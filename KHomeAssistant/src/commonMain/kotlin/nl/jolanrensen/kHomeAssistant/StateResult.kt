@@ -13,12 +13,12 @@ import nl.jolanrensen.kHomeAssistant.messages.Context
  * */
 @Serializable
 data class StateResult(
-        val entity_id: String,
-        val state: String,
-        val attributes: JsonObject,
-        val last_changed: String, // TODO change to datetime
-        val last_updated: String, // TODO change to datetime
-        val context: Context
+    val entity_id: String,
+    var state: String,
+    val attributes: JsonObject,
+    val last_changed: String, // TODO change to datetime
+    val last_updated: String, // TODO change to datetime
+    val context: Context
 ) {
     companion object {
         @OptIn(ImplicitReflectionSerializer::class, UnstableDefault::class)
