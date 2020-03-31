@@ -66,16 +66,25 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
 
 }
 
-fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChange(
-    condition: (newState: S?) -> Boolean,
+fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChangedToNot(
+    newState: S,
     callback: suspend E.() -> Unit
 ) =
-    onStateChange { newState ->
-        if (condition(newState))
+    onStateChanged { it ->
+        if (newState != it)
             callback()
     }
 
-fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChange(callback: suspend E.(newState: S?) -> Unit) {
+fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChangedTo(
+    newState: S,
+    callback: suspend E.() -> Unit
+) =
+    onStateChanged { it ->
+        if (newState == it)
+            callback()
+    }
+
+fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChanged(callback: suspend E.(newState: S?) -> Unit) {
     checkEntityExists()
     kHomeAssistant()!!.stateListeners
         .getOrPut(entityID) { hashSetOf() }

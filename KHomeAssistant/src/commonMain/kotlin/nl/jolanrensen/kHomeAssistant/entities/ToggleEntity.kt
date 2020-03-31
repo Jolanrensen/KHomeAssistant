@@ -39,10 +39,10 @@ open class ToggleEntity<AttributesType : BaseAttributes>(
 }
 
 fun <A : BaseAttributes, E : ToggleEntity<A>> E.onTurnOn(callback: suspend E.() -> Unit) =
-    onStateChange({ it == OnOff.ON }, callback)
+    onStateChangedTo(OnOff.ON,  callback)
 
 fun <A : BaseAttributes, E : ToggleEntity<A>> E.onTurnOff(callback: suspend E.() -> Unit) =
-    onStateChange({ it == OnOff.OFF }, callback)
+    onStateChangedTo(OnOff.OFF, callback)
 
 fun <A : BaseAttributes, E : ToggleEntity<A>> E.onUnavailable(callback: suspend E.() -> Unit) =
-    onStateChange({ it == OnOff.UNAVAILABLE }, callback)
+    onStateChangedTo(OnOff.UNAVAILABLE, callback)

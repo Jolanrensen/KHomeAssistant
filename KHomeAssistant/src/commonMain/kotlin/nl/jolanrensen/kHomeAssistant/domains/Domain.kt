@@ -17,6 +17,9 @@ interface Domain<E: BaseEntity<out Any, out BaseAttributes>> {
     /** Helper function to create an Entity in a domain, alternative to YourDomainEntity("name") */
     fun Entity(name: String): E
 
+    /** Type YourDomain["entity"] instead of YourDomain.Entity("entity") */
+    operator fun get(name: String): E = Entity(name)
+
     /** Helper function to check whether the context is present */
     fun checkContext()
 

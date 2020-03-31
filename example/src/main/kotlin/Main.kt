@@ -1,6 +1,7 @@
 import kotlinx.coroutines.delay
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
@@ -49,9 +50,10 @@ suspend fun main() {
 //            .map { Light.Entity(it) }
 //            .forEach { it.toggle() }
 
+
         while (true) {
             delay(1000)
-            println("batik = ${Light.Entity("batik").getState()}")
+            println("batik = ${Light["batik"].getState()}")
         }
 
     }.run()
