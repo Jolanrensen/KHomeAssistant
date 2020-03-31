@@ -25,8 +25,8 @@ import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
 import nl.jolanrensen.kHomeAssistant.messages.*
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
 import kotlin.time.minutes
 
 /**
@@ -107,16 +107,16 @@ class KHomeAssistant(
     override val coroutineContext: CoroutineContext
         get() = _coroutineContext!!
 
-    private val maxCacheAge: Duration = 15.minutes
+    private val maxCacheAge = 15.minutes
     private val cache: HashMap<String, StateResult> = hashMapOf()
-//    private var cacheAge: TimeMark = TimeSource.Monotonic.markNow() todo
+    private var cacheAge = TimeSource.Monotonic.markNow()
 
     private suspend fun updateCache() {
         val response: FetchStateResponse = sendMessage(FetchStateMessage())
         response.result!!.forEach {
             cache[it.entity_id] = it
         }
-//        cacheAge = TimeSource.Monotonic.markNow() todo
+        cacheAge = TimeSource.Monotonic.markNow()
         debugPrintln("Updated cache!")
     }
 
@@ -170,7 +170,6 @@ class KHomeAssistant(
         val block: suspend DefaultClientWebSocketSession.() -> Unit = {
             _coroutineContext = coroutineContext
             authenticate()
-
 
             // receive and put in queue
             val receiver = launch {
@@ -356,7 +355,7 @@ class KHomeAssistant(
     ): AttributesType {
         val attributesValue = try {
             if (useCache) {
-//                if (cacheAge.elapsedNow() > maxCacheAge) updateCache() todo
+                if (cacheAge.elapsedNow() > maxCacheAge) updateCache()
                 cache[entity.entityID]!!.attributes
             } else {
                 val response: FetchStateResponse = sendMessage(FetchStateMessage())
@@ -377,7 +376,7 @@ class KHomeAssistant(
     ): StateType {
         val stateValue = try {
             if (useCache) {
-//                if (cacheAge.elapsedNow() > maxCacheAge) updateCache() todo
+                if (cacheAge.elapsedNow() > maxCacheAge) updateCache()
                 cache[entity.entityID]!!.state
             } else {
                 val response: FetchStateResponse = sendMessage(FetchStateMessage())
