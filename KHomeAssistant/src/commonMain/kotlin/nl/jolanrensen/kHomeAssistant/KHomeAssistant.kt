@@ -41,7 +41,7 @@ class KHomeAssistant(
     val accessToken: String,
     val secure: Boolean = false,
     val debug: Boolean = false,
-    val justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations
+//    val justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations
     val useCache: Boolean = true,
     val automations: Collection<Automation>
 ) : KHomeAssistantContext {
@@ -84,7 +84,7 @@ class KHomeAssistant(
         accessToken: String,
         secure: Boolean = false,
         debug: Boolean = false,
-        justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations
+//        justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations
         useCache: Boolean = true,
         automationName: String = "Single Automation",
         automation: suspend Automation.() -> Unit
@@ -94,7 +94,7 @@ class KHomeAssistant(
         accessToken = accessToken,
         secure = secure,
         debug = debug,
-        justExecute = justExecute,
+//        justExecute = justExecute,
         useCache = useCache,
         automations = listOf(automation(automationName, automation))
     )
@@ -233,15 +233,18 @@ class KHomeAssistant(
             }
 
             if (useCache) updateCache()
+            registerToEventBus()
 
             initializeAutomations()
 
-            if (justExecute) {
+            // cancel if there aren't any listeners and the automations are initialized
+            println("All automations are initialized")
+            if (stateListeners.isEmpty()) {
+                println("There are no state listeners, so KHomeAssistant is stopping...")
                 receiver.cancelAndJoin()
                 sender.cancelAndJoin()
             } else {
-                registerToEventBus()
-
+                println("There are ${stateListeners.size} state listeners, so KHomeAssistant keeps running...")
                 receiver.join()
                 sender.join()
             }
@@ -289,7 +292,7 @@ class KHomeAssistant(
             try {
                 it.kHomeAssistant = { this@KHomeAssistant }
                 it.initialize()
-                println("Successfully initialized automation ${it.automationName}")
+                println("Successfully finished running initialize() of automation ${it.automationName}")
             } catch (e: Exception) {
                 PrintException.print(
                     "FAILED to initialize automation \"${it.automationName}\" because of: $e\n${e.message}\n${e.cause}",
@@ -298,7 +301,7 @@ class KHomeAssistant(
             }
         }.also { automationInitialisations.add(it) }
 
-        if (justExecute) automationInitialisations.joinAll()
+        automationInitialisations.joinAll()
     }
 
 

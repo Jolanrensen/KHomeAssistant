@@ -42,19 +42,20 @@ suspend fun main() {
         port = 8123,
         secure = true,
         debug = true,
-        justExecute = false,
         useCache = true,
         accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI"
     ) {
 //        listOf("piano", "wall_lamp", "batik", "dream_world")
 //            .map { Light.Entity(it) }
 //            .forEach { it.toggle() }
+        Light["batik"].onTurnOn {
 
+        }
 
-        while (true) {
+//        while (true) {
             delay(1000)
             println("batik = ${Light["batik"].getState()}")
-        }
+//        }
 
     }.run()
 
