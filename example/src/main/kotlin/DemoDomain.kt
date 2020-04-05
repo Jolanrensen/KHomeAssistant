@@ -1,4 +1,3 @@
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -7,7 +6,6 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 
 // The state can be any type, including enums. Just make sure to implement the getStateValue() and parseStateValue() in your Entity class.
@@ -24,9 +22,8 @@ object Example : Domain<Example.Entity> {
             Make sure to use the helper function 'Example.' from a KHomeAssistantContext instead of using ExampleDomain directly.""".trimMargin()
     }
 
-    suspend fun exampleDomainServiceCall() {
-        callService("")
-    }
+    suspend fun exampleDomainServiceCall() = callService("")
+
 
     // Constructor for Entity with the right context
     override fun Entity(name: String) = Entity(kHomeAssistant, name)
@@ -35,23 +32,23 @@ object Example : Domain<Example.Entity> {
     /** This class defines your entity, it can be instantiated via YourDomain.YourEntity(name: String)
      * Define all the service calls on your entity inside here
      * This also includes listeners for state changes
-    */
+     */
     class Entity(
-            override val kHomeAssistant: () -> KHomeAssistant? = { null },
-            override val name: String
+        override val kHomeAssistant: () -> KHomeAssistant? = { null },
+        override val name: String
     ) : BaseEntity<ExampleState, Entity.Attributes>(
-            kHomeAssistant = kHomeAssistant,
-            name = name,
-            domain = Example
+        kHomeAssistant = kHomeAssistant,
+        name = name,
+        domain = Example
     ) {
         /** These are the attributes that get parsed from Home Assistant for your entity when calling getAttributes()
          * The names must thus exactly match those of Home Assistant. */
         @Serializable
         data class Attributes(
-                override val friendly_name: String = "",
-                val test_attribute: Int? = null,
-                val some_other_attribute: List<String>? = null
-                /** Add attributes here like `val attribute: Type? = null` */
+            override val friendly_name: String = "",
+            val test_attribute: Int? = null,
+            val some_other_attribute: List<String>? = null
+            /** Add attributes here like `val attribute: Type? = null` */
         ) : BaseAttributes {
             override var fullJsonObject: JsonObject = JsonObject(mapOf())
         }
@@ -103,18 +100,18 @@ object Example : Domain<Example.Entity> {
                 }
             }
             callService(
-                    serviceName = "some_service",
-                    data = data
+                serviceName = "some_service",
+                data = data
             )
         }
 
         /** Want to add a whole lot of options and you want to type less? Sure, let's just use Serialization again */
         @Serializable
         inner class callSomeService(
-                val val1: Int? = null,
-                val val2: Int? = null,
-                val val3: Int? = null,
-                val val4: Int? = null
+            val val1: Int? = null,
+            val val2: Int? = null,
+            val val3: Int? = null,
+            val val4: Int? = null
         ) {
             init {
                 runBlocking {
@@ -145,5 +142,6 @@ object Example : Domain<Example.Entity> {
 
 /** Access your domain, and set the context correctly */
 typealias ExampleDomain = Example
+
 val KHomeAssistantContext.Example: ExampleDomain
     get() = ExampleDomain.also { it.kHomeAssistant = kHomeAssistant }

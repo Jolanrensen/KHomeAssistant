@@ -23,10 +23,13 @@ open class ToggleEntity<AttributesType : BaseAttributes>(
         null
     }
 
+    /** Turns on an entity (that supports being turned on), for example an automation, switch, etc */
     suspend inline fun turnOn() = callService("turn_on")
 
+    /** Turns off an entity (that supports being turned off), for example an automation, switch, etc */
     suspend inline fun turnOff() = callService("turn_off")
 
+    /** Turns off an entity that is on, or turns on an entity that is off (that supports being turned on and off) */
     suspend inline fun toggle() = callService("toggle")
 
 

@@ -5,13 +5,14 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
-import nl.jolanrensen.kHomeAssistant.attributes.SerializableBaseAttributes
+import nl.jolanrensen.kHomeAssistant.attributes.DefaultAttributes
 import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
 import nl.jolanrensen.kHomeAssistant.domains.Domain
+import nl.jolanrensen.kHomeAssistant.domains.HomeAssistant
 import nl.jolanrensen.kHomeAssistant.messages.Context
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
-typealias DefaultEntity = BaseEntity<String, SerializableBaseAttributes>
+typealias DefaultEntity = BaseEntity<String, DefaultAttributes>
 
 open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
     open val kHomeAssistant: () -> KHomeAssistant? = { null },
@@ -21,7 +22,7 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
     private var entityExists = false
 
     @Suppress("UNNECESSARY_SAFE_CALL")
-    fun checkEntityExists() {
+    open fun checkEntityExists() {
         if (entityExists) return
         kHomeAssistant?.invoke()?.launch {
             getState() // throws error if entity does not exist
@@ -33,7 +34,7 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
     open val attributesSerializer: KSerializer<AttributesType>? = null
 
     init {
-        checkEntityExists()
+        this.checkEntityExists()
     }
 
     /** Given a string stateValue, this method should return the correct StateType */
@@ -51,12 +52,31 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
     suspend fun getLastUpdated(): String = TODO("last_updated uit State")
     suspend fun getContext(): Context = TODO("context uit State")
 
+    /** Request the update of an entity, rather than waiting for the next scheduled update, for example Google travel time sensor, a template sensor, or a light */
+    suspend inline fun updateEntity() = callService(HomeAssistant, "update_entity")
+
+    /** Call a service with this entity using a different serviceDomain */
+    suspend fun callService(
+        serviceDomain: Domain<*>,
+        serviceName: String,
+        data: Map<String, JsonElement> = mapOf(),
+        doEntityCheck: Boolean = true
+    ): ResultMessage {
+        if (doEntityCheck) checkEntityExists()
+        return kHomeAssistant()!!.callService(
+            entity = this,
+            serviceDomain = serviceDomain,
+            serviceName = serviceName,
+            data = data
+        )
+    }
 
     suspend fun callService(
         serviceName: String,
-        data: Map<String, JsonElement> = mapOf()
+        data: Map<String, JsonElement> = mapOf(),
+        doEntityCheck: Boolean = true
     ): ResultMessage {
-        checkEntityExists()
+        if (doEntityCheck) checkEntityExists()
         return kHomeAssistant()!!.callService(
             entity = this,
             serviceName = serviceName,

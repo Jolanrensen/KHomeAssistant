@@ -20,7 +20,7 @@ interface BaseAttributes {
 }
 
 @Serializable
-class SerializableBaseAttributes(
+class DefaultAttributes(
         override val friendly_name: String = ""
 ) : BaseAttributes {
     override var fullJsonObject: JsonObject = JsonObject(mapOf())

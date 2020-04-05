@@ -22,9 +22,7 @@ import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
-import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
 import nl.jolanrensen.kHomeAssistant.messages.*
-import kotlin.jvm.Volatile
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 import kotlin.time.minutes
@@ -331,9 +329,19 @@ class KHomeAssistant(
     }
 
     /** Calls the given service */
+    suspend fun callService(entity: BaseEntity<*, *>, serviceDomain: Domain<*>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
+        callService(
+            serviceDomain = serviceDomain.domainName,
+            serviceName = serviceName,
+            entityID = entity.entityID,
+            data = data
+        )
+
+
+    /** Calls the given service */
     suspend fun callService(domain: Domain<*>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
         callService(
-            domain = domain.domainName,
+            serviceDomain = domain.domainName,
             serviceName = serviceName,
             data = data
         )
@@ -341,26 +349,26 @@ class KHomeAssistant(
     /** Calls the given service */
     suspend fun callService(entity: BaseEntity<*, *>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
         callService(
-            domain = entity.domain.domainName,
-            entityName = entity.name,
+            serviceDomain = entity.domain.domainName,
+            entityID = entity.entityID,
             serviceName = serviceName,
             data = data
         )
 
     /** Calls the given service */
     suspend fun callService(
-        domain: String,
-        entityName: String? = null,
+        serviceDomain: String,
+        entityID: String? = null,
         serviceName: String,
         data: Map<String, JsonElement> = mapOf()
     ): ResultMessage =
         sendMessage<CallServiceMessage, ResultMessageBase>(
             CallServiceMessage(
-                domain = domain,
+                domain = serviceDomain,
                 service = serviceName,
                 service_data = JsonObject(
-                    entityName?.let {
-                        data + ("entity_id" to JsonPrimitive("$domain.$it"))
+                    entityID?.let {
+                        data + ("entity_id" to JsonPrimitive(it))
                     } ?: data
                 )
             ).also { debugPrintln(it) }

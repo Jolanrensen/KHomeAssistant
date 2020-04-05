@@ -50,10 +50,6 @@ object Light : Domain<Light.Entity> {
 
         override val attributesSerializer: KSerializer<Attributes> = Attributes.serializer()
 
-        //
-//        fun onTestCase(callback: suspend Entity.() -> Unit) {
-//            registerStateListener({ it == OnOff.ON }, callback)
-//        }
         enum class Flash(val value: String) {
             SHORT("short"), LONG("long")
         }
@@ -75,7 +71,7 @@ object Light : Domain<Light.Entity> {
             val brightness_step: Float? = null,
             val brightness_step_pct: Float? = null,
             val flash: Flash? = null,
-            val effect: String? = null
+            val effect: String? = null // tODO add result callback
         ) {
             init {
                 runBlocking {
@@ -152,21 +148,18 @@ object Light : Domain<Light.Entity> {
             }
         }
 
-        suspend fun turnOff(transition: Int) {
-            val data = hashMapOf<String, JsonElement>().apply {
-                transition.let {
-                    if (it < 0)
-                        throw IllegalArgumentException("incorrect transition $it")
-                    this["transition"] = JsonPrimitive(it)
-                }
-            }
+        @OptIn(ExperimentalStdlibApi::class)
+        suspend fun turnOff(transition: Int) =
             callService(
                 serviceName = "turn_off",
-                data = data
+                data = buildMap<String, JsonElement> {
+                    transition.let {
+                        if (it < 0)
+                            throw IllegalArgumentException("incorrect transition $it")
+                        this["transition"] = JsonPrimitive(it)
+                    }
+                }
             )
-        }
-
-
     }
 }
 

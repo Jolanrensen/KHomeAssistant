@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.automation
+import nl.jolanrensen.kHomeAssistant.domains.HomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.entities.onAttributesChanged
@@ -42,25 +43,22 @@ fun main() {
             host = "home.jolanrensen.nl",
             port = 8123,
             secure = true,
-            debug = false,
+            debug = true,
             useCache = true,
             accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
             automations = listOf(
-                automation("1") {
-                    launch {
-                        launch {
-                            throw Exception("automation crash")
-                        }
-
-                    }
-                },
+//                automation("1") {
+//                    launch {
+//                        launch {
+//                            // tesdf
+//                           println("mooie test")
+//                            throw Exception("automation crash")
+//                        }
+//
+//                    }
+//                },
                 automation("2") {
-                    Light["bed"]
-                        .onStateChanged {
-                            println("state changed to: $it")
-                        }.onAttributesChanged {
-                            println("attributes changed to $it")
-                        }
+                    Light.Entity("batik").updateEntity()
                 }
             )
         ).run()
