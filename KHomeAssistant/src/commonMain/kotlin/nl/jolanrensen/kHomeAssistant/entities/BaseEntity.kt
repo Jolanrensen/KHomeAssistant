@@ -9,6 +9,7 @@ import nl.jolanrensen.kHomeAssistant.attributes.SerializableBaseAttributes
 import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.messages.Context
+import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
 typealias DefaultEntity = BaseEntity<String, SerializableBaseAttributes>
 
@@ -54,12 +55,14 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
     suspend fun callService(
         serviceName: String,
         data: Map<String, JsonElement> = mapOf()
-    ) =
-        kHomeAssistant()!!.callService(
+    ): ResultMessage {
+        checkEntityExists()
+        return kHomeAssistant()!!.callService(
             entity = this,
             serviceName = serviceName,
             data = data
         )
+    }
 
     val entityID: String
         get() = "${domain.domainName}.$name"
