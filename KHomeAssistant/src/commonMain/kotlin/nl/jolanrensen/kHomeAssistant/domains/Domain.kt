@@ -18,6 +18,8 @@ interface Domain<E: BaseEntity<out Any, out BaseAttributes>> {
     /** Helper function to create an Entity in a domain, alternative to YourDomainEntity("name") */
     fun Entity(name: String): E
 
+    // TODO maybe allow a way to make an anonymous toggle entity
+
     /** Type YourDomain["entity"] instead of YourDomain.Entity("entity") */
     operator fun get(name: String): E = Entity(name)
 

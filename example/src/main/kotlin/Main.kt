@@ -1,16 +1,12 @@
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.automation
-import nl.jolanrensen.kHomeAssistant.domains.HomeAssistant
+import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
-import nl.jolanrensen.kHomeAssistant.entities.onAttributesChanged
-import nl.jolanrensen.kHomeAssistant.entities.onStateChanged
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
-import java.lang.Exception
 import kotlin.time.ExperimentalTime
 
 
@@ -58,8 +54,14 @@ fun main() {
 //                    }
 //                },
                 automation("2") {
-                    Light["batik"]
+                    Domain("media_player")["denon_avrx2200w"].apply {
+                        callService("turn_off")
 
+//                        callService(
+//                            "volume_set",
+//                            mapOf("volume_level" to JsonPrimitive(0.25))
+//                        )
+                    }
                 }
             )
         ).run()
