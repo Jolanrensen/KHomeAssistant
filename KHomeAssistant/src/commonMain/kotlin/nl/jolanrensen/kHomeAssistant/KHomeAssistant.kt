@@ -24,7 +24,7 @@ import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
 import nl.jolanrensen.kHomeAssistant.messages.*
-import kotlin.coroutines.CoroutineContext
+import kotlin.jvm.Volatile
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 import kotlin.time.minutes
@@ -99,13 +99,16 @@ class KHomeAssistant(
         automations = listOf(automation(automationName, automation))
     )
 
-
     override val kHomeAssistant = { this }
 
-    private var _coroutineContext: CoroutineContext? = null
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        PrintException.print(e = throwable)
+    }
+    private val supervisor = SupervisorJob()
+    override val coroutineContext = Dispatchers.Default + supervisor + exceptionHandler
 
-    override val coroutineContext: CoroutineContext
-        get() = _coroutineContext!!
+
+
 
     private val maxCacheAge = 15.minutes
     private val cache: HashMap<String, StateResult> = hashMapOf()
@@ -168,16 +171,16 @@ class KHomeAssistant(
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun run() {
         val block: suspend DefaultClientWebSocketSession.() -> Unit = {
-            _coroutineContext = coroutineContext
+            val ioScope: CoroutineScope = this
             authenticate()
 
             // receive and put in queue
-            val receiver = launch {
+            val receiver = ioScope.launch {
                 while (true) {
                     debugPrintln("receiver running!")
                     // receive or wait, break if connection closed
                     val message = incoming.receiveOrNull() as? Frame.Text ?: break
-                    launch {
+                    ioScope.launch {
                         val json = message.readText()
                         debugPrintln(json)
 
@@ -196,15 +199,22 @@ class KHomeAssistant(
                                     "state_changed" -> {
                                         val eventDataStateChanged: EventDataStateChanged = fromJson(event.data)
                                         val entityID = eventDataStateChanged.entity_id
+                                        val oldState = eventDataStateChanged.old_state
                                         val newState = eventDataStateChanged.new_state
 
                                         if (useCache) cache[entityID]!!.state = newState.state
 
                                         stateListeners[entityID]?.forEach {
-                                            launch { it(newState) }
+                                            this@KHomeAssistant.launch {
+                                                try {
+                                                    it(newState)
+                                                } catch (e: Exception) {
+                                                    PrintException.print("Error happened after state for entity $entityID changed from $oldState to $newState")
+                                                    throw e
+                                                }
+                                            }
                                         }
 
-                                        // TODO update listeners for this entityID with this state change
                                         debugPrintln("Detected statechange $eventDataStateChanged")
                                     }
                                     "call_service" -> {
@@ -223,7 +233,7 @@ class KHomeAssistant(
             }
 
 
-            val sender = launch {
+            val sender = ioScope.launch {
                 while (true) {
                     // receive from the sendQueue and send out
                     val message = sendQueue.receive()
@@ -236,6 +246,8 @@ class KHomeAssistant(
             registerToEventBus()
 
             initializeAutomations()
+
+            // TODO maybe wait for the supervisor if possible to make sure all launches are done when running without listeners
 
             // cancel if there aren't any listeners and the automations are initialized
             println("All automations are initialized")
@@ -286,20 +298,22 @@ class KHomeAssistant(
     }
 
     /** Initialize all automations asynchronously */
-    private suspend fun DefaultClientWebSocketSession.initializeAutomations() {
+    private suspend fun initializeAutomations() {
         val automationInitialisations = hashSetOf<Job>()
-        for (it in automations) launch {
-            try {
-                it.kHomeAssistant = { this@KHomeAssistant }
-                it.initialize()
+        for (it in automations)
+            this@KHomeAssistant.launch {// TODO
+                val inner = launch {
+                    it.kHomeAssistant = { this@KHomeAssistant }
+                    it.initialize()
+                }
+                try {
+                    inner.join()
+                } catch (e: Exception) {
+                    PrintException.print("FAILED to initialize automation \"${it.automationName}\"")
+                    throw e
+                }
                 println("Successfully finished running initialize() of automation ${it.automationName}")
-            } catch (e: Exception) {
-                PrintException.print(
-                    "FAILED to initialize automation \"${it.automationName}\" because of: $e\n${e.message}\n${e.cause}",
-                    e
-                )
-            }
-        }.also { automationInitialisations.add(it) }
+            }.also { automationInitialisations.add(it) }
 
         automationInitialisations.joinAll()
     }

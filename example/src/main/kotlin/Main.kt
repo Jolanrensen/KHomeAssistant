@@ -1,12 +1,13 @@
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.domains.Domain
+import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
 
 
 class Test : Automation() {
@@ -27,36 +28,36 @@ class Test : Automation() {
             turnOff()
         }
     }
-
 }
 
 
 @OptIn(ExperimentalTime::class)
-suspend fun main() {
+fun main() {
+    runBlocking {
+        println("running!")
+        KHomeAssistant(
+            host = "home.jolanrensen.nl",
+            port = 8123,
+            secure = true,
+            debug = false,
+            useCache = true,
+            accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
+            automations = listOf(
+                automation("1") {
+                    launch {
+                        launch {
+                            delay(5000)
+                            println("joee")
+                        }
 
+                    }
+                },
+                automation("2") {
+                    Light["batik"].toggle()
+                }
+            )
+        ).run()
+    }
 
-//    val test = Entity()
-    println("running!")
-    KHomeAssistant(
-        host = "home.jolanrensen.nl",
-        port = 8123,
-        secure = true,
-        debug = true,
-        useCache = true,
-        accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI"
-    ) {
-//        listOf("piano", "wall_lamp", "batik", "dream_world")
-//            .map { Light.Entity(it) }
-//            .forEach { it.toggle() }
-        Light["batik"].onTurnOn {
-
-        }
-
-//        while (true) {
-            delay(1000)
-            println("batik = ${Light["batik"].getState()}")
-//        }
-
-    }.run()
 
 }

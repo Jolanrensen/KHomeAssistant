@@ -1,4 +1,5 @@
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
@@ -116,7 +117,7 @@ object Example : Domain<Example.Entity> {
                 val val4: Int? = null
         ) {
             init {
-                kHomeAssistant()!!.launch{
+                runBlocking {
                     run()
                 }
             }

@@ -1,11 +1,11 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 import nl.jolanrensen.kHomeAssistant.helper.*
@@ -60,7 +60,7 @@ object Light : Domain<Light.Entity> {
 
 
         @Serializable
-        inner class turnOn( // TODO on js this causes issues due to the name being the same as the function, add getResult
+        inner class turnOnWithData(
             val transition: Int? = null,
             val profile: String? = null,
             val hs_color: HSColor? = null,
@@ -78,83 +78,77 @@ object Light : Domain<Light.Entity> {
             val effect: String? = null
         ) {
             init {
-                kHomeAssistant()!!.launch {
-                    run()
-                }
+                runBlocking {
+                    // First check input
+                    val attributes = getAttributes()
+                    transition?.let {
+                        if (it < 0)
+                            throw IllegalArgumentException("incorrect transition $it")
+                    }
+                    profile?.let {
+                    }
+                    hs_color?.let {
+                        if (it.isEmpty() || it.size > 2 || it.h !in 0f..360f || it.s !in 0f..100f)
+                            throw IllegalArgumentException("incorrect hs_color $it")
+                    }
+                    xy_color?.let {
+                        if (it.isEmpty() || it.size > 2)
+                            throw IllegalArgumentException("incorrect xy_color $it")
+                    }
+                    rgb_color?.let {
+                        if (it.isEmpty() || it.size > 3 || it.any { it !in 0..255 })
+                            throw IllegalArgumentException("incorrect rgb_color $it")
+                    }
+                    white_value?.let {
+                        if (it !in 0..255)
+                            throw IllegalArgumentException("incorrect white_value $it")
+                    }
+                    color_temp?.let {
+                        if (attributes.min_mireds == null || attributes.max_mireds == null)
+                            throw IllegalArgumentException("mireds not supported for this device")
+                        if (it !in attributes.min_mireds..attributes.max_mireds)
+                            throw IllegalArgumentException("incorrect color_temp $it")
+                    }
+                    kelvin?.let {
+                        if (it < 0)
+                            throw IllegalArgumentException("incorrect kelvin $it")
+                    }
+                    color_name?.let {
+                        // TODO check color name https://www.w3.org/TR/css-color-3/#svg-color
+                    }
+                    brightness?.let {
+                        if (it !in 0..255)
+                            throw IllegalArgumentException("incorrect brightness $it")
+                    }
+                    brightness_pct?.let {
+                        if (it !in 0f..100f)
+                            throw IllegalArgumentException("incorrect brightness_pct $it")
+                    }
+                    brightness_step?.let {
+                        if (it !in -255f..255f)
+                            throw IllegalArgumentException("incorrect brightness_step $it")
+                    }
+                    brightness_step_pct?.let {
+                        if (it !in -100f..100f)
+                            throw IllegalArgumentException("incorrect brightness_step_pct $it")
+                    }
+                    flash?.let {
+                    }
+                    effect?.let {
+                        if (attributes.effect_list == null || it !in attributes.effect_list)
+                            throw IllegalArgumentException("incorrect effect $it")
+                    }
 
+                    // Then serialize the json and call the service with the data
+                    val data = Json(
+                        JsonConfiguration.Stable.copy(encodeDefaults = false)
+                    ).toJson(serializer(), this@turnOnWithData)
 
-            }
-
-            private suspend fun run() {
-                // First check input
-                val attributes = getAttributes()
-                transition?.let {
-                    if (it < 0)
-                        throw IllegalArgumentException("incorrect transition $it")
+                    callService(
+                        serviceName = "turn_on",
+                        data = data.jsonObject
+                    )
                 }
-                profile?.let {
-                }
-                hs_color?.let {
-                    if (it.isEmpty() || it.size > 2 || it.h !in 0f..360f || it.s !in 0f..100f)
-                        throw IllegalArgumentException("incorrect hs_color $it")
-                }
-                xy_color?.let {
-                    if (it.isEmpty() || it.size > 2)
-                        throw IllegalArgumentException("incorrect xy_color $it")
-                }
-                rgb_color?.let {
-                    if (it.isEmpty() || it.size > 3 || it.any { it !in 0..255 })
-                        throw IllegalArgumentException("incorrect rgb_color $it")
-                }
-                white_value?.let {
-                    if (it !in 0..255)
-                        throw IllegalArgumentException("incorrect white_value $it")
-                }
-                color_temp?.let {
-                    if (attributes.min_mireds == null || attributes.max_mireds == null)
-                        throw IllegalArgumentException("mireds not supported for this device")
-                    if (it !in attributes.min_mireds..attributes.max_mireds)
-                        throw IllegalArgumentException("incorrect color_temp $it")
-                }
-                kelvin?.let {
-                    if (it < 0)
-                        throw IllegalArgumentException("incorrect kelvin $it")
-                }
-                color_name?.let {
-                    // TODO check color name https://www.w3.org/TR/css-color-3/#svg-color
-                }
-                brightness?.let {
-                    if (it !in 0..255)
-                        throw IllegalArgumentException("incorrect brightness $it")
-                }
-                brightness_pct?.let {
-                    if (it !in 0f..100f)
-                        throw IllegalArgumentException("incorrect brightness_pct $it")
-                }
-                brightness_step?.let {
-                    if (it !in -255f..255f)
-                        throw IllegalArgumentException("incorrect brightness_step $it")
-                }
-                brightness_step_pct?.let {
-                    if (it !in -100f..100f)
-                        throw IllegalArgumentException("incorrect brightness_step_pct $it")
-                }
-                flash?.let {
-                }
-                effect?.let {
-                    if (attributes.effect_list == null || it !in attributes.effect_list)
-                        throw IllegalArgumentException("incorrect effect $it")
-                }
-
-                // Then serialize the json and call the service with the data
-                val data = Json(
-                    JsonConfiguration.Stable.copy(encodeDefaults = false)
-                ).toJson(serializer(), this)
-
-                callService(
-                    serviceName = "turn_on",
-                    data = data.jsonObject
-                )
             }
         }
 
