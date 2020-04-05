@@ -9,6 +9,7 @@ import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.entities.onAttributesChanged
 import nl.jolanrensen.kHomeAssistant.entities.onStateChanged
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
+import java.lang.Exception
 import kotlin.time.ExperimentalTime
 
 
@@ -48,14 +49,13 @@ fun main() {
                 automation("1") {
                     launch {
                         launch {
-                            delay(5000)
-                            println("joee")
+                            throw Exception("automation crash")
                         }
 
                     }
                 },
                 automation("2") {
-                    Light["bed"]
+                    Light["bedaa"]
                         .onStateChanged {
                             println("state changed to: $it")
                         }.onAttributesChanged {

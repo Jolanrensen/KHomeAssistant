@@ -383,7 +383,7 @@ class KHomeAssistant(
                 entityJson.attributes
             }
         } catch (e: Exception) {
-            throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
+            throw Exception("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
         }
         return attributesFromJson(attributesValue, serializer)
     }
@@ -404,7 +404,7 @@ class KHomeAssistant(
                 entityJson.state
             }
         } catch (e: Exception) {
-            throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
+            throw Exception("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
         }
 
         return entity.parseStateValue(stateValue)!!

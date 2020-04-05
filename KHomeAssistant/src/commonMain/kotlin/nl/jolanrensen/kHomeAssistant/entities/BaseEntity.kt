@@ -21,7 +21,6 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
 
     @Suppress("UNNECESSARY_SAFE_CALL")
     fun checkEntityExists() {
-        return // TODO
         if (entityExists) return
         kHomeAssistant?.invoke()?.launch {
             getState() // throws error if entity does not exist
