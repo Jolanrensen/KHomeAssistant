@@ -55,7 +55,7 @@ fun main() {
                     }
                 },
                 automation("2") {
-                    Light["bedaa"]
+                    Light["bed"]
                         .onStateChanged {
                             println("state changed to: $it")
                         }.onAttributesChanged {
