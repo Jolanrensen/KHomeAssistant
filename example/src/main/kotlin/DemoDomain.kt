@@ -126,7 +126,7 @@ object Example : Domain<Example.Entity> {
                     // Serialize and call the service
                     val data = Json(
                         JsonConfiguration.Stable.copy(encodeDefaults = false)
-                    ).toJson(serializer(), this)
+                    ).toJson(serializer(), this@callSomeService)
 
                     callService(
                         serviceName = "some_service_thing",
