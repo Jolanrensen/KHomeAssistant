@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonElement
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.attributes.SerializableBaseAttributes
+import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.messages.Context
 
@@ -69,28 +70,49 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
 fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChangedToNot(
     newState: S,
     callback: suspend E.() -> Unit
-) =
+): E {
     onStateChanged { it ->
         if (newState != it)
             callback()
     }
+    return this
+}
 
 fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChangedTo(
     newState: S,
     callback: suspend E.() -> Unit
-) =
+): E {
     onStateChanged { it ->
         if (newState == it)
             callback()
     }
+    return this
+}
 
-fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChanged(callback: suspend E.(newState: S?) -> Unit) {
+fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChanged(
+    callback: suspend E.(newState: S?) -> Unit
+): E {
     checkEntityExists()
     kHomeAssistant()!!.stateListeners
         .getOrPut(entityID) { hashSetOf() }
-        .add {
-            callback(parseStateValue(it.state))
+        .add { oldState, newState ->
+            if (oldState.state != newState.state)
+                callback(parseStateValue(newState.state))
         }
+    return this
+}
+
+fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onAttributesChanged(
+    callback: suspend E.(newAttributes: A?) -> Unit
+): E {
+    checkEntityExists()
+    kHomeAssistant()!!.stateListeners
+        .getOrPut(entityID) { hashSetOf() }
+        .add { oldState, newState ->
+            if (oldState.attributes != newState.attributes)
+                callback(attributesFromJson(newState.attributes, attributesSerializer!!))
+        }
+    return this
 }
 
 /**

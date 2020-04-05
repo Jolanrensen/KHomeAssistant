@@ -118,24 +118,21 @@ object Example : Domain<Example.Entity> {
         ) {
             init {
                 runBlocking {
-                    run()
-                }
-            }
-            private suspend fun run() {
-                val1?.let {
-                    // Check
-                }
-                // .. check all values
+                    val1?.let {
+                        // Check
+                    }
+                    // .. check all values
 
-                // Serialize and call the service
-                val data = Json(
+                    // Serialize and call the service
+                    val data = Json(
                         JsonConfiguration.Stable.copy(encodeDefaults = false)
-                ).toJson(serializer(), this)
+                    ).toJson(serializer(), this)
 
-                callService(
+                    callService(
                         serviceName = "some_service_thing",
                         data = data.jsonObject
-                )
+                    )
+                }
             }
         }
 

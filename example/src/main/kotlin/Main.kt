@@ -6,6 +6,8 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
+import nl.jolanrensen.kHomeAssistant.entities.onAttributesChanged
+import nl.jolanrensen.kHomeAssistant.entities.onStateChanged
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import kotlin.time.ExperimentalTime
 
@@ -53,7 +55,12 @@ fun main() {
                     }
                 },
                 automation("2") {
-                    Light["batik"].toggle()
+                    Light["bed"]
+                        .onStateChanged {
+                            println("state changed to: $it")
+                        }.onAttributesChanged {
+                            println("attributes changed to $it")
+                        }
                 }
             )
         ).run()

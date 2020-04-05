@@ -137,7 +137,7 @@ class KHomeAssistant(
     }
 
     /** stateListeners["entity_id"] = set of listeners for this entity_id */
-    val stateListeners: HashMap<String, HashSet<suspend (StateResult) -> Unit>> = hashMapOf()
+    val stateListeners: HashMap<String, HashSet<suspend (oldState: StateResult, newState: StateResult) -> Unit>> = hashMapOf()
 
     private val sendQueue: Channel<suspend DefaultClientWebSocketSession.() -> Unit> = Channel(UNLIMITED)
 
@@ -207,7 +207,7 @@ class KHomeAssistant(
                                         stateListeners[entityID]?.forEach {
                                             this@KHomeAssistant.launch {
                                                 try {
-                                                    it(newState)
+                                                    it(oldState, newState)
                                                 } catch (e: Exception) {
                                                     PrintException.print("Error happened after state for entity $entityID changed from $oldState to $newState")
                                                     throw e
