@@ -10,17 +10,19 @@ import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 import nl.jolanrensen.kHomeAssistant.helper.*
 
-/** Do not use directly! Always use Light. */
+/** Do not use directly! Always use Light.
+ *
+ * https://www.home-assistant.io/integrations/light/
+ * */
 object Light : Domain<Light.Entity> {
     override var kHomeAssistant: () -> KHomeAssistant? = { null }
     override val domainName = "light"
 
     override fun checkContext() = require(kHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'Light.' from a KHomeAssistantContext instead of using LightDomain directly.""".trimMargin()
+            Make sure to use the helper function 'Light.' from a KHomeAssistantContext instead of using Light directly.""".trimMargin()
     }
 
-    /** Does the same as LightEntity() */
     override fun Entity(name: String): Entity = Entity(kHomeAssistant = kHomeAssistant, name = name)
 
     class Entity(
@@ -45,7 +47,7 @@ object Light : Domain<Light.Entity> {
             val white_value: Int? = null,
             val supported_features: Int
         ) : BaseAttributes {
-            override var fullJsonObject: JsonObject = JsonObject(mapOf())
+            override var fullJsonObject = JsonObject(mapOf())
         }
 
         override val attributesSerializer: KSerializer<Attributes> = Attributes.serializer()
@@ -165,6 +167,5 @@ object Light : Domain<Light.Entity> {
 
 /** Access the Light Domain */
 typealias LightDomain = Light
-
 val KHomeAssistantContext.Light: LightDomain
     get() = LightDomain.also { it.kHomeAssistant = kHomeAssistant }

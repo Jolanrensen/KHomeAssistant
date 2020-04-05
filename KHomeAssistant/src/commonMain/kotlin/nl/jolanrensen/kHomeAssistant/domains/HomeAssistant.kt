@@ -6,13 +6,16 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.helper.GeoPoint
 
+/**
+ * https://www.home-assistant.io/integrations/homeassistant
+ */
 object HomeAssistant : Domain<DefaultEntity> {
     override val domainName: String = "homeassistant"
     override var kHomeAssistant: () -> KHomeAssistant? = { null }
 
     override fun checkContext() = require(kHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'Example.' from a KHomeAssistantContext instead of using ExampleDomain directly.""".trimMargin()
+            Make sure to use the helper function 'HomeAssistant.' from a KHomeAssistantContext instead of using HomeAssistant directly.""".trimMargin()
     }
 
     /** Reads the configuration files and checks them for correctness, but does not load them into Home Assistant. Creates a persistent notification and log entry if errors are found. */

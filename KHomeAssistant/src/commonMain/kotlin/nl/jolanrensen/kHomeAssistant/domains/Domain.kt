@@ -7,6 +7,7 @@ import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.attributes.DefaultAttributes
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
 
 interface Domain<E: BaseEntity<out Any, out BaseAttributes>> {
@@ -28,20 +29,22 @@ interface Domain<E: BaseEntity<out Any, out BaseAttributes>> {
      * For instance, turning on a light would be
      * Light.callService("turn_on", Light.Entity("kitchen"), mapOf("brightness" to 100))
      * */
-    suspend fun callService(serviceName: String, data: Map<String, JsonElement> = mapOf()) =
-            kHomeAssistant()!!.callService(
-                    domain = this,
-                    serviceName = serviceName,
-                    data = data
-            )
+    suspend fun callService(serviceName: String, data: Map<String, JsonElement> = mapOf()): ResultMessage {
+        checkContext()
+        return kHomeAssistant()!!.callService(
+            domain = this,
+            serviceName = serviceName,
+            data = data
+        )
+    }
 
 }
 
 class DomainHasNoEntityException : Exception {
-    constructor()
-    constructor(message: String?)
-    constructor(message: String?, cause: Throwable?)
-    constructor(cause: Throwable?)
+    constructor() : super()
+    constructor(message: String?) : super(message)
+    constructor(message: String?, cause: Throwable?) : super(message, cause)
+    constructor(cause: Throwable?) : super(cause)
 }
 
 /** Create a temporary Domain. Useful for quick service calls. */

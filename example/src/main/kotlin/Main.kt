@@ -58,7 +58,8 @@ fun main() {
 //                    }
 //                },
                 automation("2") {
-                    Light.Entity("batik").updateEntity()
+                    Light["batik"]
+
                 }
             )
         ).run()
