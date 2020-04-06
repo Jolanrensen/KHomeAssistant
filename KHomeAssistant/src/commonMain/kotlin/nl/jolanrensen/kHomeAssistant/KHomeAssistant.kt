@@ -100,7 +100,7 @@ class KHomeAssistant(
     override val kHomeAssistant = { this }
 
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        PrintException.print(e = throwable)
+        PrintException.print("", throwable)
     }
     private val supervisor = SupervisorJob()
     override val coroutineContext = Dispatchers.Default + supervisor + exceptionHandler

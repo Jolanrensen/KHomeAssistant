@@ -1,11 +1,10 @@
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.automation
-import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
+import nl.jolanrensen.kHomeAssistant.entities.onStateChanged
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import kotlin.time.ExperimentalTime
 
@@ -30,12 +29,17 @@ class Test : Automation() {
     }
 }
 
+object Instance {
+    var kHomeAssistant: KHomeAssistant? = null
+}
+
 
 @OptIn(ExperimentalTime::class)
 fun main() {
     runBlocking {
         println("running!")
-        KHomeAssistant(
+
+        val instance = KHomeAssistant(
             host = "home.jolanrensen.nl",
             port = 8123,
             secure = true,
@@ -54,18 +58,17 @@ fun main() {
 //                    }
 //                },
                 automation("2") {
-                    Domain("media_player")["denon_avrx2200w"].apply {
-                        callService("turn_off")
-
-//                        callService(
-//                            "volume_set",
-//                            mapOf("volume_level" to JsonPrimitive(0.25))
-//                        )
+                    // added some sort of test
+                    println("test1")
+                    Light["wall_lamp"].onStateChanged {
+                        println("newState: $it")
                     }
                 }
             )
-        ).run()
-    }
+        )
 
+        Instance.kHomeAssistant = instance
+        instance.run()
+    }
 
 }
