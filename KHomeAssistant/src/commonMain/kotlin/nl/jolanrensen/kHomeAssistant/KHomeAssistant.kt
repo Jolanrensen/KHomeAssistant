@@ -1,5 +1,8 @@
 package nl.jolanrensen.kHomeAssistant
 
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.milliseconds
+import com.soywiz.klock.until
 import io.ktor.client.features.websocket.DefaultClientWebSocketSession
 import io.ktor.client.features.websocket.ws
 import io.ktor.client.features.websocket.wss
@@ -17,6 +20,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import nl.jolanrensen.kHomeAssistant.Clock.fixedRateTimer
 import nl.jolanrensen.kHomeAssistant.WebsocketsHttpClient.httpClient
 import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
@@ -39,42 +43,9 @@ class KHomeAssistant(
     val accessToken: String,
     val secure: Boolean = false,
     val debug: Boolean = false,
-//    val justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations
     val useCache: Boolean = true,
     val automations: Collection<Automation>
 ) : KHomeAssistantContext {
-
-//    constructor(
-//            host: String,
-//            port: Int = 8123,
-//            accessToken: String,
-//            secure: Boolean = false,
-//            debug: Boolean = false,
-//            automations: Collection<Automation>
-//    ) : this(
-//            host = host,
-//            port = port,
-//            accessToken = accessToken,
-//            secure = secure,
-//            debug = debug,
-//            automations = automations.toMutableList()
-//    )
-
-//    constructor(
-//            host: String,
-//            port: Int = 8123,
-//            accessToken: String,
-//            secure: Boolean = false,
-//            debug: Boolean = false,
-//            vararg automations: Automation
-//    ) : this(
-//            host = host,
-//            port = port,
-//            accessToken = accessToken,
-//            secure = secure,
-//            debug = debug,
-//            automations = automations.toMutableList()
-//    )
 
     constructor(
         host: String,
@@ -82,7 +53,6 @@ class KHomeAssistant(
         accessToken: String,
         secure: Boolean = false,
         debug: Boolean = false,
-//        justExecute: Boolean = false, // ignore all listeners, just execute the initialize of all automations
         useCache: Boolean = true,
         automationName: String = "Single Automation",
         automation: suspend Automation.() -> Unit
@@ -92,7 +62,6 @@ class KHomeAssistant(
         accessToken = accessToken,
         secure = secure,
         debug = debug,
-//        justExecute = justExecute,
         useCache = useCache,
         automations = listOf(automation(automationName, automation))
     )
@@ -104,9 +73,6 @@ class KHomeAssistant(
     }
     private val supervisor = SupervisorJob()
     override val coroutineContext = Dispatchers.Default + supervisor + exceptionHandler
-
-
-
 
     private val maxCacheAge = 15.minutes
     private val cache: HashMap<String, StateResult> = hashMapOf()
@@ -135,7 +101,10 @@ class KHomeAssistant(
     }
 
     /** stateListeners["entity_id"] = set of listeners for this entity_id */
-    val stateListeners: HashMap<String, HashSet<suspend (oldState: StateResult, newState: StateResult) -> Unit>> = hashMapOf()
+    val stateListeners: HashMap<String, HashSet<suspend (oldState: StateResult, newState: StateResult) -> Unit>> =
+        hashMapOf()
+
+    val scheduledRepeatedTasks: HashSet<RepeatedTask> = hashSetOf()
 
     private val sendQueue: Channel<suspend DefaultClientWebSocketSession.() -> Unit> = Channel(UNLIMITED)
 
@@ -168,6 +137,7 @@ class KHomeAssistant(
     /** Run KHomeAssistant, this makes the connection, authenticates, initializes and runs the complete HA interaction */
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun run() {
+        println("KHomeAssistant started running at ${DateTime.nowLocal().utc}")
         val block: suspend DefaultClientWebSocketSession.() -> Unit = {
             val ioScope: CoroutineScope = this
             authenticate()
@@ -240,6 +210,68 @@ class KHomeAssistant(
                 }
             }
 
+
+            fixedRateTimer(1000) {
+                val now = DateTime.now()
+                val start = now - now.milliseconds.milliseconds
+                val end = now + (1000 - now.milliseconds).milliseconds
+                for (task in scheduledRepeatedTasks) {
+                    while (task.startingAt < start)
+                        task.startingAt += task.runEvery
+
+                    if (task.startingAt in start until end)
+                        this@KHomeAssistant.launch { task.callback() }
+                }
+            }
+
+
+//            var executionTime = 0.milliseconds
+//            var previousTime = DateTime.now()
+//            while (true) {
+//                delay(1000 - executionTime.millisecondsLong)
+//                executionTime = measureTime {
+//                    val now = DateTime.now()
+//                    val range = previousTime until now
+//                    for (task in scheduledRepeatedTasks) {
+//                        while (task.startingAt < previousTime) {
+//                            task.startingAt += task.runEvery
+//                        }
+//                        if (task.startingAt in range) {
+//                            this@KHomeAssistant.launch {
+//                                task.callback()
+//                            }
+//                        }
+//                    }
+//                    previousTime = now
+//                } + 0.8.milliseconds // Time correction
+//
+//            }
+//            }
+
+//            val scheduler = this@KHomeAssistant.launch {
+//                var executionTime = 0.milliseconds
+//                var previousTime = DateTime.now()
+//                while (true) {
+//                    delay(1000 - executionTime.millisecondsLong)
+//                    executionTime = measureTime {
+//                        val now = DateTime.now()
+//                        val range = previousTime until now
+//                        for (task in scheduledRepeatedTasks) {
+//                            while (task.startingAt < previousTime) {
+//                                task.startingAt += task.runEvery
+//                            }
+//                            if (task.startingAt in range) {
+//                                this@KHomeAssistant.launch {
+//                                    task.callback()
+//                                }
+//                            }
+//                        }
+//                        previousTime = now
+//                    } + 0.8.milliseconds // Time correction
+//
+//                }
+//            }
+
             if (useCache) updateCache()
             registerToEventBus()
 
@@ -249,14 +281,16 @@ class KHomeAssistant(
 
             // cancel if there aren't any listeners and the automations are initialized
             println("All automations are initialized")
-            if (stateListeners.isEmpty()) {
-                println("There are no state listeners, so KHomeAssistant is stopping...")
+            if (stateListeners.isEmpty() && scheduledRepeatedTasks.isEmpty()) {
+                println("There are no state listeners or scheduled tasks so KHomeAssistant is stopping...")
                 receiver.cancelAndJoin()
                 sender.cancelAndJoin()
+//                scheduler.cancelAndJoin()
             } else {
-                println("There are ${stateListeners.size} state listeners, so KHomeAssistant keeps running...")
+                println("There are ${stateListeners.size} state listeners and ${scheduledRepeatedTasks.size} scheduled repeated tasks, so KHomeAssistant keeps running...")
                 receiver.join()
                 sender.join()
+//                scheduler.join()
             }
         }
 
@@ -292,7 +326,7 @@ class KHomeAssistant(
         if (!response.isAuthOk) {
             throw IllegalArgumentException(response.message)
         }
-        println("successfully logged in, connected to HASS instance of version $haVersion")
+        println("Successfully logged in, connected to HASS instance of version $haVersion")
     }
 
     /** Initialize all automations asynchronously */
@@ -329,7 +363,12 @@ class KHomeAssistant(
     }
 
     /** Calls the given service */
-    suspend fun callService(entity: BaseEntity<*, *>, serviceDomain: Domain<*>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
+    suspend fun callService(
+        entity: BaseEntity<*, *>,
+        serviceDomain: Domain<*>,
+        serviceName: String,
+        data: Map<String, JsonElement> = mapOf()
+    ) =
         callService(
             serviceDomain = serviceDomain.domainName,
             serviceName = serviceName,

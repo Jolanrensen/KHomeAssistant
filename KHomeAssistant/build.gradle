@@ -16,7 +16,12 @@ apply plugin: 'maven-publish'
 
 
 kotlin {
-    jvm()
+    jvm {
+        compilations.main.kotlinOptions {
+            // Setup the Kotlin compiler options for the 'main' compilation:
+            jvmTarget = "1.8"
+        }
+    }
     js {
         browser {
         }

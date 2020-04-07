@@ -24,9 +24,9 @@ dependencies {
     implementation "com.soywiz.korlibs.klock:klock-jvm:1.9.1"
 
 
-    implementation "nl.jolanrensen.kHomeAssistant:KHomeAssistant:0.0.2"
+//    implementation "nl.jolanrensen.kHomeAssistant:KHomeAssistant:0.0.2"
 
-//    implementation project(":KHomeAssistant")
+    implementation project(":KHomeAssistant")
 }
 
 mainClassName = 'MainKt'
