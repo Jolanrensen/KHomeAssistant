@@ -1,7 +1,4 @@
-import com.soywiz.klock.DateFormat
-import com.soywiz.klock.DateTime
-import com.soywiz.klock.Time
-import com.soywiz.klock.seconds
+import com.soywiz.klock.*
 import kotlinx.coroutines.runBlocking
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
@@ -64,12 +61,12 @@ fun main() {
 //                },
                 automation("2") {
                     // added some sort of test
-                    println("test1")
+                    println(DateTime(DateTime.EPOCH.date, Time(13)).localUnadjusted)
                     Light["wall_lamp"].onStateChanged {
                         println("newState: $it")
                     }
 
-                    runEvery(1.seconds) {
+                    runEvery(1.seconds * 2) {
                         println("1 second has passed! The time is ${DateTime.now().toString(DateFormat("EEE, dd MMM yyyy HH:mm:ss::SSS z"))}")
                     }
 
@@ -80,8 +77,8 @@ fun main() {
                     val twoSecondsPastLastMidnight = DateTime(
                         date = DateTime.now().date,
                         time = Time(hour = 0, second = 2)
-                    )
-                    runEvery(5.seconds, startingAt = twoSecondsPastLastMidnight) {
+                    ).localUnadjusted
+                    runEvery(5.seconds, alignWith = twoSecondsPastLastMidnight) {
                         println("5 seconds have passed! The time is ${DateTime.now().toString(DateFormat("EEE, dd MMM yyyy HH:mm:ss::SSS z"))}")
                     }
 
