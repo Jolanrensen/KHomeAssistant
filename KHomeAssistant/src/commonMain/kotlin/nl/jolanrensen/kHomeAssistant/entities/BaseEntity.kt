@@ -9,8 +9,11 @@ import nl.jolanrensen.kHomeAssistant.attributes.DefaultAttributes
 import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.HomeAssistant
+import nl.jolanrensen.kHomeAssistant.helper.cast
 import nl.jolanrensen.kHomeAssistant.messages.Context
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
 
 typealias DefaultEntity = BaseEntity<String, DefaultAttributes>
 
@@ -19,16 +22,22 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
     open val name: String,
     open val domain: Domain<out BaseEntity<out StateType, out AttributesType>>
 ) {
+
+    /** Used to get attributes using a delegate. */
+    inline operator fun <reified V: Any?> getValue(
+        thisRef: BaseEntity<*, *>?,
+        property: KProperty<*>
+    ): V? = attributes[property.name]?.cast() // TODO
+
     private var entityExists = false
 
     @Suppress("UNNECESSARY_SAFE_CALL")
     open fun checkEntityExists() {
         if (entityExists) return
         kHomeAssistant?.invoke()?.launch {
-            getState() // throws error if entity does not exist
+            state // throws error if entity does not exist
             entityExists = true
         }
-
     }
 
     open val attributesSerializer: KSerializer<AttributesType>? = null
@@ -43,10 +52,16 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
     /** This method returns the state for this entity in the original String format */
     open fun getStateValue(state: StateType): String? = null
 
-    suspend fun getState(): StateType = kHomeAssistant()!!.getState(this)
+    val state: StateType
+        get() = kHomeAssistant()!!.getState(this)
+    // set() TODO
+
     suspend fun setState(s: StateType): Unit = TODO()
 
-    suspend fun getAttributes(): AttributesType = kHomeAssistant()!!.getAttributes(this, attributesSerializer!!)
+    val attributes: AttributesType
+        get() = kHomeAssistant()!!.getAttributes(this, attributesSerializer!!)
+
+    val friendly_name: String? by this
 
     suspend fun getLastChanged(): String = TODO("last_changed uit State")
     suspend fun getLastUpdated(): String = TODO("last_updated uit State")
@@ -88,6 +103,9 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
         get() = "${domain.domainName}.$name"
 
 }
+
+/** Shorthand for apply, allows for DSL-like behavior on entities. */
+inline operator fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.invoke(callback: E.() -> Unit): E = apply(callback)
 
 fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChangedToNot(
     newState: S,

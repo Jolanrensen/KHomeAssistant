@@ -15,7 +15,7 @@ import nl.jolanrensen.kHomeAssistant.messages.Context
 data class StateResult(
     val entity_id: String,
     var state: String,
-    val attributes: JsonObject,
+    var attributes: JsonObject,
     val last_changed: String, // TODO change to datetime
     val last_updated: String, // TODO change to datetime
     val context: Context

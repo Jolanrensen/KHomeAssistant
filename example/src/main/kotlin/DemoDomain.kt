@@ -77,7 +77,7 @@ object Example : Domain<Example.Entity> {
 
         /** Want to add data? sure! */
         suspend fun exampleEntityServiceCallWithData(someValue: Int? = null, someOtherValue: String? = null) {
-            val attributes = getAttributes()
+            val attributes = attributes
 
             // Don't forget to check the data if you want more redundancy, otherwise just add it to a Map<String, JsonElement> or JsonObject
             val data = hashMapOf<String, JsonElement>().apply {
@@ -135,7 +135,7 @@ object Example : Domain<Example.Entity> {
 
         // Example function that uses the state
         suspend fun isInState1(): Boolean {
-            return getState() == ExampleState.STATE1
+            return state == ExampleState.STATE1
         }
     }
 }

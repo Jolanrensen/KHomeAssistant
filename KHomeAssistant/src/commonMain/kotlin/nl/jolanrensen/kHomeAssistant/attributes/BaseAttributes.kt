@@ -8,6 +8,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.helper.cast
+import kotlin.reflect.KProperty
 
 interface BaseAttributes {
     val friendly_name: String

@@ -15,6 +15,8 @@ open class ToggleEntity<AttributesType : BaseAttributes>(
     domain = domain
 ) {
 
+    /**  */
+
     override fun getStateValue(state: OnOff): String = state.stateValue
 
     override fun parseStateValue(stateValue: String): OnOff? = try {
@@ -34,15 +36,15 @@ open class ToggleEntity<AttributesType : BaseAttributes>(
 
 
     /** HelperFunctions */
-    suspend inline fun isOn() = getState() == OnOff.ON
+    val isOn get() = state == OnOff.ON
 
-    suspend inline fun isOff() = getState() == OnOff.OFF
+    val isOff get() = state == OnOff.OFF
 
-    suspend inline fun isUnavailable() = getState() == OnOff.UNAVAILABLE
+    val isUnavailable get() = state == OnOff.UNAVAILABLE
 }
 
 fun <A : BaseAttributes, E : ToggleEntity<A>> E.onTurnOn(callback: suspend E.() -> Unit) =
-    onStateChangedTo(OnOff.ON,  callback)
+    onStateChangedTo(OnOff.ON, callback)
 
 fun <A : BaseAttributes, E : ToggleEntity<A>> E.onTurnOff(callback: suspend E.() -> Unit) =
     onStateChangedTo(OnOff.OFF, callback)

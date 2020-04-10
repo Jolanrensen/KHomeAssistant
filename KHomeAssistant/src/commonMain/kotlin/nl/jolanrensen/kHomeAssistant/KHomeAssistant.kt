@@ -1,7 +1,6 @@
 package nl.jolanrensen.kHomeAssistant
 
 import com.soywiz.klock.DateTime
-import com.soywiz.klock.milliseconds
 import com.soywiz.klock.until
 import io.ktor.client.features.websocket.DefaultClientWebSocketSession
 import io.ktor.client.features.websocket.ws
@@ -27,6 +26,7 @@ import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.messages.*
+import kotlin.jvm.Volatile
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 import kotlin.time.minutes
@@ -43,7 +43,7 @@ class KHomeAssistant(
     val accessToken: String,
     val secure: Boolean = false,
     val debug: Boolean = false,
-    val useCache: Boolean = true,
+//    val useCache: Boolean = true,
     val automations: Collection<Automation>
 ) : KHomeAssistantContext {
 
@@ -53,7 +53,7 @@ class KHomeAssistant(
         accessToken: String,
         secure: Boolean = false,
         debug: Boolean = false,
-        useCache: Boolean = true,
+//        useCache: Boolean = true,
         automationName: String = "Single Automation",
         automation: suspend Automation.() -> Unit
     ) : this(
@@ -62,7 +62,7 @@ class KHomeAssistant(
         accessToken = accessToken,
         secure = secure,
         debug = debug,
-        useCache = useCache,
+//        useCache = useCache,
         automations = listOf(automation(automationName, automation))
     )
 
@@ -75,7 +75,8 @@ class KHomeAssistant(
     override val coroutineContext = Dispatchers.Default + supervisor + exceptionHandler
 
     private val maxCacheAge = 15.minutes
-    private val cache: HashMap<String, StateResult> = hashMapOf()
+    @Volatile
+    private var cache: HashMap<String, StateResult> = hashMapOf()
     private var cacheAge = TimeSource.Monotonic.markNow()
 
     private suspend fun updateCache() {
@@ -170,7 +171,10 @@ class KHomeAssistant(
                                         val oldState = eventDataStateChanged.old_state
                                         val newState = eventDataStateChanged.new_state
 
-                                        if (useCache) cache[entityID]!!.state = newState.state
+                                        cache[entityID]!!.apply {
+                                            state = newState.state
+                                            attributes = newState.attributes
+                                        }
 
                                         stateListeners[entityID]?.forEach {
                                             this@KHomeAssistant.launch {
@@ -270,7 +274,8 @@ class KHomeAssistant(
 //                }
 //            }
 
-            if (useCache) updateCache()
+//            if (useCache)
+            updateCache()
             registerToEventBus()
 
             initializeAutomations()
@@ -411,43 +416,43 @@ class KHomeAssistant(
             ).also { debugPrintln(it) }
         ).also { debugPrintln(it) }
 
-    suspend fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getAttributes(
+    fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getAttributes(
         entity: EntityType,
         serializer: KSerializer<AttributesType>
     ): AttributesType {
         val attributesValue = try {
-            if (useCache) {
-                if (cacheAge.elapsedNow() > maxCacheAge) updateCache()
-                cache[entity.entityID]!!.attributes
-            } else {
-                val response: FetchStateResponse = sendMessage(FetchStateMessage())
-                val entityJson = response.result!!.first { it.entity_id == entity.entityID }
-
-                debugPrintln("received entity's (${entity.name}) attributes: ${entityJson.attributes}")
-
-                entityJson.attributes
-            }
+//            if (useCache) {
+            if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
+            cache[entity.entityID]!!.attributes
+//            } else {
+//                val response: FetchStateResponse = sendMessage(FetchStateMessage())
+//                val entityJson = response.result!!.first { it.entity_id == entity.entityID }
+//
+//                debugPrintln("received entity's (${entity.name}) attributes: ${entityJson.attributes}")
+//
+//                entityJson.attributes
+//            }
         } catch (e: Exception) {
             throw Exception("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
         }
         return attributesFromJson(attributesValue, serializer)
     }
 
-    suspend fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getState(
+    fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getState(
         entity: EntityType
     ): StateType {
         val stateValue = try {
-            if (useCache) {
-                if (cacheAge.elapsedNow() > maxCacheAge) updateCache()
-                cache[entity.entityID]!!.state
-            } else {
-                val response: FetchStateResponse = sendMessage(FetchStateMessage())
-                val entityJson = response.result!!.first { it.entity_id == entity.entityID }
-
-                debugPrintln("received entity's (${entity.name}) state: ${entityJson.state}")
-
-                entityJson.state
-            }
+//            if (useCache) {
+            if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
+            cache[entity.entityID]!!.state
+//            } else {
+//                val response: FetchStateResponse = sendMessage(FetchStateMessage())
+//                val entityJson = response.result!!.first { it.entity_id == entity.entityID }
+//
+//                debugPrintln("received entity's (${entity.name}) state: ${entityJson.state}")
+//
+//                entityJson.state
+//            }
         } catch (e: Exception) {
             throw Exception("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
         }
