@@ -1,12 +1,9 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonObject
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
-import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
+import nl.jolanrensen.kHomeAssistant.entities.getValue
 
 /**
  * https://www.home-assistant.io/integrations/input_boolean/
@@ -30,24 +27,20 @@ object InputBoolean : Domain<InputBoolean.Entity> {
     class Entity(
         override val kHomeAssistant: () -> KHomeAssistant?,
         override val name: String
-    ) : ToggleEntity<Entity.Attributes>(
+    ) : ToggleEntity(
         kHomeAssistant = kHomeAssistant,
         name = name,
         domain = InputBoolean
     ) {
-        @Serializable
-        data class Attributes(
-            override val friendly_name: String,
-            val editable: Boolean
-        ) : BaseAttributes {
-            override var fullJsonObject = JsonObject(mapOf())
-        }
+        // Attributes
+        // read only
+        val editable: Boolean? by this
 
-        override val attributesSerializer: KSerializer<Attributes> = Attributes.serializer()
     }
 }
 
 /** Access the InputBoolean Domain */
 typealias InputBooleanDomain = InputBoolean
+
 val KHomeAssistantContext.InputBoolean: InputBooleanDomain
     get() = InputBooleanDomain.also { it.kHomeAssistant = kHomeAssistant }

@@ -1,14 +1,16 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
+import nl.jolanrensen.kHomeAssistant.entities.getValue
 import nl.jolanrensen.kHomeAssistant.helper.*
 import kotlin.reflect.KProperty
 
@@ -30,7 +32,7 @@ object Light : Domain<Light.Entity> {
     class Entity(
         override val kHomeAssistant: () -> KHomeAssistant?,
         override val name: String
-    ) : ToggleEntity<Entity.Attributes>(
+    ) : ToggleEntity(
         kHomeAssistant = kHomeAssistant,
         name = name,
         domain = Light // TODO check?
@@ -38,7 +40,7 @@ object Light : Domain<Light.Entity> {
         /** Some attributes can be set using the turn_on command. For those, we define a setter-companion to getValue. */
         @Suppress("UNCHECKED_CAST")
         operator fun <V : Any?> setValue(
-            thisRef: BaseEntity<*, *>?,
+            thisRef: BaseEntity<*>?,
             property: KProperty<*>,
             value: V
         ) {
@@ -72,65 +74,82 @@ object Light : Domain<Light.Entity> {
         var profile: String
             @Deprecated("'profile' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'profile' is write only")
-            set(value) { runBlocking { turnOnWithData(profile = value) } }
+            set(value) {
+                runBlocking { turnOnWithData(profile = value) }
+            }
 
         var color_temp: Int
             @Deprecated("'color_temp' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'color_temp' is write only")
-            set(value) { runBlocking { turnOnWithData(color_temp = value) } }
+            set(value) {
+                runBlocking { turnOnWithData(color_temp = value) }
+            }
 
         var kelvin: Int
             @Deprecated("'kelvin' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'kelvin' is write only")
-            set(value) { runBlocking { turnOnWithData(kelvin = value) } }
+            set(value) {
+                runBlocking { turnOnWithData(kelvin = value) }
+            }
 
         var color_name: String
             @Deprecated("'color_name' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'color_name' is write only")
-            set(value) { runBlocking { turnOnWithData(color_name = value) } }
+            set(value) {
+                runBlocking { turnOnWithData(color_name = value) }
+            }
 
         var brightness_pct: Float
             @Deprecated("'brightness_pct' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_pct' is write only")
-            set(value) { runBlocking { turnOnWithData(brightness_pct = value) } }
+            set(value) {
+                runBlocking { turnOnWithData(brightness_pct = value) }
+            }
 
         var brightness_step: Float
             @Deprecated("'brightness_step' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_step' is write only")
-            set(value) { runBlocking { turnOnWithData(brightness_step = value) } }
+            set(value) {
+                runBlocking { turnOnWithData(brightness_step = value) }
+            }
 
         var brightness_step_pct: Float
             @Deprecated("'brightness_step_pct' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_step_pct' is write only")
-            set(value) { runBlocking { turnOnWithData(brightness_step_pct = value) } }
+            set(value) {
+                runBlocking { turnOnWithData(brightness_step_pct = value) }
+            }
 
         var flash: Flash
             @Deprecated("'flash' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'flash' is write only")
-            set(value) { runBlocking { turnOnWithData(flash = value) } }
+            set(value) {
+                runBlocking { turnOnWithData(flash = value) }
+            }
 
         var effect: String
             @Deprecated("'effect' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'effect' is write only")
-            set(value) { runBlocking { turnOnWithData(effect = value) } }
+            set(value) {
+                runBlocking { turnOnWithData(effect = value) }
+            }
 
-        @Serializable
-        data class Attributes(
-            override val friendly_name: String,
-            val min_mireds: Int? = null,
-            val max_mireds: Int? = null,
-            val effect_list: List<String>? = null,
-            val brightness: Int? = null,
-            val hs_color: HSColor? = null,
-            val rgb_color: RGBColor? = null,
-            val xy_color: XYColor? = null,
-            val white_value: Int? = null,
-            val supported_features: Int
-        ) : BaseAttributes {
-            override var fullJsonObject = JsonObject(mapOf())
-        }
+//        @Serializable
+//        data class Attributes(
+//            override val friendly_name: String,
+//            val min_mireds: Int? = null,
+//            val max_mireds: Int? = null,
+//            val effect_list: List<String>? = null,
+//            val brightness: Int? = null,
+//            val hs_color: HSColor? = null,
+//            val rgb_color: RGBColor? = null,
+//            val xy_color: XYColor? = null,
+//            val white_value: Int? = null,
+//            val supported_features: Int
+//        ) : BaseAttributes {
+//            override var fullJsonObject = JsonObject(mapOf())
+//        }
 
-        override val attributesSerializer: KSerializer<Attributes> = Attributes.serializer()
 
         enum class Flash(val value: String) {
             SHORT("short"), LONG("long")
@@ -159,7 +178,6 @@ object Light : Domain<Light.Entity> {
             init {
                 runBlocking {
                     // First check input
-                    val attributes = attributes
                     transition?.let {
                         if (it < 0)
                             throw IllegalArgumentException("incorrect transition $it")
@@ -183,9 +201,9 @@ object Light : Domain<Light.Entity> {
                             throw IllegalArgumentException("incorrect white_value $it")
                     }
                     color_temp?.let {
-                        if (attributes.min_mireds == null || attributes.max_mireds == null)
+                        if (min_mireds == null || max_mireds == null)
                             throw IllegalArgumentException("mireds not supported for this device")
-                        if (it !in attributes.min_mireds..attributes.max_mireds)
+                        if (it !in min_mireds!!..max_mireds!!)
                             throw IllegalArgumentException("incorrect color_temp $it")
                     }
                     kelvin?.let {
@@ -214,7 +232,7 @@ object Light : Domain<Light.Entity> {
                     flash?.let {
                     }
                     effect?.let {
-                        if (attributes.effect_list == null || it !in attributes.effect_list)
+                        if (effect_list == null || it !in effect_list!!)
                             throw IllegalArgumentException("incorrect effect $it")
                     }
 

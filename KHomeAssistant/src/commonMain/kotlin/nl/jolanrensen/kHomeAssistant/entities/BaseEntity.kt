@@ -1,34 +1,23 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
 import kotlinx.coroutines.launch
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
-import nl.jolanrensen.kHomeAssistant.attributes.DefaultAttributes
-import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.HomeAssistant
 import nl.jolanrensen.kHomeAssistant.helper.cast
 import nl.jolanrensen.kHomeAssistant.messages.Context
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-typealias DefaultEntity = BaseEntity<String, DefaultAttributes>
+typealias DefaultEntity = BaseEntity<String>
 
-open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
+open class BaseEntity<StateType : Any>(
     open val kHomeAssistant: () -> KHomeAssistant? = { null },
     open val name: String,
-    open val domain: Domain<out BaseEntity<out StateType, out AttributesType>>
+    open val domain: Domain<out BaseEntity<out StateType>>
 ) {
-
-    /** Used to get attributes using a delegate. */
-    inline operator fun <reified V: Any?> getValue(
-        thisRef: BaseEntity<*, *>?,
-        property: KProperty<*>
-    ): V? = attributes[property.name]?.cast() // TODO
-
     private var entityExists = false
 
     @Suppress("UNNECESSARY_SAFE_CALL")
@@ -39,8 +28,6 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
             entityExists = true
         }
     }
-
-    open val attributesSerializer: KSerializer<AttributesType>? = null
 
     init {
         this.checkEntityExists()
@@ -58,8 +45,8 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
 
     suspend fun setState(s: StateType): Unit = TODO()
 
-    val attributes: AttributesType
-        get() = kHomeAssistant()!!.getAttributes(this, attributesSerializer!!)
+    val attributes: JsonObject
+        get() = kHomeAssistant()!!.getAttributes(this)
 
     val friendly_name: String? by this
 
@@ -104,10 +91,16 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
 
 }
 
-/** Shorthand for apply, allows for DSL-like behavior on entities. */
-inline operator fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.invoke(callback: E.() -> Unit): E = apply(callback)
+/** Used to get attributes using a delegate. */
+inline operator fun <S : Any, E : BaseEntity<S>, reified V : Any?> E.getValue(
+    thisRef: BaseEntity<*>?,
+    property: KProperty<*>
+): V? = attributes[property.name]?.cast()
 
-fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChangedToNot(
+/** Shorthand for apply, allows for DSL-like behavior on entities. */
+inline operator fun <S : Any, E : BaseEntity<S>> E.invoke(callback: E.() -> Unit): E = apply(callback)
+
+fun <S : Any, E : BaseEntity<S>> E.onStateChangedToNot(
     newState: S,
     callback: suspend E.() -> Unit
 ): E {
@@ -118,7 +111,7 @@ fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChangedToNot(
     return this
 }
 
-fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChangedTo(
+fun <S : Any, E : BaseEntity<S>> E.onStateChangedTo(
     newState: S,
     callback: suspend E.() -> Unit
 ): E {
@@ -129,7 +122,7 @@ fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChangedTo(
     return this
 }
 
-fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChanged(
+fun <S : Any, E : BaseEntity<S>> E.onStateChanged(
     callback: suspend E.(newState: S?) -> Unit
 ): E {
     checkEntityExists()
@@ -142,15 +135,15 @@ fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChanged(
     return this
 }
 
-fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onAttributesChanged(
-    callback: suspend E.(newAttributes: A?) -> Unit
+fun <S : Any, E : BaseEntity<S>> E.onAttributesChanged(
+    callback: suspend E.(newAttributes: JsonObject?) -> Unit
 ): E {
     checkEntityExists()
     kHomeAssistant()!!.stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add { oldState, newState ->
             if (oldState.attributes != newState.attributes)
-                callback(attributesFromJson(newState.attributes, attributesSerializer!!))
+                callback(newState.attributes)
         }
     return this
 }

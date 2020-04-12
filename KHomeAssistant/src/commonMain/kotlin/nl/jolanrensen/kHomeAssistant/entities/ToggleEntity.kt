@@ -2,14 +2,13 @@ package nl.jolanrensen.kHomeAssistant.entities
 
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 
-open class ToggleEntity<AttributesType : BaseAttributes>(
+open class ToggleEntity(
     override val kHomeAssistant: () -> KHomeAssistant?,
     override val name: String,
-    override val domain: Domain<out BaseEntity<OnOff, out AttributesType>>
-) : BaseEntity<OnOff, AttributesType>(
+    override val domain: Domain<out BaseEntity<OnOff>>
+) : BaseEntity<OnOff>(
     kHomeAssistant = kHomeAssistant,
     name = name,
     domain = domain
@@ -43,11 +42,11 @@ open class ToggleEntity<AttributesType : BaseAttributes>(
     val isUnavailable get() = state == OnOff.UNAVAILABLE
 }
 
-fun <A : BaseAttributes, E : ToggleEntity<A>> E.onTurnOn(callback: suspend E.() -> Unit) =
+fun <E : ToggleEntity> E.onTurnOn(callback: suspend E.() -> Unit) =
     onStateChangedTo(OnOff.ON, callback)
 
-fun <A : BaseAttributes, E : ToggleEntity<A>> E.onTurnOff(callback: suspend E.() -> Unit) =
+fun <E : ToggleEntity> E.onTurnOff(callback: suspend E.() -> Unit) =
     onStateChangedTo(OnOff.OFF, callback)
 
-fun <A : BaseAttributes, E : ToggleEntity<A>> E.onUnavailable(callback: suspend E.() -> Unit) =
+fun <E : ToggleEntity> E.onUnavailable(callback: suspend E.() -> Unit) =
     onStateChangedTo(OnOff.UNAVAILABLE, callback)

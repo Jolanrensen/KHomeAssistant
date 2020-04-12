@@ -1,12 +1,14 @@
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
-import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.entities.getValue
 
 // The state can be any type, including enums. Just make sure to implement the getStateValue() and parseStateValue() in your Entity class.
 enum class ExampleState(val stateValue: String) {
@@ -36,25 +38,19 @@ object Example : Domain<Example.Entity> {
     class Entity(
         override val kHomeAssistant: () -> KHomeAssistant? = { null },
         override val name: String
-    ) : BaseEntity<ExampleState, Entity.Attributes>(
+    ) : BaseEntity<ExampleState>(
         kHomeAssistant = kHomeAssistant,
         name = name,
         domain = Example
     ) {
         /** These are the attributes that get parsed from Home Assistant for your entity when calling getAttributes()
          * The names must thus exactly match those of Home Assistant. */
-        @Serializable
-        data class Attributes(
-            override val friendly_name: String = "",
-            val test_attribute: Int? = null,
-            val some_other_attribute: List<String>? = null
-            /** Add attributes here like `val attribute: Type? = null` */
-        ) : BaseAttributes {
-            override var fullJsonObject: JsonObject = JsonObject(mapOf())
-        }
+        // Attributes
+        // read only
+        val test_attribute: Int? by this
+        val some_other_attribute: List<String>? by this
 
-        /** This is used to deserialize your attributes from Home Assistant */
-        override val attributesSerializer: KSerializer<Attributes> = Attributes.serializer()
+        // TODO add examples for read/write and write only attributes
 
         /** Define how to convert your state type into a Home Assistant string state */
         override fun getStateValue(state: ExampleState): String = state.stateValue
@@ -94,7 +90,7 @@ object Example : Domain<Example.Entity> {
 
                     // you can also perform checks with the attributes
                     // for instance checking whether some string is supported by the device
-                    if (it.isEmpty() || it !in attributes.some_other_attribute!!)
+                    if (it.isEmpty() || it !in some_other_attribute!!)
                         throw IllegalArgumentException("incorrect someOtherValue $it")
                     this["some_other_value"] = JsonPrimitive(it)
                 }

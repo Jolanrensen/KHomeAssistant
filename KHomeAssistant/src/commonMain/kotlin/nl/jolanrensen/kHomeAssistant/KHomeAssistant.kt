@@ -19,10 +19,9 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import nl.jolanrensen.kHomeAssistant.Clock.cancelAllTimers
 import nl.jolanrensen.kHomeAssistant.Clock.fixedRateTimer
 import nl.jolanrensen.kHomeAssistant.WebsocketsHttpClient.httpClient
-import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
-import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.messages.*
@@ -286,14 +285,13 @@ class KHomeAssistant(
             println("All automations are initialized")
             if (stateListeners.isEmpty() && scheduledRepeatedTasks.isEmpty()) {
                 println("There are no state listeners or scheduled tasks so KHomeAssistant is stopping...")
+                cancelAllTimers()
                 receiver.cancelAndJoin()
                 sender.cancelAndJoin()
-//                scheduler.cancelAndJoin()
             } else {
                 println("There are ${stateListeners.size} state listeners and ${scheduledRepeatedTasks.size} scheduled repeated tasks, so KHomeAssistant keeps running...")
                 receiver.join()
                 sender.join()
-//                scheduler.join()
             }
         }
 
@@ -367,7 +365,7 @@ class KHomeAssistant(
 
     /** Calls the given service */
     suspend fun callService(
-        entity: BaseEntity<*, *>,
+        entity: BaseEntity<*>,
         serviceDomain: Domain<*>,
         serviceName: String,
         data: Map<String, JsonElement> = mapOf()
@@ -389,7 +387,7 @@ class KHomeAssistant(
         )
 
     /** Calls the given service */
-    suspend fun callService(entity: BaseEntity<*, *>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
+    suspend fun callService(entity: BaseEntity<*>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
         callService(
             serviceDomain = entity.domain.domainName,
             entityID = entity.entityID,
@@ -416,29 +414,19 @@ class KHomeAssistant(
             ).also { debugPrintln(it) }
         ).also { debugPrintln(it) }
 
-    fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getAttributes(
-        entity: EntityType,
-        serializer: KSerializer<AttributesType>
-    ): AttributesType {
+    fun <StateType : Any, EntityType : BaseEntity<StateType>> getAttributes(
+        entity: EntityType
+    ): JsonObject {
         val attributesValue = try {
-//            if (useCache) {
             if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
             cache[entity.entityID]!!.attributes
-//            } else {
-//                val response: FetchStateResponse = sendMessage(FetchStateMessage())
-//                val entityJson = response.result!!.first { it.entity_id == entity.entityID }
-//
-//                debugPrintln("received entity's (${entity.name}) attributes: ${entityJson.attributes}")
-//
-//                entityJson.attributes
-//            }
         } catch (e: Exception) {
             throw Exception("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
         }
-        return attributesFromJson(attributesValue, serializer)
+        return attributesValue
     }
 
-    fun <StateType : Any, AttributesType : BaseAttributes, EntityType : BaseEntity<StateType, AttributesType>> getState(
+    fun <StateType : Any, EntityType : BaseEntity<StateType>> getState(
         entity: EntityType
     ): StateType {
         val stateValue = try {

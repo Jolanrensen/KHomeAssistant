@@ -46,13 +46,18 @@ fun main() {
             automations = listOf(
                 automation("1") {
 
-                    Light["batik"] {
+                    val batik = Light["batik"] {
 //                        white_value = 0
 //                        color_name = "green"
+//
+//
 //                        brightness_pct = 50f
-
-
+//                        brightness = 245
+//
+//                        val b = brightness
                     }
+
+
 
                 }
 //                automation("2") {
