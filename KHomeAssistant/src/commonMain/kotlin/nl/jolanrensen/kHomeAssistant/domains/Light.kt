@@ -27,6 +27,8 @@ object Light : Domain<Light.Entity> {
             Make sure to use the helper function 'Light.' from a KHomeAssistantContext instead of using Light directly.""".trimMargin()
     }
 
+
+
     override fun Entity(name: String): Entity = Entity(kHomeAssistant = kHomeAssistant, name = name)
 
     class Entity(
@@ -134,27 +136,9 @@ object Light : Domain<Light.Entity> {
                 runBlocking { turnOnWithData(effect = value) }
             }
 
-//        @Serializable
-//        data class Attributes(
-//            override val friendly_name: String,
-//            val min_mireds: Int? = null,
-//            val max_mireds: Int? = null,
-//            val effect_list: List<String>? = null,
-//            val brightness: Int? = null,
-//            val hs_color: HSColor? = null,
-//            val rgb_color: RGBColor? = null,
-//            val xy_color: XYColor? = null,
-//            val white_value: Int? = null,
-//            val supported_features: Int
-//        ) : BaseAttributes {
-//            override var fullJsonObject = JsonObject(mapOf())
-//        }
-
-
         enum class Flash(val value: String) {
             SHORT("short"), LONG("long")
         }
-
 
         @Serializable
         inner class turnOnWithData(

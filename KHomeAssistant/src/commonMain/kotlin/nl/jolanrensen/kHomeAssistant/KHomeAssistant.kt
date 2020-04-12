@@ -217,10 +217,11 @@ class KHomeAssistant(
             fixedRateTimer(1000) {
                 val now = DateTime.now()
                 for (task in scheduledRepeatedTasks) {
-                    while (task.alignWith < now.startOfMinute)
+                    while (task.alignWith < now.startOfSecond)
                         task.alignWith += task.runEvery
 
-                    if (task.alignWith in now.startOfMinute until now.endOfMinute)
+                    println("align with: ${task.alignWith.local}")
+                    if (task.alignWith in now.startOfSecond until now.endOfSecond)
                         this@KHomeAssistant.launch { task.callback() }
                 }
             }

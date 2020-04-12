@@ -1,3 +1,6 @@
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.DateTimeTz
+import com.soywiz.klock.Time
 import kotlinx.coroutines.runBlocking
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
@@ -6,6 +9,9 @@ import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.entities.invoke
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
+import nl.jolanrensen.kHomeAssistant.entities.turnOff
+import nl.jolanrensen.kHomeAssistant.entities.turnOn
+import nl.jolanrensen.kHomeAssistant.runEveryDayAt
 
 
 class Test : Automation() {
@@ -19,9 +25,9 @@ class Test : Automation() {
     override suspend fun initialize() {
         Switch.Entity("bedroom_switch").onTurnOn {
             if (allLights.any { it.isOn })
-                allLights.forEach { it.turnOff() }
+                allLights.turnOff()
             else
-                allLights.forEach { it.turnOn() }
+                allLights.turnOn()
 
             turnOff()
         }
@@ -41,20 +47,17 @@ fun main() {
             host = "home.jolanrensen.nl",
             port = 8123,
             secure = true,
-            debug = true,
+            debug = false,
             accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
             automations = listOf(
                 automation("1") {
 
-                    val batik = Light["batik"] {
-//                        white_value = 0
-//                        color_name = "green"
-//
-//
-//                        brightness_pct = 50f
-//                        brightness = 245
-//
-//                        val b = brightness
+                    println(DateTime.EPOCH.local)
+
+                    val time = Time(hour = 17, second = 0, minute = 0)
+
+                    runEveryDayAt(Time(hour = 17, second = 0, minute = 0)) {
+                        println("hoi")
                     }
 
 

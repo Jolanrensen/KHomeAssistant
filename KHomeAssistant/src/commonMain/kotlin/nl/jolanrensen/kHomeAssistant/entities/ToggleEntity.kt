@@ -13,9 +13,6 @@ open class ToggleEntity(
     name = name,
     domain = domain
 ) {
-
-    /**  */
-
     override fun getStateValue(state: OnOff): String = state.stateValue
 
     override fun parseStateValue(stateValue: String): OnOff? = try {
@@ -50,3 +47,7 @@ fun <E : ToggleEntity> E.onTurnOff(callback: suspend E.() -> Unit) =
 
 fun <E : ToggleEntity> E.onUnavailable(callback: suspend E.() -> Unit) =
     onStateChangedTo(OnOff.UNAVAILABLE, callback)
+
+suspend inline fun <E: ToggleEntity> Iterable<E>.turnOn() = forEach { it.turnOn() }
+suspend inline fun <E: ToggleEntity> Iterable<E>.turnOff() = forEach { it.turnOff() }
+suspend inline fun <E: ToggleEntity> Iterable<E>.toggle() = forEach { it.toggle() }
