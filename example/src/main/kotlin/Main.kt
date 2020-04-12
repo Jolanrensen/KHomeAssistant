@@ -6,7 +6,6 @@ import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.entities.invoke
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
-import nl.jolanrensen.kHomeAssistant.helper.RGBColor
 
 
 class Test : Automation() {
@@ -46,18 +45,13 @@ fun main() {
             accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
             automations = listOf(
                 automation("1") {
-                    val batik = Light.Entity("batik").onTurnOn { }
+
+                    Light["batik"] {
+//                        white_value = 0
+//                        color_name = "green"
+//                        brightness_pct = 50f
 
 
-                    batik {
-//                        turnOff()
-//                        turnOnWithData(brightness = 2)
-//                        println(brightness)
-                        while (true) {
-                            white_value = white_value!! + 1
-                            if (white_value!! > 240) white_value = 0
-                        }
-                        rgb_color = RGBColor(255, 0, 0)
                     }
 
                 }
