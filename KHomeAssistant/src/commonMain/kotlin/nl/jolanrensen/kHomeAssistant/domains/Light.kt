@@ -5,6 +5,7 @@ import kotlinx.serialization.json.*
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
+import nl.jolanrensen.kHomeAssistant.domains.Light.SupportedFeatures.*
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 import nl.jolanrensen.kHomeAssistant.entities.getValue
@@ -41,13 +42,14 @@ object Light : Domain<Light.Entity> {
 
     override fun Entity(name: String): Entity = Entity(kHomeAssistant = kHomeAssistant, name = name)
 
+    @OptIn(ExperimentalStdlibApi::class)
     class Entity(
         override val kHomeAssistant: () -> KHomeAssistant?,
         override val name: String
     ) : ToggleEntity(
         kHomeAssistant = kHomeAssistant,
         name = name,
-        domain = Light // TODO check?
+        domain = Light
     ) {
         /** Some attributes can be set using the turn_on command. For those, we define a setter-companion to getValue. */
         @Suppress("UNCHECKED_CAST")
@@ -68,19 +70,24 @@ object Light : Domain<Light.Entity> {
             }
         }
 
-
-        // Attributes
+        // ----- Attributes -----
         // read only
+
+        /** Minimum color temperature in mireds. */
         val min_mireds: Int? by this
+
+        /** Maximum color temperature in mireds. */
         val max_mireds: Int? by this
+
+        /** List of supported effects. */
         val effect_list: List<String>? by this
 
-        @OptIn(ExperimentalStdlibApi::class)
+        /** Set of supported features. */
         val supported_features: Set<SupportedFeatures>
             get() = buildSet {
-                val features = attributes["supported_features"]!!.int
+                val supported_features: Int? by this@Entity
                 SupportedFeatures.values().forEach {
-                    if (it.value and features == it.value)
+                    if (it.value and supported_features!! == it.value)
                         add(it)
                 }
             }
@@ -177,6 +184,11 @@ object Light : Domain<Light.Entity> {
                 runBlocking { turnOnWithData(effect = value) }
             }
 
+        private fun checkIfSupported(supportedFeature: SupportedFeatures) {
+            if (supportedFeature !in supported_features)
+                throw UnsupportedFeatureException("Unfortunately the light $name does not support ${supportedFeature.name}.")
+        }
+
         @Serializable
         inner class turnOnWithData(
             val transition: Int? = null,
@@ -193,66 +205,80 @@ object Light : Domain<Light.Entity> {
             val brightness_step: Float? = null,
             val brightness_step_pct: Float? = null,
             val flash: Flash? = null,
-            val effect: String? = null // tODO add result callback, todo add checks for supported features
+            val effect: String? = null // tODO add result callback
         ) {
 
             init {
                 runBlocking {
                     // First check input
                     transition?.let {
+                        checkIfSupported(SUPPORT_TRANSITION)
                         if (it < 0)
                             throw IllegalArgumentException("incorrect transition $it")
                     }
                     profile?.let {
                     }
                     hs_color?.let {
+                        checkIfSupported(SUPPORT_COLOR)
                         if (it.isEmpty() || it.size > 2 || it.h !in 0f..360f || it.s !in 0f..100f)
                             throw IllegalArgumentException("incorrect hs_color $it")
                     }
                     xy_color?.let {
+                        checkIfSupported(SUPPORT_COLOR)
                         if (it.isEmpty() || it.size > 2)
                             throw IllegalArgumentException("incorrect xy_color $it")
                     }
                     rgb_color?.let {
+                        checkIfSupported(SUPPORT_COLOR)
                         if (it.isEmpty() || it.size > 3 || it.any { it !in 0..255 })
                             throw IllegalArgumentException("incorrect rgb_color $it")
                     }
                     white_value?.let {
+                        checkIfSupported(SUPPORT_WHITE_VALUE)
                         if (it !in 0..255)
                             throw IllegalArgumentException("incorrect white_value $it")
                     }
                     color_temp?.let {
+                        checkIfSupported(SUPPORT_COLOR_TEMP)
                         if (min_mireds == null || max_mireds == null)
                             throw IllegalArgumentException("mireds not supported for this device")
                         if (it !in min_mireds!!..max_mireds!!)
                             throw IllegalArgumentException("incorrect color_temp $it")
                     }
                     kelvin?.let {
+                        checkIfSupported(SUPPORT_COLOR_TEMP)
                         if (it < 0)
                             throw IllegalArgumentException("incorrect kelvin $it")
                     }
                     color_name?.let {
+                        checkIfSupported(SUPPORT_COLOR)
                         // TODO check color name https://www.w3.org/TR/css-color-3/#svg-color
                     }
                     brightness?.let {
+                        checkIfSupported(SUPPORT_BRIGHTNESS)
                         if (it !in 0..255)
                             throw IllegalArgumentException("incorrect brightness $it")
                     }
                     brightness_pct?.let {
+                        checkIfSupported(SUPPORT_BRIGHTNESS)
                         if (it !in 0f..100f)
                             throw IllegalArgumentException("incorrect brightness_pct $it")
                     }
                     brightness_step?.let {
+                        checkIfSupported(SUPPORT_BRIGHTNESS)
                         if (it !in -255f..255f)
                             throw IllegalArgumentException("incorrect brightness_step $it")
                     }
                     brightness_step_pct?.let {
+                        checkIfSupported(SUPPORT_BRIGHTNESS)
                         if (it !in -100f..100f)
                             throw IllegalArgumentException("incorrect brightness_step_pct $it")
                     }
                     flash?.let {
+                        checkIfSupported(SUPPORT_FLASH)
                     }
                     effect?.let {
+                        checkIfSupported(SUPPORT_EFFECT)
                         if (effect_list == null || it !in effect_list!!)
                             throw IllegalArgumentException("incorrect effect $it")
                     }
@@ -283,12 +309,12 @@ object Light : Domain<Light.Entity> {
                 }
             )
     }
-
 }
 
-/** Access the Light Domain */
+
 typealias LightDomain = Light
 
+/** Access the Light Domain */
 val KHomeAssistantContext.Light: LightDomain
     get() = LightDomain.also { it.kHomeAssistant = kHomeAssistant }
 
