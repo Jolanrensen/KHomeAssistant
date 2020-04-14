@@ -1,17 +1,13 @@
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.DateTimeTz
 import com.soywiz.klock.Time
+import com.soywiz.klock.minutes
 import kotlinx.coroutines.runBlocking
-import nl.jolanrensen.kHomeAssistant.Automation
-import nl.jolanrensen.kHomeAssistant.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.automation
+import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
-import nl.jolanrensen.kHomeAssistant.entities.invoke
-import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
-import nl.jolanrensen.kHomeAssistant.entities.turnOff
-import nl.jolanrensen.kHomeAssistant.entities.turnOn
-import nl.jolanrensen.kHomeAssistant.runEveryDayAt
+import nl.jolanrensen.kHomeAssistant.entities.*
+import nl.jolanrensen.kHomeAssistant.helper.RGBColor
 
 
 class Test : Automation() {
@@ -56,9 +52,16 @@ fun main() {
 
                     val time = Time(hour = 17, second = 0, minute = 0)
 
-                    runEveryDayAt(Time(hour = 17, second = 0, minute = 0)) {
-                        println("hoi")
+//                    runEveryDayAt(hour = 17, second = 0, minute = 0) {
+//                        println("hoi")
+//                    }
+
+                    Light["wall_lamp", "batik", "piano", "table_lamp", "dream_world"] {
+                        println("supported features of $friendly_name is $supported_features")
                     }
+
+
+
 
 
 

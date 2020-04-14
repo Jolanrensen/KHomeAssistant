@@ -2,6 +2,13 @@ package nl.jolanrensen.kHomeAssistant
 
 import com.soywiz.klock.*
 
+
+// TODO
+//fun KHomeAssistantContext.runEveryWeekAt(dayOfWeek: DayOfWeek, time: Time, callback: suspend () -> Unit): Task {
+//    val offsetAtEpoch = DateTime.EPOCH.localUnadjusted.offset.time
+//    return runEvery(1.weeks, DateTime(DateTime.EPOCH.date, time).localUnadjusted - offsetAtEpoch, callback)
+//}
+
 fun KHomeAssistantContext.runEveryDayAt(
     hour: Int,
     minute: Int = 0,
@@ -14,6 +21,11 @@ fun KHomeAssistantContext.runEveryDayAt(time: Time, callback: suspend () -> Unit
     val offsetAtEpoch = DateTime.EPOCH.localUnadjusted.offset.time
     return runEvery(1.days, DateTime(DateTime.EPOCH.date, time).localUnadjusted - offsetAtEpoch, callback)
 }
+
+fun KHomeAssistantContext.runEveryWeek(
+    alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
+    callback: suspend () -> Unit
+) = runEvery(1.weeks, alignWith, callback)
 
 fun KHomeAssistantContext.runEveryDay(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
@@ -32,11 +44,11 @@ fun KHomeAssistantContext.runEveryMinute(
 ) = runEvery(1.minutes, alignWith, callback)
 
 fun KHomeAssistantContext.runEvery(
-    runEvery: TimeSpan,
+    timeSpan: TimeSpan,
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ): Task {
-    val task = RepeatedTask(runEvery, alignWith.utc, callback)
+    val task = RepeatedTask(timeSpan, alignWith.utc, callback)
     kHomeAssistant()!!.scheduledRepeatedTasks += task
 
     return object : Task {

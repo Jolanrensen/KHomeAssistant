@@ -13,13 +13,19 @@ interface Domain<E: BaseEntity<out Any>> {
 
     var kHomeAssistant: () -> KHomeAssistant?
 
-    /** Helper function to create an Entity in a domain, alternative to YourDomainEntity("name") */
+    /** Function to create an Entity in a domain */
     fun Entity(name: String): E
+
+    /** Helper function to create multiple entities at once in a domain */
+    fun Entities(vararg names: String): List<E> = names.map { Entity(it) }
 
     // TODO maybe allow a way to make an anonymous toggle entity
 
     /** Type YourDomain["entity"] instead of YourDomain.Entity("entity") */
     operator fun get(name: String): E = Entity(name)
+
+    /** Type YourDomain["entity", "other_entity"] instead of YourDomain.Entities("entity", "other_entity") */
+    operator fun get(name: String, vararg names: String): List<E> = Entities(name, *names)
 
     /** Helper function to check whether the context is present */
     fun checkContext()

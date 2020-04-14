@@ -100,6 +100,10 @@ inline operator fun <S : Any, E : BaseEntity<S>, reified V : Any?> E.getValue(
 /** Shorthand for apply, allows for DSL-like behavior on entities. */
 inline operator fun <S : Any, E : BaseEntity<S>> E.invoke(callback: E.() -> Unit): E = apply(callback)
 
+/** Shorthand for apply for each, allows for DSL-like behavior on collections of entities. */
+inline operator fun <S : Any, E : BaseEntity<S>> Iterable<E>.invoke(callback: E.() -> Unit) = forEach(callback)
+
+
 fun <S : Any, E : BaseEntity<S>> E.onStateChangedToNot(
     newState: S,
     callback: suspend E.() -> Unit

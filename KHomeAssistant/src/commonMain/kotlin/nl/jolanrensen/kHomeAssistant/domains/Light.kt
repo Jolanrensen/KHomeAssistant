@@ -1,10 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.*
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
@@ -28,6 +25,19 @@ object Light : Domain<Light.Entity> {
     }
 
 
+    enum class Flash(val value: String) {
+        SHORT("short"), LONG("long")
+    }
+
+    enum class SupportedFeatures(val value: Int) {
+        SUPPORT_BRIGHTNESS(1),
+        SUPPORT_COLOR_TEMP(2),
+        SUPPORT_EFFECT(4),
+        SUPPORT_FLASH(8),
+        SUPPORT_COLOR(16),
+        SUPPORT_TRANSITION(32),
+        SUPPORT_WHITE_VALUE(128)
+    }
 
     override fun Entity(name: String): Entity = Entity(kHomeAssistant = kHomeAssistant, name = name)
 
@@ -58,21 +68,44 @@ object Light : Domain<Light.Entity> {
             }
         }
 
+
         // Attributes
         // read only
         val min_mireds: Int? by this
         val max_mireds: Int? by this
         val effect_list: List<String>? by this
-        val supported_features: Int? by this
+
+        @OptIn(ExperimentalStdlibApi::class)
+        val supported_features: Set<SupportedFeatures>
+            get() = buildSet {
+                val features = attributes["supported_features"]!!.int
+                SupportedFeatures.values().forEach {
+                    if (it.value and features == it.value)
+                        add(it)
+                }
+            }
 
         // read / write
+
+        /** Integer between 0 and 255 for how bright the light should be, where 0 means the light is off, 1 is the minimum brightness and 255 is the maximum brightness supported by the light. */
         var brightness: Int? by this
+
+        /** An HSColor containing two floats representing the hue and saturation of the color you want the light to be. Hue is scaled 0-360, and saturation is scaled 0-100. */
         var hs_color: HSColor? by this
+
+        /** An RGBColor containing three integers between 0 and 255 representing the RGB color you want the light to be. Note that the specified RGB value will not change the light brightness, only the color. */
         var rgb_color: RGBColor? by this
+
+        /** An XYColor containing two floats representing the xy color you want the light to be. */
         var xy_color: XYColor? by this
+
+        /** Integer between 0 and 255 for how bright a dedicated white LED should be. */
         var white_value: Int? by this
 
+
         // write only
+
+        /** String with the name of one of the built-in profiles (relax, energize, concentrate, reading) or one of the custom profiles defined in light_profiles.csv in the current working directory. Light profiles define an xy color and a brightness. If a profile is given and a brightness then the profile brightness will be overwritten. */
         var profile: String
             @Deprecated("'profile' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'profile' is write only")
@@ -80,6 +113,7 @@ object Light : Domain<Light.Entity> {
                 runBlocking { turnOnWithData(profile = value) }
             }
 
+        /** An integer in mireds representing the color temperature you want the light to be. */
         var color_temp: Int
             @Deprecated("'color_temp' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'color_temp' is write only")
@@ -87,6 +121,7 @@ object Light : Domain<Light.Entity> {
                 runBlocking { turnOnWithData(color_temp = value) }
             }
 
+        /** Alternatively, you can specify the color temperature in Kelvin. */
         var kelvin: Int
             @Deprecated("'kelvin' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'kelvin' is write only")
@@ -94,6 +129,7 @@ object Light : Domain<Light.Entity> {
                 runBlocking { turnOnWithData(kelvin = value) }
             }
 
+        /** A human-readable string of a color name, such as blue or goldenrod. All CSS3 color names are supported. */
         var color_name: String
             @Deprecated("'color_name' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'color_name' is write only")
@@ -101,6 +137,7 @@ object Light : Domain<Light.Entity> {
                 runBlocking { turnOnWithData(color_name = value) }
             }
 
+        /** Alternatively, you can specify brightness in percent (a number between 0 and 100), where 0 means the light is off, 1 is the minimum brightness and 100 is the maximum brightness supported by the light. */
         var brightness_pct: Float
             @Deprecated("'brightness_pct' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_pct' is write only")
@@ -108,6 +145,7 @@ object Light : Domain<Light.Entity> {
                 runBlocking { turnOnWithData(brightness_pct = value) }
             }
 
+        /** Change brightness by an amount. Should be between -255..255. */
         var brightness_step: Float
             @Deprecated("'brightness_step' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_step' is write only")
@@ -115,6 +153,7 @@ object Light : Domain<Light.Entity> {
                 runBlocking { turnOnWithData(brightness_step = value) }
             }
 
+        /** Change brightness by a percentage. Should be between -100..100. */
         var brightness_step_pct: Float
             @Deprecated("'brightness_step_pct' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_step_pct' is write only")
@@ -122,6 +161,7 @@ object Light : Domain<Light.Entity> {
                 runBlocking { turnOnWithData(brightness_step_pct = value) }
             }
 
+        /** Tell light to flash, can be either value Flash.SHORT or Flash.LONG. */
         var flash: Flash
             @Deprecated("'flash' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'flash' is write only")
@@ -129,16 +169,13 @@ object Light : Domain<Light.Entity> {
                 runBlocking { turnOnWithData(flash = value) }
             }
 
+        /** Applies an effect such as colorloop or random. */
         var effect: String
             @Deprecated("'effect' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'effect' is write only")
             set(value) {
                 runBlocking { turnOnWithData(effect = value) }
             }
-
-        enum class Flash(val value: String) {
-            SHORT("short"), LONG("long")
-        }
 
         @Serializable
         inner class turnOnWithData(
@@ -156,7 +193,7 @@ object Light : Domain<Light.Entity> {
             val brightness_step: Float? = null,
             val brightness_step_pct: Float? = null,
             val flash: Flash? = null,
-            val effect: String? = null // tODO add result callback
+            val effect: String? = null // tODO add result callback, todo add checks for supported features
         ) {
 
             init {
