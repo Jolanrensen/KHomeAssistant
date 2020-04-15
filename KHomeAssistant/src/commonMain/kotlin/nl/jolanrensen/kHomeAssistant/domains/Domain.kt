@@ -6,6 +6,7 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
+import nl.jolanrensen.kHomeAssistant.entities.invoke
 
 
 interface Domain<E: BaseEntity<out Any>> {
@@ -16,8 +17,15 @@ interface Domain<E: BaseEntity<out Any>> {
     /** Function to create an Entity in a domain */
     fun Entity(name: String): E
 
+    /** Shorthand for apply, allows for DSL-like behavior on entities. */
+    fun Entity(name: String, callback: E.() -> Unit): E = Entity(name).apply(callback)
+
+
     /** Helper function to create multiple entities at once in a domain */
     fun Entities(vararg names: String): List<E> = names.map { Entity(it) }
+
+    /** Shorthand for apply for each, allows for DSL-like behavior on collections of entities. */
+    fun Entities(vararg names: String, callback: E.() -> Unit): List<E> = Entities(*names).apply { forEach(callback) }
 
     // TODO maybe allow a way to make an anonymous toggle entity
 

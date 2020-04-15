@@ -1,26 +1,27 @@
-import com.soywiz.klock.DateTime
-import com.soywiz.klock.DateTimeTz
-import com.soywiz.klock.Time
-import com.soywiz.klock.minutes
 import kotlinx.coroutines.runBlocking
-import nl.jolanrensen.kHomeAssistant.*
+import nl.jolanrensen.kHomeAssistant.Automation
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.domains.Switch
-import nl.jolanrensen.kHomeAssistant.entities.*
-import nl.jolanrensen.kHomeAssistant.helper.RGBColor
+import nl.jolanrensen.kHomeAssistant.entities.invoke
+import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
+import nl.jolanrensen.kHomeAssistant.entities.turnOff
+import nl.jolanrensen.kHomeAssistant.entities.turnOn
 
 
-class Test : Automation() {
+class BedroomLights : Automation() {
 
-    val bedroomLamp = Light.Entity("bedroom_lamp")
-    val bed = Light.Entity("bed")
-    val globe = Light.Entity("globe")
-
-    val allLights = listOf(bedroomLamp, bed, globe)
+    val allLights: List<Light.Entity> = Light["bed", "bedroom_lamp", "globe", "pisa"]
 
     override suspend fun initialize() {
-        Switch.Entity("bedroom_switch").onTurnOn {
+
+        allLights {
+            println(state)
+        }
+
+        Switch["bedroom_switch"].onTurnOn {
             if (allLights.any { it.isOn })
                 allLights.turnOff()
             else
@@ -30,11 +31,6 @@ class Test : Automation() {
         }
     }
 }
-
-object Instance {
-    var kHomeAssistant: KHomeAssistant? = null
-}
-
 
 fun main() {
     runBlocking {
@@ -49,53 +45,20 @@ fun main() {
             automations = listOf(
                 automation("1") {
 
-//                    println(DateTime.EPOCH.local)
+                    val stereo = MediaPlayer["denon_avrx2200w"]
 
-                    val time = Time(hour = 17, second = 0, minute = 0)
 
-//                    runEveryDayAt(hour = 17, second = 0, minute = 0) {
-//                        println("hoi")
-//                    }
-                    MediaPlayer["living_room_home_mini"] {
 
-                        media_track = media_track!! + 1
+
+                    MediaPlayer.Entities("denon_avrx2200w") {
+                        println(source_list)
                     }
 
 
-
-
-
-
-                }
-//                automation("2") {
-//                    // added some sort of test
-//                    println(DateTime(DateTime.EPOCH.date, Time(13)).localUnadjusted)
-//                    Light["wall_lamp"].onStateChanged {
-//                        println("newState: $it")
-//                    }
-//
-//                    runEvery(1.seconds * 2) {
-//                        println("1 second has passed! The time is ${DateTime.now().toString(DateFormat("EEE, dd MMM yyyy HH:mm:ss::SSS z"))}")
-//                    }
-//
-//                    runEvery(1.7.seconds) {
-//                        println("1.7 seconds have passed! The time is ${DateTime.now().toString(DateFormat("EEE, dd MMM yyyy HH:mm:ss::SSS z"))}")
-//                    }
-//
-//                    val twoSecondsPastLastMidnight = DateTime(
-//                        date = DateTime.now().date,
-//                        time = Time(hour = 0, second = 2)
-//                    ).localUnadjusted
-//                    runEvery(5.seconds, alignWith = twoSecondsPastLastMidnight) {
-//                        println("5 seconds have passed! The time is ${DateTime.now().toString(DateFormat("EEE, dd MMM yyyy HH:mm:ss::SSS z"))}")
-//                    }
-//
-//                }
+                },
+                BedroomLights()
             )
-        )
-
-        Instance.kHomeAssistant = instance
-        instance.run()
+        ).run()
     }
 
 }

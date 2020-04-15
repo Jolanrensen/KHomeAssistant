@@ -8,7 +8,9 @@ open class Automation : KHomeAssistantContext {
     open val automationName: String
         get() = this::class.simpleName.toString()
 
-    override var kHomeAssistant: () -> KHomeAssistant? = { null }
+    var kHomeAssistantInstance: KHomeAssistant? = null
+
+    override var kHomeAssistant: () -> KHomeAssistant? = { kHomeAssistantInstance }
 
     override val coroutineContext: CoroutineContext
         get() = kHomeAssistant()!!.coroutineContext

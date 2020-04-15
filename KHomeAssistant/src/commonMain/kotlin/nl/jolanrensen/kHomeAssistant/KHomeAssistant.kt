@@ -339,7 +339,7 @@ class KHomeAssistant(
         for (it in automations)
             this@KHomeAssistant.launch {// TODO
                 val inner = launch {
-                    it.kHomeAssistant = { this@KHomeAssistant }
+                    it.kHomeAssistantInstance = this@KHomeAssistant
                     it.initialize()
                 }
                 try {

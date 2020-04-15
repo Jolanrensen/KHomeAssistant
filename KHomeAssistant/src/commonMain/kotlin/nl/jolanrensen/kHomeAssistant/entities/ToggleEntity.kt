@@ -31,25 +31,25 @@ open class ToggleEntity(
     /** Turns off an entity that is on, or turns on an entity that is off (that supports being turned on and off) */
     suspend inline fun toggle() = callService("toggle")
 
-    suspend inline fun turn(state: OnOff) {
+    suspend inline fun switchTo(state: OnOff) {
         when (state) {
             OnOff.ON -> turnOn()
             OnOff.OFF -> turnOff()
         }
     }
 
-    suspend inline fun turn(state: Boolean) {
-        if (state) turnOn() else turnOff()
+    suspend inline fun switchTo(on: Boolean) {
+        if (on) turnOn() else turnOff()
     }
 
     /** HelperFunctions */
     var isOn: Boolean
         get() = state == OnOff.ON
-        set(value) { runBlocking { turn(value) } }
+        set(value) { runBlocking { switchTo(value) } }
 
     var isOff: Boolean
         get() = state == OnOff.OFF
-        set(value) { runBlocking { turn(!value) } }
+        set(value) { runBlocking { switchTo(!value) } }
 
     val isUnavailable: Boolean
         get() = state == OnOff.UNAVAILABLE
@@ -67,5 +67,5 @@ fun <E : ToggleEntity> E.onUnavailable(callback: suspend E.() -> Unit) =
 suspend inline fun <E: ToggleEntity> Iterable<E>.turnOn() = this { turnOn() }
 suspend inline fun <E: ToggleEntity> Iterable<E>.turnOff() = this { turnOff() }
 suspend inline fun <E: ToggleEntity> Iterable<E>.toggle() = this { toggle() }
-suspend inline fun <E: ToggleEntity> Iterable<E>.turn(state: OnOff) = this { turn(state) }
-suspend inline fun <E: ToggleEntity> Iterable<E>.turn(state: Boolean) = this { turn(state) }
+suspend inline fun <E: ToggleEntity> Iterable<E>.switchTo(state: OnOff) = this { switchTo(state) }
+suspend inline fun <E: ToggleEntity> Iterable<E>.switchTo(state: Boolean) = this { switchTo(state) }
