@@ -1,5 +1,9 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
+import com.soywiz.klock.*
+import com.soywiz.klock.DateFormat.Companion.DEFAULT_FORMAT
+import com.soywiz.klock.DateFormat.Companion.FORMAT1
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
@@ -8,6 +12,7 @@ import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaContentType.*
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 import nl.jolanrensen.kHomeAssistant.entities.getValue
+import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT
 import nl.jolanrensen.kHomeAssistant.helper.UnsupportedFeatureException
 
 /**
@@ -74,15 +79,93 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
         // ----- Attributes -----
         // read only
 
-        val source_list: List<String>? by this
-
-        val sound_mode_list: List<String>? by this
-
+        /** Content type of current playing media. */
         val media_content_type: String? by this
 
+        /** Content ID of current playing media. */
+        val media_content_id: String? by this
+
+        /** Duration of current playing media. */
+        val media_duration: TimeSpan?
+            get() {
+                val media_duration: Float? by this
+                return media_duration?.seconds
+            }
+
+        /** When was the position of the current playing media valid. */
+        val media_position_updated_at: DateTime?
+            get() {
+                val media_position_updated_at: String? by this
+                return media_position_updated_at?.let { HASS_DATE_FORMAT.parseUtc(it) }
+            }
+
+        /** Image url of current playing media. */
+        val media_image_url: String? by this
+
+        /** If the image url is remotely accessible. */
+        val media_image_remotely_accessible: Boolean? by this
+
+        /** Hash value for media image. */
+        val media_image_hash: String? by this
+
+        /** Title of current playing media. */
         val media_title: String? by this
 
-        val sound_mode_raw: String? by this
+        /** Artist of current playing media, music track only. */
+        val media_artist: String? by this
+
+        /** Album name of current playing media, music track only. */
+        val media_album_name: String? by this
+
+        /** Album artist of current playing media, music track only. */
+        val media_album_artist: String? by this
+
+        /** Track number of current playing media, music track only. */
+        var media_track: Int? // TODO check
+            get() = getValue(this, ::media_track)
+            @Deprecated(level = DeprecationLevel.WARNING, message = "Use with caution!")
+            set(value) {
+                runBlocking {
+                    while (media_track!! < value!!) {
+                        mediaNextTrack()
+                        delay(100)
+                    }
+                    while (media_track!! > value) {
+                        mediaPreviousTrack()
+                        delay(100)
+                    }
+                }
+            }
+
+        /** Title of series of current playing media, TV show only. */
+        val media_series_title: String? by this
+
+        /** Season of current playing media, TV show only. */
+        val media_season: Int? by this // TODO check
+
+        /** Episode of current playing media, TV show only. */
+        val media_episode: String? by this
+
+        /** Channel currently playing. */
+        val media_channel: Int? by this // TODO check
+
+        /** Title of playlist currently playing. */
+        val media_playlist: String? by this
+
+        /** ID of the currently running app. */
+        val app_id: String? by this
+
+        /** Name of the currently running app. */
+        val app_name: String? by this
+
+        /** List of available input sources. */
+        val source_list: List<String>? by this
+
+        /** List of available sound modes. */
+        val sound_mode_list: List<String>? by this
+
+
+        // val sound_mode_raw: String? by this
 
         /** Set of supported features. */
         val supported_features: Set<SupportedFeatures>
@@ -97,43 +180,48 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
 
         // read / write
 
-        var volume_level: Float?
+        /** Volume level of the media player (0f..1f). */
+        var volume_level: Volume?
             get() = getValue(this, ::volume_level)
             set(value) {
                 runBlocking { volumeSet(value!!) }
             }
 
+        /** Boolean if volume is currently muted. */
         var is_volume_muted: Boolean?
             get() = getValue(this, ::is_volume_muted)
             set(value) {
                 runBlocking { volumeMute(value!!) }
             }
 
+        /** Position of current playing media. */
+        var media_position: TimeSpan?
+            get() {
+                val media_position: Float? by this
+                return media_position?.seconds
+            }
+            set(value) { runBlocking { mediaSeek(value!!) } }
+
+        /** Name of the current input source. */
         var source: String?
             get() = getValue(this, ::source)
             set(value) {
                 runBlocking { selectSource(value!!) }
             }
 
+        /** Name of the current sound mode. */
         var sound_mode: String?
             get() = getValue(this, ::sound_mode)
             set(value) {
                 runBlocking { selectSoundMode(value!!) }
             }
 
-        /*
-        source_list: AUX1, Blu-ray CD, Bluetooth, Favorites, Internet Radio, Media Server, Microfoons, Online Music, Pi, Platenspeler, SHIELD, Spotify, TV Audio, Tv Ontvanger, Wii, iPod/USB
-        sound_mode_list: MUSIC, MOVIE, GAME, AUTO, STANDARD, VIRTUAL, MATRIX, ROCK ARENA, JAZZ CLUB, VIDEO GAME, MONO MOVIE, DIRECT, PURE DIRECT, DOLBY DIGITAL, DTS SURROUND, MCH STEREO, STEREO, ALL ZONE STEREO
-        volume_level: 0.25
-        is_volume_muted: false
-        media_content_type: channel
-        media_title: SHIELD
-        source: SHIELD
-        sound_mode: STEREO
-        sound_mode_raw: Stereo
-        friendly_name: denon_avrx2200w
-        supported_features: 69004
-         */
+        /** Boolean if shuffle is enabled. */
+        var shuffle: Boolean?
+            get() = getValue(this, ::shuffle)
+            set(value) {
+                runBlocking { shuffleSet(value!!) }
+            }
 
 
         private fun checkIfSupported(supportedFeature: SupportedFeatures) {
@@ -141,15 +229,10 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
                 throw UnsupportedFeatureException("Unfortunately the media player $name does not support ${supportedFeature.name}.")
         }
 
-        suspend fun volumeMute(mute: Boolean = true) =
-            callService(
-                serviceName = "volume_mute",
-                data = buildMap<String, JsonPrimitive> {
-                    this["is_volume_muted"] = JsonPrimitive(mute)
-                }
-            )
 
-        suspend fun volumeUnmute() = volumeMute(false)
+        suspend fun volumeUp() = callService("volume_up")
+        suspend fun volumeDown() = callService("volume_down")
+
 
         suspend fun volumeSet(volumeLevel: Float) =
             callService(
@@ -163,22 +246,48 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
                 }
             )
 
-        suspend fun mediaSeek(seekPosition: Float) =
+        suspend fun volumeMute(mute: Boolean = true) =
             callService(
-                serviceName = "media_seek",
-                data = buildMap<String, JsonElement> {
-                    this["seek_position"] = JsonPrimitive(seekPosition)
+                serviceName = "volume_mute",
+                data = buildMap<String, JsonPrimitive> {
+                    this["is_volume_muted"] = JsonPrimitive(mute)
                 }
             )
 
-        suspend fun playMedia(mediaContentType: MediaContentType, mediaContentId: String) =
+        suspend fun volumeUnmute() = volumeMute(false)
+
+        suspend fun mediaPlayPause() = callService("media_play_pause")
+
+        suspend fun mediaPlay() = callService("media_play")
+
+        suspend fun mediaPause() = callService("media_pause")
+
+        suspend fun mediaStop() = callService("media_stop")
+
+        suspend fun mediaNextTrack() = callService("media_next_track")
+
+        suspend fun mediaPreviousTrack() = callService("media_previous_track")
+
+        suspend fun clearPlaylist() = callService("clear_playlist")
+
+        suspend fun mediaSeek(seekPosition: TimeSpan) =
+            callService(
+                serviceName = "media_seek",
+                data = buildMap<String, JsonElement> {
+                    this["seek_position"] = JsonPrimitive(seekPosition.seconds)
+                }
+            )
+
+        suspend fun playMedia(mediaContentType: String, mediaContentId: String) =
             callService(
                 serviceName = "play_media",
                 data = buildMap<String, JsonElement> {
                     this["media_content_id"] = JsonPrimitive(mediaContentId)
-                    this["media_content_type"] = JsonPrimitive(mediaContentType.value)
+                    this["media_content_type"] = JsonPrimitive(mediaContentType)
                 }
             )
+
+        suspend fun playMedia(mediaContentType: MediaContentType, mediaContentId: String) = playMedia(mediaContentType.value, mediaContentId)
 
         suspend fun playMusic(mediaContentId: String) = playMedia(MUSIC, mediaContentId)
         suspend fun playTvShow(mediaContentId: String) = playMedia(TVSHOW, mediaContentId)
@@ -227,6 +336,8 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
             )
     }
 }
+
+typealias Volume = Float
 
 
 typealias MediaPlayerDomain = MediaPlayer

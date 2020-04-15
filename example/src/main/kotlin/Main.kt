@@ -5,6 +5,7 @@ import com.soywiz.klock.minutes
 import kotlinx.coroutines.runBlocking
 import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.domains.Light
+import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.helper.RGBColor
@@ -48,16 +49,16 @@ fun main() {
             automations = listOf(
                 automation("1") {
 
-                    println(DateTime.EPOCH.local)
+//                    println(DateTime.EPOCH.local)
 
                     val time = Time(hour = 17, second = 0, minute = 0)
 
 //                    runEveryDayAt(hour = 17, second = 0, minute = 0) {
 //                        println("hoi")
 //                    }
+                    MediaPlayer["living_room_home_mini"] {
 
-                    Light["wall_lamp", "batik", "piano", "table_lamp", "dream_world"] {
-                        println("supported features of $friendly_name is $supported_features")
+                        mediaNextTrack()
                     }
 
 

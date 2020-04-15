@@ -2,6 +2,7 @@ package nl.jolanrensen.kHomeAssistant.entities
 
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
+import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 
 open class ToggleEntity(
@@ -30,13 +31,28 @@ open class ToggleEntity(
     /** Turns off an entity that is on, or turns on an entity that is off (that supports being turned on and off) */
     suspend inline fun toggle() = callService("toggle")
 
+    suspend inline fun turn(state: OnOff) {
+        when (state) {
+            OnOff.ON -> turnOn()
+            OnOff.OFF -> turnOff()
+        }
+    }
+
+    suspend inline fun turn(state: Boolean) {
+        if (state) turnOn() else turnOff()
+    }
 
     /** HelperFunctions */
-    val isOn get() = state == OnOff.ON
+    var isOn: Boolean
+        get() = state == OnOff.ON
+        set(value) { runBlocking { turn(value) } }
 
-    val isOff get() = state == OnOff.OFF
+    var isOff: Boolean
+        get() = state == OnOff.OFF
+        set(value) { runBlocking { turn(!value) } }
 
-    val isUnavailable get() = state == OnOff.UNAVAILABLE
+    val isUnavailable: Boolean
+        get() = state == OnOff.UNAVAILABLE
 }
 
 fun <E : ToggleEntity> E.onTurnOn(callback: suspend E.() -> Unit) =
@@ -48,6 +64,8 @@ fun <E : ToggleEntity> E.onTurnOff(callback: suspend E.() -> Unit) =
 fun <E : ToggleEntity> E.onUnavailable(callback: suspend E.() -> Unit) =
     onStateChangedTo(OnOff.UNAVAILABLE, callback)
 
-suspend inline fun <E: ToggleEntity> Iterable<E>.turnOn() = forEach { it.turnOn() }
-suspend inline fun <E: ToggleEntity> Iterable<E>.turnOff() = forEach { it.turnOff() }
-suspend inline fun <E: ToggleEntity> Iterable<E>.toggle() = forEach { it.toggle() }
+suspend inline fun <E: ToggleEntity> Iterable<E>.turnOn() = this { turnOn() }
+suspend inline fun <E: ToggleEntity> Iterable<E>.turnOff() = this { turnOff() }
+suspend inline fun <E: ToggleEntity> Iterable<E>.toggle() = this { toggle() }
+suspend inline fun <E: ToggleEntity> Iterable<E>.turn(state: OnOff) = this { turn(state) }
+suspend inline fun <E: ToggleEntity> Iterable<E>.turn(state: Boolean) = this { turn(state) }
