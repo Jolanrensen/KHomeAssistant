@@ -1,8 +1,9 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import com.soywiz.klock.*
-import com.soywiz.klock.DateFormat.Companion.DEFAULT_FORMAT
-import com.soywiz.klock.DateFormat.Companion.FORMAT1
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.TimeSpan
+import com.soywiz.klock.parseUtc
+import com.soywiz.klock.seconds
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
@@ -10,10 +11,12 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaContentType.*
+import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.SupportedFeatures.*
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 import nl.jolanrensen.kHomeAssistant.entities.getValue
 import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT
 import nl.jolanrensen.kHomeAssistant.helper.UnsupportedFeatureException
+import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
 /**
  * https://www.home-assistant.io/integrations/media_player/
@@ -123,7 +126,7 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
         /** Track number of current playing media, music track only. */
         var media_track: Int? // TODO check
             get() = getValue(this, ::media_track)
-            @Deprecated(level = DeprecationLevel.WARNING, message = "Use with caution!")
+            @Deprecated(level = DeprecationLevel.WARNING, message = "Should work but use with caution!")
             set(value) {
                 runBlocking {
                     while (media_track!! < value!!) {
@@ -164,9 +167,6 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
         /** List of available sound modes. */
         val sound_mode_list: List<String>? by this
 
-
-        // val sound_mode_raw: String? by this
-
         /** Set of supported features. */
         val supported_features: Set<SupportedFeatures>
             get() = buildSet {
@@ -181,7 +181,7 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
         // read / write
 
         /** Volume level of the media player (0f..1f). */
-        var volume_level: Volume?
+        var volume_level: Float?
             get() = getValue(this, ::volume_level)
             set(value) {
                 runBlocking { volumeSet(value!!) }
@@ -200,7 +200,9 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
                 val media_position: Float? by this
                 return media_position?.seconds
             }
-            set(value) { runBlocking { mediaSeek(value!!) } }
+            set(value) {
+                runBlocking { mediaSeek(value!!) }
+            }
 
         /** Name of the current input source. */
         var source: String?
@@ -224,18 +226,26 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
             }
 
 
-        private fun checkIfSupported(supportedFeature: SupportedFeatures) {
-            if (supportedFeature !in supported_features)
-                throw UnsupportedFeatureException("Unfortunately the media player $name does not support ${supportedFeature.name}.")
+        private fun checkIfSupported(vararg supportedFeatures: SupportedFeatures) {
+            supportedFeatures.forEach {
+                if (it !in supported_features)
+                    throw UnsupportedFeatureException("Unfortunately the media player $name does not support ${it.name}.")
+            }
         }
 
 
-        suspend fun volumeUp() = callService("volume_up")
-        suspend fun volumeDown() = callService("volume_down")
+        suspend fun volumeUp(): ResultMessage {
+            checkIfSupported(SUPPORT_VOLUME_STEP, SUPPORT_VOLUME_SET)
+            return callService("volume_up")
+        }
+        suspend fun volumeDown(): ResultMessage {
+            checkIfSupported(SUPPORT_VOLUME_STEP, SUPPORT_VOLUME_SET)
+            return callService("volume_down")
+        }
 
-
-        suspend fun volumeSet(volumeLevel: Float) =
-            callService(
+        suspend fun volumeSet(volumeLevel: Float): ResultMessage {
+            checkIfSupported(SUPPORT_VOLUME_SET)
+            return callService(
                 serviceName = "volume_set",
                 data = buildMap<String, JsonElement> {
                     volumeLevel.let {
@@ -245,49 +255,78 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
                     }
                 }
             )
+        }
 
-        suspend fun volumeMute(mute: Boolean = true) =
-            callService(
+        suspend fun volumeMute(mute: Boolean = true): ResultMessage {
+            checkIfSupported(SUPPORT_VOLUME_MUTE)
+            return callService(
                 serviceName = "volume_mute",
                 data = buildMap<String, JsonPrimitive> {
                     this["is_volume_muted"] = JsonPrimitive(mute)
                 }
             )
+        }
 
         suspend fun volumeUnmute() = volumeMute(false)
 
-        suspend fun mediaPlayPause() = callService("media_play_pause")
+        suspend fun mediaPlayPause(): ResultMessage {
+            checkIfSupported(SUPPORT_PAUSE, SUPPORT_PLAY)
+            return callService("media_play_pause")
+        }
 
-        suspend fun mediaPlay() = callService("media_play")
+        suspend fun mediaPlay(): ResultMessage {
+            checkIfSupported(SUPPORT_PLAY)
+            return callService("media_play")
+        }
 
-        suspend fun mediaPause() = callService("media_pause")
+        suspend fun mediaPause(): ResultMessage {
+            checkIfSupported(SUPPORT_PAUSE)
+            return callService("media_pause")
+        }
 
-        suspend fun mediaStop() = callService("media_stop")
+        suspend fun mediaStop(): ResultMessage {
+            checkIfSupported(SUPPORT_STOP)
+            return callService("media_stop")
+        }
 
-        suspend fun mediaNextTrack() = callService("media_next_track")
+        suspend fun mediaNextTrack(): ResultMessage {
+            checkIfSupported(SUPPORT_NEXT_TRACK)
+            return callService("media_next_track")
+        }
 
-        suspend fun mediaPreviousTrack() = callService("media_previous_track")
+        suspend fun mediaPreviousTrack(): ResultMessage {
+            checkIfSupported(SUPPORT_PREVIOUS_TRACK)
+            return callService("media_previous_track")
+        }
 
-        suspend fun clearPlaylist() = callService("clear_playlist")
+        suspend fun clearPlaylist(): ResultMessage {
+            checkIfSupported(SUPPORT_CLEAR_PLAYLIST)
+            return callService("clear_playlist")
+        }
 
-        suspend fun mediaSeek(seekPosition: TimeSpan) =
-            callService(
+        suspend fun mediaSeek(seekPosition: TimeSpan): ResultMessage {
+            checkIfSupported(SUPPORT_SEEK)
+            return callService(
                 serviceName = "media_seek",
                 data = buildMap<String, JsonElement> {
                     this["seek_position"] = JsonPrimitive(seekPosition.seconds)
                 }
             )
+        }
 
-        suspend fun playMedia(mediaContentType: String, mediaContentId: String) =
-            callService(
+        suspend fun playMedia(mediaContentType: String, mediaContentId: String): ResultMessage {
+            checkIfSupported(SUPPORT_PLAY_MEDIA)
+            return callService(
                 serviceName = "play_media",
                 data = buildMap<String, JsonElement> {
                     this["media_content_id"] = JsonPrimitive(mediaContentId)
                     this["media_content_type"] = JsonPrimitive(mediaContentType)
                 }
             )
+        }
 
-        suspend fun playMedia(mediaContentType: MediaContentType, mediaContentId: String) = playMedia(mediaContentType.value, mediaContentId)
+        suspend fun playMedia(mediaContentType: MediaContentType, mediaContentId: String) =
+            playMedia(mediaContentType.value, mediaContentId)
 
         suspend fun playMusic(mediaContentId: String) = playMedia(MUSIC, mediaContentId)
         suspend fun playTvShow(mediaContentId: String) = playMedia(TVSHOW, mediaContentId)
@@ -300,8 +339,9 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
         suspend fun playGame(mediaContentId: String) = playMedia(GAME, mediaContentId)
         suspend fun playApp(mediaContentId: String) = playMedia(APP, mediaContentId)
 
-        suspend fun selectSource(source: String) =
-            callService(
+        suspend fun selectSource(source: String): ResultMessage {
+            checkIfSupported(SUPPORT_SELECT_SOURCE)
+            return callService(
                 serviceName = "select_source",
                 data = buildMap<String, JsonElement> {
                     source.let {
@@ -311,9 +351,11 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
                     }
                 }
             )
+        }
 
-        suspend fun selectSoundMode(soundMode: String) =
-            callService(
+        suspend fun selectSoundMode(soundMode: String): ResultMessage {
+            checkIfSupported(SUPPORT_SELECT_SOUND_MODE)
+            return callService(
                 serviceName = "select_sound_mode",
                 data = buildMap<String, JsonElement> {
                     soundMode.let {
@@ -323,9 +365,11 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
                     }
                 }
             )
+        }
 
-        suspend fun shuffleSet(shuffle: Boolean) =
-            callService(
+        suspend fun shuffleSet(shuffle: Boolean): ResultMessage {
+            checkIfSupported(SUPPORT_SHUFFLE_SET)
+            return callService(
                 serviceName = "shuffle_set",
                 data = buildMap<String, JsonElement> {
                     shuffle.let {
@@ -334,11 +378,9 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
                     }
                 }
             )
+        }
     }
 }
-
-typealias Volume = Float
-
 
 typealias MediaPlayerDomain = MediaPlayer
 

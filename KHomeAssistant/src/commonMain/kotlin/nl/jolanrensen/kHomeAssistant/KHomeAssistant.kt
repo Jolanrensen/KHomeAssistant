@@ -5,6 +5,7 @@ import com.soywiz.klock.until
 import io.ktor.client.features.websocket.DefaultClientWebSocketSession
 import io.ktor.client.features.websocket.ws
 import io.ktor.client.features.websocket.wss
+import io.ktor.http.ContentType
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.http.cio.websocket.send
@@ -23,6 +24,7 @@ import nl.jolanrensen.kHomeAssistant.Clock.cancelAllTimers
 import nl.jolanrensen.kHomeAssistant.Clock.fixedRateTimer
 import nl.jolanrensen.kHomeAssistant.WebsocketsHttpClient.httpClient
 import nl.jolanrensen.kHomeAssistant.domains.Domain
+import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.messages.*
 import kotlin.jvm.Volatile
@@ -448,4 +450,6 @@ class KHomeAssistant(
 
         return entity.parseStateValue(stateValue)!!
     }
+
+//    suspend fun getMediaPlayerThumbnail(mediaPlayer: MediaPlayer.Entity): Array
 }

@@ -58,7 +58,7 @@ fun main() {
 //                    }
                     MediaPlayer["living_room_home_mini"] {
 
-                        mediaNextTrack()
+                        media_track = media_track!! + 1
                     }
 
 
