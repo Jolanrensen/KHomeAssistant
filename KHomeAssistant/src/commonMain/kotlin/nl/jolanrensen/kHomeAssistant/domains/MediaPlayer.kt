@@ -13,9 +13,9 @@ import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaContentType.*
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.SupportedFeatures.*
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
-import nl.jolanrensen.kHomeAssistant.entities.getValue
 import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT
 import nl.jolanrensen.kHomeAssistant.helper.UnsupportedFeatureException
+import nl.jolanrensen.kHomeAssistant.helper.cast
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
 /**
@@ -83,49 +83,49 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
         // read only
 
         /** Content type of current playing media. */
-        val media_content_type: String? by this
+        val media_content_type: String? by attrsDelegate
 
         /** Content ID of current playing media. */
-        val media_content_id: String? by this
+        val media_content_id: String? by attrsDelegate
 
         /** Duration of current playing media. */
         val media_duration: TimeSpan?
             get() {
-                val media_duration: Float? by this
-                return media_duration?.seconds
+                val value: Float? = attrsDelegate.getValue(this, ::media_duration)
+                return value?.seconds
             }
 
         /** When was the position of the current playing media valid. */
         val media_position_updated_at: DateTime?
             get() {
-                val media_position_updated_at: String? by this
-                return media_position_updated_at?.let { HASS_DATE_FORMAT.parseUtc(it) }
+                val value: String? = attrsDelegate.getValue(this, ::media_position_updated_at)
+                return value?.let { HASS_DATE_FORMAT.parseUtc(it) }
             }
 
         /** Image url of current playing media. */
-        val media_image_url: String? by this
+        val media_image_url: String? by attrsDelegate
 
         /** If the image url is remotely accessible. */
-        val media_image_remotely_accessible: Boolean? by this
+        val media_image_remotely_accessible: Boolean? by attrsDelegate
 
         /** Hash value for media image. */
-        val media_image_hash: String? by this
+        val media_image_hash: String? by attrsDelegate
 
         /** Title of current playing media. */
-        val media_title: String? by this
+        val media_title: String? by attrsDelegate
 
         /** Artist of current playing media, music track only. */
-        val media_artist: String? by this
+        val media_artist: String? by attrsDelegate
 
         /** Album name of current playing media, music track only. */
-        val media_album_name: String? by this
+        val media_album_name: String? by attrsDelegate
 
         /** Album artist of current playing media, music track only. */
-        val media_album_artist: String? by this
+        val media_album_artist: String? by attrsDelegate
 
         /** Track number of current playing media, music track only. */
         var media_track: Int? // TODO check
-            get() = getValue(this, ::media_track)
+            get() = attrsDelegate.getValue(this, ::media_track)
             @Deprecated(level = DeprecationLevel.WARNING, message = "Should work but use with caution!")
             set(value) {
                 runBlocking {
@@ -141,38 +141,38 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
             }
 
         /** Title of series of current playing media, TV show only. */
-        val media_series_title: String? by this
+        val media_series_title: String? by attrsDelegate
 
         /** Season of current playing media, TV show only. */
-        val media_season: Int? by this // TODO check
+        val media_season: Int? by attrsDelegate // TODO check
 
         /** Episode of current playing media, TV show only. */
-        val media_episode: String? by this
+        val media_episode: String? by attrsDelegate
 
         /** Channel currently playing. */
-        val media_channel: Int? by this // TODO check
+        val media_channel: Int? by attrsDelegate // TODO check
 
         /** Title of playlist currently playing. */
-        val media_playlist: String? by this
+        val media_playlist: String? by attrsDelegate
 
         /** ID of the currently running app. */
-        val app_id: String? by this
+        val app_id: String? by attrsDelegate
 
         /** Name of the currently running app. */
-        val app_name: String? by this
+        val app_name: String? by attrsDelegate
 
         /** List of available input sources. */
-        val source_list: List<String>? by this
+        val source_list: List<String>? by attrsDelegate
 
         /** List of available sound modes. */
-        val sound_mode_list: List<String>? by this
+        val sound_mode_list: List<String>? by attrsDelegate
 
         /** Set of supported features. */
         val supported_features: Set<SupportedFeatures>
             get() = buildSet {
-                val supported_features: Int? by this@Entity
+                val value: Int? = attrsDelegate.getValue(this, ::supported_features)
                 SupportedFeatures.values().forEach {
-                    if (it.value and supported_features!! == it.value)
+                    if (it.value and value!! == it.value)
                         add(it)
                 }
             }
@@ -182,14 +182,14 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
 
         /** Volume level of the media player (0f..1f). */
         var volume_level: Float?
-            get() = getValue(this, ::volume_level)
+            get() = attrsDelegate.getValue(this, ::volume_level)
             set(value) {
                 runBlocking { volumeSet(value!!) }
             }
 
         /** Boolean if volume is currently muted. */
         var is_volume_muted: Boolean?
-            get() = getValue(this, ::is_volume_muted)
+            get() = attrsDelegate.getValue(this, ::is_volume_muted)
             set(value) {
                 runBlocking { volumeMute(value!!) }
             }
@@ -197,8 +197,8 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
         /** Position of current playing media. */
         var media_position: TimeSpan?
             get() {
-                val media_position: Float? by this
-                return media_position?.seconds
+                val value: Float? = attrsDelegate.getValue(this, ::media_position)
+                return value?.seconds
             }
             set(value) {
                 runBlocking { mediaSeek(value!!) }
@@ -206,21 +206,21 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
 
         /** Name of the current input source. */
         var source: String?
-            get() = getValue(this, ::source)
+            get() = attrsDelegate.getValue(this, ::source)
             set(value) {
                 runBlocking { selectSource(value!!) }
             }
 
         /** Name of the current sound mode. */
         var sound_mode: String?
-            get() = getValue(this, ::sound_mode)
+            get() = attrsDelegate.getValue(this, ::sound_mode)
             set(value) {
                 runBlocking { selectSoundMode(value!!) }
             }
 
         /** Boolean if shuffle is enabled. */
         var shuffle: Boolean?
-            get() = getValue(this, ::shuffle)
+            get() = attrsDelegate.getValue(this, ::shuffle)
             set(value) {
                 runBlocking { shuffleSet(value!!) }
             }

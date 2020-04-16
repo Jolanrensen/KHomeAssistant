@@ -8,7 +8,7 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
-import nl.jolanrensen.kHomeAssistant.entities.getValue
+
 
 // The state can be any type, including enums. Just make sure to implement the getStateValue() and parseStateValue() in your Entity class.
 enum class ExampleState(val stateValue: String) {
@@ -47,8 +47,8 @@ object Example : Domain<Example.Entity> {
          * The names must thus exactly match those of Home Assistant. */
         // Attributes
         // read only
-        val test_attribute: Int? by this
-        val some_other_attribute: List<String>? by this
+        val test_attribute: Int? by attrsDelegate
+        val some_other_attribute: List<String>? by attrsDelegate
 
         // TODO add examples for read/write and write only attributes
 

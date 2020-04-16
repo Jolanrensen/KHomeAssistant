@@ -5,7 +5,6 @@ import com.soywiz.klock.until
 import io.ktor.client.features.websocket.DefaultClientWebSocketSession
 import io.ktor.client.features.websocket.ws
 import io.ktor.client.features.websocket.wss
-import io.ktor.http.ContentType
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.readText
 import io.ktor.http.cio.websocket.send
@@ -16,7 +15,6 @@ import kotlinx.coroutines.channels.receiveOrNull
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.ImplicitReflectionSerializer
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -24,7 +22,6 @@ import nl.jolanrensen.kHomeAssistant.Clock.cancelAllTimers
 import nl.jolanrensen.kHomeAssistant.Clock.fixedRateTimer
 import nl.jolanrensen.kHomeAssistant.WebsocketsHttpClient.httpClient
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.messages.*
 import kotlin.jvm.Volatile
@@ -76,6 +73,7 @@ class KHomeAssistant(
     override val coroutineContext = Dispatchers.Default + supervisor + exceptionHandler
 
     private val maxCacheAge = 15.minutes
+
     @Volatile
     private var cache: HashMap<String, StateResult> = hashMapOf()
     private var cacheAge = TimeSource.Monotonic.markNow()

@@ -1,7 +1,8 @@
 package nl.jolanrensen.kHomeAssistant.helper
 
 import kotlinx.serialization.json.*
-import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 
 
 inline fun <reified T : Any?> JsonElement.cast(): T? = try {
@@ -22,4 +23,41 @@ inline fun <reified T : Any?> JsonElement.cast(): T? = try {
         Boolean::class -> boolean as T
         else -> null
     }
-} catch (e: Exception) { null }
+} catch (e: Exception) {
+    null
+}
+
+@Suppress("UNCHECKED_CAST")
+@OptIn(ExperimentalStdlibApi::class)
+fun <T : Any?> JsonElement.cast(type: KType): T? = try {
+    when (type) {
+        // JsonElements
+        typeOf<JsonPrimitive?>() -> primitive as T
+        typeOf<JsonObject?>(), typeOf<Map<String, JsonElement>?>() -> jsonObject as T
+        typeOf<JsonNull?>() -> jsonNull as T
+
+        typeOf<JsonArray?>(),
+        typeOf<List<JsonPrimitive>?>(),
+        typeOf<List<JsonObject>?>(),
+        typeOf<List<JsonArray>?>(),
+        typeOf<List<JsonNull>?>(),
+        typeOf<List<String>?>(),
+        typeOf<List<Int>?>(),
+        typeOf<List<Long>?>(),
+        typeOf<List<Double>?>(),
+        typeOf<List<Float>?>(),
+        typeOf<List<Boolean>?>() -> jsonArray as T
+
+        // JsonPrimitives
+        typeOf<String?>() -> content as T
+        typeOf<Int?>() -> int as T
+        typeOf<Long?>() -> long as T
+        typeOf<Double?>() -> double as T
+        typeOf<Float?>() -> float as T
+        typeOf<Boolean?>() -> boolean as T
+        else -> null
+    }
+
+} catch (e: Exception) {
+    null
+}

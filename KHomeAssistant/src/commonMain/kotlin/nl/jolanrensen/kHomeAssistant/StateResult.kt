@@ -22,9 +22,11 @@ data class StateResult(
 ) {
     companion object {
         @OptIn(ImplicitReflectionSerializer::class, UnstableDefault::class)
-        fun fromJson(json: String): StateResult = Json(JsonConfiguration(
+        fun fromJson(json: String): StateResult = Json(
+            JsonConfiguration(
                 isLenient = true,
                 ignoreUnknownKeys = true
-        )).parse(serializer(), json)
+            )
+        ).parse(serializer(), json)
     }
 }

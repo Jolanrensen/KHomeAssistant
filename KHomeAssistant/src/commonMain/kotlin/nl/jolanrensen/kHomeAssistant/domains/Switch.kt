@@ -4,6 +4,7 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 
+
 /** Do not use directly! Always use Switch.
  *
  * https://www.home-assistant.io/integrations/switch/

@@ -5,6 +5,7 @@ import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 
+
 open class ToggleEntity(
     override val kHomeAssistant: () -> KHomeAssistant?,
     override val name: String,

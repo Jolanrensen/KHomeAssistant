@@ -3,7 +3,7 @@ package nl.jolanrensen.kHomeAssistant.domains
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
-import nl.jolanrensen.kHomeAssistant.entities.getValue
+
 
 /**
  * https://www.home-assistant.io/integrations/input_boolean/
@@ -34,7 +34,7 @@ object InputBoolean : Domain<InputBoolean.Entity> {
     ) {
         // Attributes
         // read only
-        val editable: Boolean? by this
+        val editable: Boolean? by attrsDelegate
 
     }
 }

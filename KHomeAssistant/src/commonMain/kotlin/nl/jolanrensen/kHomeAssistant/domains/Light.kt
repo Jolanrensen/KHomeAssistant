@@ -6,11 +6,12 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.Light.SupportedFeatures.*
+import nl.jolanrensen.kHomeAssistant.entities.AttributesDelegate
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
-import nl.jolanrensen.kHomeAssistant.entities.getValue
 import nl.jolanrensen.kHomeAssistant.helper.*
 import kotlin.reflect.KProperty
+
 
 /** Do not use directly! Always use Light.
  *
@@ -53,7 +54,7 @@ object Light : Domain<Light.Entity> {
     ) {
         /** Some attributes can be set using the turn_on command. For those, we define a setter-companion to getValue. */
         @Suppress("UNCHECKED_CAST")
-        operator fun <V : Any?> setValue(
+        operator fun <V : Any?> AttributesDelegate.setValue(
             thisRef: BaseEntity<*>?,
             property: KProperty<*>,
             value: V
@@ -74,20 +75,20 @@ object Light : Domain<Light.Entity> {
         // read only
 
         /** Minimum color temperature in mireds. */
-        val min_mireds: Int? by this
+        val min_mireds: Int? by attrsDelegate
 
         /** Maximum color temperature in mireds. */
-        val max_mireds: Int? by this
+        val max_mireds: Int? by attrsDelegate
 
         /** List of supported effects. */
-        val effect_list: List<String>? by this
+        val effect_list: List<String>? by attrsDelegate
 
         /** Set of supported features. */
         val supported_features: Set<SupportedFeatures>
             get() = buildSet {
-                val supported_features: Int? by this@Entity
+                val value: Int? = attrsDelegate.getValue(this@Entity, ::supported_features)
                 SupportedFeatures.values().forEach {
-                    if (it.value and supported_features!! == it.value)
+                    if (it.value and value!! == it.value)
                         add(it)
                 }
             }
@@ -95,19 +96,19 @@ object Light : Domain<Light.Entity> {
         // read / write
 
         /** Integer between 0 and 255 for how bright the light should be, where 0 means the light is off, 1 is the minimum brightness and 255 is the maximum brightness supported by the light. */
-        var brightness: Int? by this
+        var brightness: Int? by attrsDelegate
 
         /** An HSColor containing two floats representing the hue and saturation of the color you want the light to be. Hue is scaled 0-360, and saturation is scaled 0-100. */
-        var hs_color: HSColor? by this
+        var hs_color: HSColor? by attrsDelegate
 
         /** An RGBColor containing three integers between 0 and 255 representing the RGB color you want the light to be. Note that the specified RGB value will not change the light brightness, only the color. */
-        var rgb_color: RGBColor? by this
+        var rgb_color: RGBColor? by attrsDelegate
 
         /** An XYColor containing two floats representing the xy color you want the light to be. */
-        var xy_color: XYColor? by this
+        var xy_color: XYColor? by attrsDelegate
 
         /** Integer between 0 and 255 for how bright a dedicated white LED should be. */
-        var white_value: Int? by this
+        var white_value: Int? by attrsDelegate
 
 
         // write only

@@ -1,10 +1,9 @@
 import kotlinx.coroutines.runBlocking
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.automation
-import nl.jolanrensen.kHomeAssistant.domains.Light
-import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
-import nl.jolanrensen.kHomeAssistant.domains.Switch
+import nl.jolanrensen.kHomeAssistant.domains.*
 import nl.jolanrensen.kHomeAssistant.entities.invoke
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
@@ -45,18 +44,18 @@ fun main() {
             automations = listOf(
                 automation("1") {
 
-                    val stereo = MediaPlayer["denon_avrx2200w"]
-
-
-
-
-                    MediaPlayer.Entities("denon_avrx2200w") {
-                        println(source_list)
+                    Light["batik"] {
+                        println(effect_list)
                     }
 
+                    val inputNumberTest = InputNumber["input_number_test"]
 
-                },
-                BedroomLights()
+                    val toiletWindow = InputBoolean["toilet_window"]
+
+
+
+
+                }
             )
         ).run()
     }
