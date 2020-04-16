@@ -3,6 +3,7 @@ package nl.jolanrensen.kHomeAssistant.domains
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
+import kotlin.reflect.KProperty
 
 
 /**
@@ -32,6 +33,12 @@ object InputBoolean : Domain<InputBoolean.Entity> {
         name = name,
         domain = InputBoolean
     ) {
+        /** Delegate so you can control an InputBoolean like a local variable
+         * Simply type "var yourBoolean by InputBoolean.Entity("your_boolean")
+         * */
+        operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = isOn
+        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) { isOn = value }
+
         // Attributes
         // read only
         val editable: Boolean? by attrsDelegate

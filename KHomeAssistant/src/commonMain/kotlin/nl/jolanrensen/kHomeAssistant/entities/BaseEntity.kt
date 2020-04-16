@@ -48,9 +48,6 @@ open class BaseEntity<StateType : Any>(
     val attributes: JsonObject
         get() = kHomeAssistant()!!.getAttributes(this)
 
-//    operator fun <V: Any?> JsonObject.getValue(thisRef: Any, property: KProperty<*>): V? =
-//        this[property.name]?.cast(property.returnType)
-
     val attrsDelegate = object : AttributesDelegate {
         override operator fun <V : Any?> getValue(thisRef: Any, property: KProperty<*>): V? =
             attributes[property.name]?.cast(property.returnType)

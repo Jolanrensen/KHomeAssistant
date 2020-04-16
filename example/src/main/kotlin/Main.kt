@@ -50,7 +50,7 @@ fun main() {
 
                     val inputNumberTest = InputNumber["input_number_test"]
 
-                    val toiletWindow = InputBoolean["toilet_window"]
+                    var toiletWindow by InputBoolean["toilet_window"]
 
 
 
