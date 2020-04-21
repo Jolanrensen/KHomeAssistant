@@ -2,6 +2,7 @@
 import kotlinx.coroutines.runBlocking
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.*
 import nl.jolanrensen.kHomeAssistant.entities.invoke
@@ -44,7 +45,9 @@ fun main() {
             automations = listOf(
                 automation("1") {
 
-                    println(Light["batik"])
+                    println(Light["batik"] {
+                        state = OnOff.ON
+                    })
 
                     println(MediaPlayer["denon_avrx2200w"])
 

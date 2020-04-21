@@ -32,10 +32,16 @@ open class ToggleEntity(
     /** Turns off an entity that is on, or turns on an entity that is off (that supports being turned on and off) */
     suspend inline fun toggle() = callService("toggle")
 
+    /** state can also be writable. */
+    override var state: OnOff
+        get() = super.state
+        set(value) { runBlocking { switchTo(value) } }
+
     suspend inline fun switchTo(state: OnOff) {
         when (state) {
             OnOff.ON -> turnOn()
             OnOff.OFF -> turnOff()
+            else -> Unit
         }
     }
 

@@ -55,7 +55,7 @@ open class BaseEntity<StateType : Any>(
     /** This method returns the state for this entity in the original String format */
     open fun getStateValue(state: StateType): String? = null
 
-    val state: StateType
+    open val state: StateType
         get() = kHomeAssistant()!!.getState(this)
     // set() TODO
 
@@ -138,7 +138,7 @@ open class BaseEntity<StateType : Any>(
     override fun toString() = "${domain::class.simpleName}.Entity($name) {${
     attributes
         .filter { it.get() != null }
-        .map { "\n    ${it.name}=${it.get()}" }
+        .map { "\n    ${it.name} = ${it.get()}" }
         .toString()
         .run { subSequence(1, length - 1) }
     }\n}"
