@@ -1,9 +1,12 @@
+
 import kotlinx.coroutines.runBlocking
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.automation
-import nl.jolanrensen.kHomeAssistant.domains.*
+import nl.jolanrensen.kHomeAssistant.domains.InputBoolean
+import nl.jolanrensen.kHomeAssistant.domains.InputNumber
+import nl.jolanrensen.kHomeAssistant.domains.Light
+import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.entities.invoke
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
@@ -35,7 +38,7 @@ fun main() {
     runBlocking {
         println("running!")
 
-        val instance = KHomeAssistant(
+        KHomeAssistant(
             host = "home.jolanrensen.nl",
             port = 8123,
             secure = true,
@@ -44,6 +47,8 @@ fun main() {
             automations = listOf(
                 automation("1") {
 
+
+
                     Light["batik"] {
                         println(effect_list)
                     }
@@ -51,8 +56,6 @@ fun main() {
                     val inputNumberTest = InputNumber["input_number_test"]
 
                     var toiletWindow by InputBoolean["toilet_window"]
-
-
 
 
                 }

@@ -2,6 +2,9 @@ package nl.jolanrensen.kHomeAssistant.domains
 
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.OnOff
+import nl.jolanrensen.kHomeAssistant.RunBlocking
+import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 import kotlin.reflect.KProperty
 
@@ -36,8 +39,10 @@ object InputBoolean : Domain<InputBoolean.Entity> {
         /** Delegate so you can control an InputBoolean like a local variable
          * Simply type "var yourBoolean by InputBoolean.Entity("your_boolean")
          * */
-        operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = isOn
-        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) { isOn = value }
+        operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = state == OnOff.ON
+        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
+            runBlocking { switchTo(value) }
+        }
 
         // Attributes
         // read only

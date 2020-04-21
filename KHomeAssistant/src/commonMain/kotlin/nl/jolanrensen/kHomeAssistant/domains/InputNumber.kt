@@ -42,6 +42,9 @@ object InputNumber : Domain<InputNumber.Entity> {
 
         // Attributes
         // read only
+
+        val initial: Float? by attrsDelegate
+
         val editable: Boolean? by attrsDelegate
 
     }
