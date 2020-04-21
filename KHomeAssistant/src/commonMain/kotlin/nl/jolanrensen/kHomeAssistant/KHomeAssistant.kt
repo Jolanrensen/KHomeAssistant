@@ -105,6 +105,7 @@ class KHomeAssistant(
         hashMapOf()
 
     val scheduledRepeatedTasks: HashSet<RepeatedTask> = hashSetOf()
+    val scheduledRepeatedIrregularTasks: HashSet<RepeatedIrregularTask> = hashSetOf()
 
     private val sendQueue: Channel<suspend DefaultClientWebSocketSession.() -> Unit> = Channel(UNLIMITED)
 
@@ -220,9 +221,16 @@ class KHomeAssistant(
                     while (task.alignWith < now.startOfSecond)
                         task.alignWith += task.runEvery
 
-                    println("align with: ${task.alignWith.local}")
+                    //println("align with: ${task.alignWith.local}")
                     if (task.alignWith in now.startOfSecond until now.endOfSecond)
                         this@KHomeAssistant.launch { task.callback() }
+                }
+                for (task in scheduledRepeatedIrregularTasks) {
+                    println("currentNextTime: ${task.currentNextTime}")
+                    if (task.currentNextTime in now.startOfSecond until now.endOfSecond)
+                        this@KHomeAssistant.launch { task.callback() }
+
+                    task.currentNextTime = task.getNextTime()
                 }
             }
 
@@ -284,13 +292,13 @@ class KHomeAssistant(
 
             // cancel if there aren't any listeners and the automations are initialized
             println("All automations are initialized")
-            if (stateListeners.isEmpty() && scheduledRepeatedTasks.isEmpty()) {
+            if (stateListeners.isEmpty() && scheduledRepeatedTasks.isEmpty() && scheduledRepeatedIrregularTasks.isEmpty()) {
                 println("There are no state listeners or scheduled tasks so KHomeAssistant is stopping...")
                 cancelAllTimers()
                 receiver.cancelAndJoin()
                 sender.cancelAndJoin()
             } else {
-                println("There are ${stateListeners.size} state listeners and ${scheduledRepeatedTasks.size} scheduled repeated tasks, so KHomeAssistant keeps running...")
+                println("There are ${stateListeners.size} state listeners and ${scheduledRepeatedTasks.size + scheduledRepeatedIrregularTasks.size} scheduled repeated tasks, so KHomeAssistant keeps running...")
                 receiver.join()
                 sender.join()
             }
