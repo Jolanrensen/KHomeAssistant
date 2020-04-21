@@ -30,6 +30,7 @@ dependencies {
 //    implementation "nl.jolanrensen.kHomeAssistant:KHomeAssistant:0.0.2"
 
     implementation project(":KHomeAssistant")
+    implementation "org.jetbrains.kotlin:kotlin-reflect:1.3.72"
 }
 
 mainClassName = 'MainKt'

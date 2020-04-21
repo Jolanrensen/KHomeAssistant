@@ -30,6 +30,14 @@ object InputNumber : Domain<InputNumber.Entity> {
         name = name,
         domain = InputNumber
     ) {
+        init {
+            attributes += arrayOf(
+                ::initial,
+                ::editable
+                // TODO
+            )
+        }
+
         // initial: 30
         //editable: false
         //min: 0

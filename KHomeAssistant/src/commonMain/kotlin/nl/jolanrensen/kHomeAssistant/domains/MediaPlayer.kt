@@ -79,6 +79,39 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
         domain = MediaPlayer
     ) {
 
+        init {
+            attributes += arrayOf(
+                ::media_content_type,
+                ::media_content_id,
+                ::media_duration,
+                ::media_position_updated_at,
+                ::media_image_url,
+                ::media_image_remotely_accessible,
+                ::media_image_hash,
+                ::media_title,
+                ::media_artist,
+                ::media_album_name,
+                ::media_album_artist,
+                ::media_track,
+                ::media_series_title,
+                ::media_season,
+                ::media_episode,
+                ::media_channel,
+                ::media_playlist,
+                ::app_id,
+                ::app_name,
+                ::source_list,
+                ::sound_mode_list,
+                ::supported_features,
+                ::volume_level,
+                ::is_volume_muted,
+                ::media_position,
+                ::source,
+                ::sound_mode,
+                ::shuffle
+            )
+        }
+
         // ----- Attributes -----
         // read only
 
@@ -91,14 +124,14 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
         /** Duration of current playing media. */
         val media_duration: TimeSpan?
             get() {
-                val value: Float? = attrsDelegate.getValue(this, ::media_duration)
+                val value: Float? = rawAttributes[::media_duration.name]?.cast()
                 return value?.seconds
             }
 
         /** When was the position of the current playing media valid. */
         val media_position_updated_at: DateTime?
             get() {
-                val value: String? = attrsDelegate.getValue(this, ::media_position_updated_at)
+                val value: String? = rawAttributes[::media_position_updated_at.name]?.cast()
                 return value?.let { HASS_DATE_FORMAT.parseUtc(it) }
             }
 
@@ -170,7 +203,7 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
         /** Set of supported features. */
         val supported_features: Set<SupportedFeatures>
             get() = buildSet {
-                val value: Int? = attrsDelegate.getValue(this, ::supported_features)
+                val value: Int? = rawAttributes[::supported_features.name]?.cast()
                 SupportedFeatures.values().forEach {
                     if (it.value and value!! == it.value)
                         add(it)
@@ -197,7 +230,7 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
         /** Position of current playing media. */
         var media_position: TimeSpan?
             get() {
-                val value: Float? = attrsDelegate.getValue(this, ::media_position)
+                val value: Float? = rawAttributes[::media_position.name]?.cast()
                 return value?.seconds
             }
             set(value) {
@@ -238,6 +271,7 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
             checkIfSupported(SUPPORT_VOLUME_STEP, SUPPORT_VOLUME_SET)
             return callService("volume_up")
         }
+
         suspend fun volumeDown(): ResultMessage {
             checkIfSupported(SUPPORT_VOLUME_STEP, SUPPORT_VOLUME_SET)
             return callService("volume_down")

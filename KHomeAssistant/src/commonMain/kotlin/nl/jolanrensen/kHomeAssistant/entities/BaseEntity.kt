@@ -10,6 +10,7 @@ import nl.jolanrensen.kHomeAssistant.helper.cast
 import nl.jolanrensen.kHomeAssistant.messages.Context
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty0
 
 typealias DefaultEntity = BaseEntity<String>
 
@@ -29,8 +30,23 @@ open class BaseEntity<StateType : Any>(
         }
     }
 
+    val attributes: ArrayList<KProperty0<*>> = arrayListOf()
+
     init {
         this.checkEntityExists()
+
+        attributes += arrayOf(
+            ::friendly_name,
+            ::state,
+            ::hidden,
+            ::entity_picture,
+            ::icon,
+            ::assumed_state,
+            ::device_class,
+            ::unit_of_measurement,
+            ::initial_state,
+            ::entityID
+        )
     }
 
     /** Given a string stateValue, this method should return the correct StateType */
@@ -45,12 +61,12 @@ open class BaseEntity<StateType : Any>(
 
     suspend fun setState(s: StateType): Unit = TODO()
 
-    val attributes: JsonObject
+    val rawAttributes: JsonObject
         get() = kHomeAssistant()!!.getAttributes(this)
 
     val attrsDelegate = object : AttributesDelegate {
         override operator fun <V : Any?> getValue(thisRef: Any, property: KProperty<*>): V? =
-            attributes[property.name]?.cast(property.returnType)
+            rawAttributes[property.name]?.cast(property.returnType)
     }
 
     // Default attributes
@@ -118,6 +134,14 @@ open class BaseEntity<StateType : Any>(
 
     val entityID: String
         get() = "${domain.domainName}.$name"
+
+    override fun toString() = "${domain::class.simpleName}.Entity($name) {${
+    attributes
+        .filter { it.get() != null }
+        .map { "\n    ${it.name}=${it.get()}" }
+        .toString()
+        .run { subSequence(1, length - 1) }
+    }\n}"
 
 }
 

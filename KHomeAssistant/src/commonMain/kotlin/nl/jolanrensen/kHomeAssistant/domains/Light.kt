@@ -1,7 +1,10 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
@@ -52,6 +55,21 @@ object Light : Domain<Light.Entity> {
         name = name,
         domain = Light
     ) {
+
+        init {
+            attributes += arrayOf(
+                ::min_mireds,
+                ::max_mireds,
+                ::effect_list,
+                ::supported_features,
+                ::brightness,
+                ::hs_color,
+                ::rgb_color,
+                ::xy_color,
+                ::white_value
+            )
+        }
+
         /** Some attributes can be set using the turn_on command. For those, we define a setter-companion to getValue. */
         @Suppress("UNCHECKED_CAST")
         operator fun <V : Any?> AttributesDelegate.setValue(
@@ -86,7 +104,7 @@ object Light : Domain<Light.Entity> {
         /** Set of supported features. */
         val supported_features: Set<SupportedFeatures>
             get() = buildSet {
-                val value: Int? = attrsDelegate.getValue(this@Entity, ::supported_features)
+                val value: Int? = rawAttributes[::supported_features.name]?.cast()
                 SupportedFeatures.values().forEach {
                     if (it.value and value!! == it.value)
                         add(it)

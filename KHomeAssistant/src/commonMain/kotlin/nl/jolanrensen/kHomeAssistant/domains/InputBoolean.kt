@@ -3,7 +3,6 @@ package nl.jolanrensen.kHomeAssistant.domains
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.RunBlocking
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 import kotlin.reflect.KProperty
@@ -42,6 +41,10 @@ object InputBoolean : Domain<InputBoolean.Entity> {
         operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = state == OnOff.ON
         operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
             runBlocking { switchTo(value) }
+        }
+
+        init {
+            attributes += ::editable
         }
 
         // Attributes

@@ -3,10 +3,7 @@ import kotlinx.coroutines.runBlocking
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.automation
-import nl.jolanrensen.kHomeAssistant.domains.InputBoolean
-import nl.jolanrensen.kHomeAssistant.domains.InputNumber
-import nl.jolanrensen.kHomeAssistant.domains.Light
-import nl.jolanrensen.kHomeAssistant.domains.Switch
+import nl.jolanrensen.kHomeAssistant.domains.*
 import nl.jolanrensen.kHomeAssistant.entities.invoke
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
@@ -47,11 +44,11 @@ fun main() {
             automations = listOf(
                 automation("1") {
 
+                    println(Light["batik"])
 
+                    println(MediaPlayer["denon_avrx2200w"])
 
-                    Light["batik"] {
-                        println(effect_list)
-                    }
+                    println(sun)
 
                     val inputNumberTest = InputNumber["input_number_test"]
 
