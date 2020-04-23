@@ -454,7 +454,11 @@ class KHomeAssistant(
             throw Exception("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
         }
 
-        return entity.parseStateValue(stateValue)!!
+        return try {
+            entity.parseStateValue(stateValue)!!
+        } catch (e: Exception) {
+            throw Exception("Could not parse state value \"$stateValue\" to entity with domain ${entity.domain::class.simpleName}, have you overridden the parseStateValue() function or are you perhaps querying the wrong entity?", e)
+        }
     }
 
 //    suspend fun getMediaPlayerThumbnail(mediaPlayer: MediaPlayer.Entity): Array

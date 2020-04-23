@@ -7,6 +7,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.domains.Domain
+import nl.jolanrensen.kHomeAssistant.domains.withContext
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 
 
@@ -140,4 +141,4 @@ object Example : Domain<Example.Entity> {
 typealias ExampleDomain = Example
 
 val KHomeAssistantContext.Example: ExampleDomain
-    get() = ExampleDomain.also { it.kHomeAssistant = kHomeAssistant }
+    get() = ExampleDomain.withContext(kHomeAssistant)

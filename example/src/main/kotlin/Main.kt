@@ -1,19 +1,16 @@
 
-import com.soywiz.klock.DateTime
-import com.soywiz.klock.minutes
 import kotlinx.coroutines.runBlocking
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.InputBoolean
-import nl.jolanrensen.kHomeAssistant.domains.InputNumber
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
+import nl.jolanrensen.kHomeAssistant.domains.sensors.GenericSensor
 import nl.jolanrensen.kHomeAssistant.entities.invoke
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
 import nl.jolanrensen.kHomeAssistant.entities.turnOn
-import nl.jolanrensen.kHomeAssistant.runAt
 
 
 class BedroomLights : Automation() {
@@ -50,17 +47,12 @@ fun main() {
             automations = listOf(
                 automation("1") {
 
-                    runAt((DateTime.now() + .5.minutes).local) {
-                        println("Half a minute passed!")
+                    GenericSensor["pixel_2_xl_battery_level"] {
+                        println(this)
+                        this.assumed_state
+
                     }
 
-                    InputNumber["input_number_test"] {
-                        println(this)
-                    }
-
-                    Light["batik"] {
-                        println(this)
-                    }
 
 
 

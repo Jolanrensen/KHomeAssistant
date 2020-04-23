@@ -58,4 +58,4 @@ object InputBoolean : Domain<InputBoolean.Entity> {
 typealias InputBooleanDomain = InputBoolean
 
 val KHomeAssistantContext.InputBoolean: InputBooleanDomain
-    get() = InputBooleanDomain.also { it.kHomeAssistant = kHomeAssistant }
+    get() = InputBooleanDomain.withContext(kHomeAssistant)

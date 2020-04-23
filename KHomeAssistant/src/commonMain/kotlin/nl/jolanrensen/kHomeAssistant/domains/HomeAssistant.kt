@@ -50,4 +50,4 @@ object HomeAssistant : Domain<DefaultEntity> {
 typealias HomeAssistantDomain = HomeAssistant
 
 val KHomeAssistantContext.HomeAssistant: HomeAssistantDomain
-    get() = HomeAssistantDomain.also { it.kHomeAssistant = kHomeAssistant }
+    get() = HomeAssistantDomain.withContext(kHomeAssistant)

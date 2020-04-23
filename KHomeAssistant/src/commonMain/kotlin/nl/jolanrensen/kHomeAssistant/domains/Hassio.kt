@@ -77,4 +77,4 @@ object Hassio : Domain<DefaultEntity> {
 typealias HassioDomain = Hassio
 
 val KHomeAssistantContext.Hassio: HassioDomain
-    get() = HassioDomain.also { it.kHomeAssistant = kHomeAssistant }
+    get() = HassioDomain.withContext(kHomeAssistant)

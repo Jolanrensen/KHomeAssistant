@@ -9,7 +9,7 @@ import nl.jolanrensen.kHomeAssistant.domains.Domain
 open class ToggleEntity(
     override val kHomeAssistant: () -> KHomeAssistant?,
     override val name: String,
-    override val domain: Domain<out BaseEntity<OnOff>>
+    override val domain: Domain<BaseEntity<OnOff>>
 ) : BaseEntity<OnOff>(
     kHomeAssistant = kHomeAssistant,
     name = name,

@@ -113,7 +113,7 @@ typealias SunDomain = Sun
 
 /** Access the Sun Domain */
 val KHomeAssistantContext.Sun: SunDomain
-    get() = SunDomain.also { it.kHomeAssistant = kHomeAssistant }
+    get() = SunDomain.withContext(kHomeAssistant)
 
 /** As there is only one sun (duh), let's make the sun entity quickly reachable */
 val KHomeAssistantContext.sun: Sun.Entity

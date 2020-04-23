@@ -35,4 +35,4 @@ object Switch : Domain<Switch.Entity> {
 typealias SwitchDomain = Switch
 
 val KHomeAssistantContext.Switch: SwitchDomain
-    get() = SwitchDomain.also { it.kHomeAssistant = kHomeAssistant }
+    get() = SwitchDomain.withContext(kHomeAssistant)

@@ -17,7 +17,7 @@ typealias DefaultEntity = BaseEntity<String>
 open class BaseEntity<StateType : Any>(
     open val kHomeAssistant: () -> KHomeAssistant? = { null },
     open val name: String,
-    open val domain: Domain<out BaseEntity<out StateType>>
+    open val domain: Domain<*>
 ) {
     private var entityExists = false
 
@@ -42,10 +42,11 @@ open class BaseEntity<StateType : Any>(
             ::entity_picture,
             ::icon,
             ::assumed_state,
-            ::device_class,
+//            ::device_class,
             ::unit_of_measurement,
             ::initial_state,
-            ::entityID
+            ::entityID,
+            ::rawAttributes
         )
     }
 
@@ -95,8 +96,8 @@ open class BaseEntity<StateType : Any>(
     /** For switches with an assumed state two buttons are shown (turn off, turn on) instead of a switch. If assumed_state is false you will get the default switch icon. */
     val assumed_state: Boolean get() = attrsDelegate.getValue(this, ::assumed_state) ?: true
 
-    /** The class of the device as set by configuration, changing the device state and icon that is displayed on the UI (see below). It does not set the unit_of_measurement.*/
-    val device_class: String? by attrsDelegate // TODO maybe move to binary sensor, sensor, cover and media player only
+//    /** The class of the device as set by configuration, changing the device state and icon that is displayed on the UI (see below). It does not set the unit_of_measurement.*/
+//    val device_class: String? by attrsDelegate // TODO maybe move to binary sensor, sensor, cover and media player only
 
     /** Defines the units of measurement, if any. This will also influence the graphical presentation in the history visualisation as continuous value. Sensors with missing unit_of_measurement are showing as discrete values. */
     val unit_of_measurement: String? by attrsDelegate

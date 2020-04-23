@@ -359,6 +359,6 @@ typealias LightDomain = Light
 
 /** Access the Light Domain */
 val KHomeAssistantContext.Light: LightDomain
-    get() = LightDomain.also { it.kHomeAssistant = kHomeAssistant }
+    get() = LightDomain.withContext(kHomeAssistant)
 
 

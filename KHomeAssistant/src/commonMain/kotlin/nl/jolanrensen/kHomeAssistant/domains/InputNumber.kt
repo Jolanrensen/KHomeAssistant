@@ -124,4 +124,4 @@ object InputNumber : Domain<InputNumber.Entity> {
 typealias InputNumberDomain = InputNumber
 
 val KHomeAssistantContext.InputNumber: InputNumberDomain
-    get() = InputNumberDomain.also { it.kHomeAssistant = kHomeAssistant }
+    get() = InputNumberDomain.withContext(kHomeAssistant)

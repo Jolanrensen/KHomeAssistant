@@ -3,13 +3,12 @@ package nl.jolanrensen.kHomeAssistant.domains
 import kotlinx.serialization.json.JsonElement
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
-import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
-import nl.jolanrensen.kHomeAssistant.entities.invoke
 
 
-interface Domain<E: BaseEntity<out Any>> {
+interface Domain<out E: BaseEntity<*>> {
     val domainName: String
 
     var kHomeAssistant: () -> KHomeAssistant?
@@ -51,8 +50,10 @@ interface Domain<E: BaseEntity<out Any>> {
             data = data
         )
     }
-
 }
+
+fun <D: Domain<*>> D.withContext(kHomeAssistant: () -> KHomeAssistant?): D = also { it.kHomeAssistant = kHomeAssistant }
+
 
 class DomainHasNoEntityException : Exception {
     constructor() : super()

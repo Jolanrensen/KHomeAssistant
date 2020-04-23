@@ -103,6 +103,7 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
                 ::source_list,
                 ::sound_mode_list,
                 ::supported_features,
+                ::device_class,
                 ::volume_level,
                 ::is_volume_muted,
                 ::media_position,
@@ -209,6 +210,9 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
                         add(it)
                 }
             }
+
+        /** The class of the device as set by configuration, changing the device state and icon that is displayed on the UI (see below). It does not set the unit_of_measurement.*/
+        val device_class: String? by attrsDelegate
 
 
         // read / write
@@ -420,4 +424,4 @@ typealias MediaPlayerDomain = MediaPlayer
 
 /** Access the MediaPlayer Domain */
 val KHomeAssistantContext.MediaPlayer: MediaPlayerDomain
-    get() = MediaPlayerDomain.also { it.kHomeAssistant = kHomeAssistant }
+    get() = MediaPlayerDomain.withContext(kHomeAssistant)
