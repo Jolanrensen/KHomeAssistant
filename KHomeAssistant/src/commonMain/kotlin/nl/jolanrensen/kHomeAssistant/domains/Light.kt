@@ -62,6 +62,7 @@ object Light : Domain<Light.Entity> {
                 ::max_mireds,
                 ::effect_list,
                 ::supported_features,
+                ::color,
                 ::brightness,
                 ::hs_color,
                 ::rgb_color,
@@ -117,7 +118,7 @@ object Light : Domain<Light.Entity> {
          * You can find a lot of colors in com.soywiz.korim.color.Colors
          * */
         var color: RGBA?
-            get() = rgb_color?.run { RGBA(r, g, b) }
+            get() = rgb_color?.run { RGBA(r.toInt(), g.toInt(), b.toInt()) }
             set(value) {
                 runBlocking { turnOn(color = value!!) }
             }

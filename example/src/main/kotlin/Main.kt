@@ -58,6 +58,10 @@ fun main() {
                         println(this)
                     }
 
+                    Light["batik"] {
+                        println(this)
+                    }
+
 
 
                     var toiletWindow by InputBoolean["toilet_window"]
