@@ -1,7 +1,6 @@
 
 import com.soywiz.klock.DateTime
-import com.soywiz.klock.Month
-import com.soywiz.klock.Year
+import com.soywiz.klock.minutes
 import kotlinx.coroutines.runBlocking
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
@@ -51,11 +50,16 @@ fun main() {
             automations = listOf(
                 automation("1") {
 
-                    runAt(DateTime(Year(2020), Month.April, 22, 9).localUnadjusted) {
-
+                    runAt((DateTime.now() + .5.minutes).local) {
+                        println("Half a minute passed!")
                     }
 
-                    val inputNumberTest = InputNumber["input_number_test"]
+                    InputNumber["input_number_test"] {
+                        println(this)
+                    }
+
+
+
 
                     var toiletWindow by InputBoolean["toilet_window"]
 

@@ -37,7 +37,7 @@ object InputBoolean : Domain<InputBoolean.Entity> {
     ) {
         /** Delegate so you can control an InputBoolean like a local variable
          * Simply type "var yourBoolean by InputBoolean.Entity("your_boolean")
-         * */
+         **/
         operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = state == OnOff.ON
         operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
             runBlocking { switchTo(value) }

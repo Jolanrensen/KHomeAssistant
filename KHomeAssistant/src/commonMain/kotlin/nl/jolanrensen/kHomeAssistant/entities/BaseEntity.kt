@@ -50,10 +50,19 @@ open class BaseEntity<StateType : Any>(
     }
 
     /** Given a string stateValue, this method should return the correct StateType */
-    open fun parseStateValue(stateValue: String): StateType? = null
+    @OptIn(ExperimentalStdlibApi::class)
+    open fun parseStateValue(stateValue: String): StateType? = try {
+        stateValue as StateType
+    } catch (e: Exception) {
+        throw Exception("Did you forget to override parseStateValue() for ${domain.domainName}?")
+    }
 
     /** This method returns the state for this entity in the original String format */
-    open fun getStateValue(state: StateType): String? = null
+    open fun getStateValue(state: StateType): String? = try {
+        state as String
+    } catch (e: Exception) {
+        throw Exception("Did you forget to override getStateValue() for ${domain.domainName}?")
+    }
 
     open val state: StateType
         get() = kHomeAssistant()!!.getState(this)
