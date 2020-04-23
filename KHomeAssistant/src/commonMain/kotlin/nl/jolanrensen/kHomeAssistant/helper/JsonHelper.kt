@@ -7,7 +7,6 @@ import kotlin.reflect.typeOf
 
 inline fun <reified T : Any?> JsonElement.cast(): T? = try {
     when (T::class) {
-
         // JsonElements
         JsonPrimitive::class -> primitive as T
         JsonObject::class, Map::class -> jsonObject as T
