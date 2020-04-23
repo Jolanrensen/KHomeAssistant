@@ -60,7 +60,6 @@ fun main() {
 
 
 
-
                     var toiletWindow by InputBoolean["toilet_window"]
 
 
