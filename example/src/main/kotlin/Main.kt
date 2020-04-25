@@ -3,6 +3,7 @@ import kotlinx.coroutines.runBlocking
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.automation
+import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.InputBoolean
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
@@ -53,8 +54,7 @@ fun main() {
                     }
 
 
-//                    Light.callService()
-
+                    Domain("").domainName
 
                     BatterySensor["pixel_2_xl_battery_level"] {
                         println(this)

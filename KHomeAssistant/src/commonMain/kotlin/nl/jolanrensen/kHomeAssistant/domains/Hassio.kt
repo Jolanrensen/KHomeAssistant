@@ -5,6 +5,9 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 
+/**
+ *
+ */
 object Hassio : Domain<DefaultEntity> {
     override val domainName = "hassio"
 
