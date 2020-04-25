@@ -6,30 +6,31 @@ import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.InputBoolean
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
-import nl.jolanrensen.kHomeAssistant.domains.sensors.GenericSensor
+import nl.jolanrensen.kHomeAssistant.domains.sensors.BatterySensor
 import nl.jolanrensen.kHomeAssistant.entities.invoke
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
 import nl.jolanrensen.kHomeAssistant.entities.turnOn
+import nl.jolanrensen.kHomeAssistant.runEveryDay
 
 
 class BedroomLights : Automation() {
 
-    val allLights: List<Light.Entity> = Light["bed", "bedroom_lamp", "globe", "pisa"]
+    val bed = Light.Entity("bed")
+    val bedroomLamp = Light.Entity("bedroom_lamp")
+    val globe = Light.Entity("globe")
+    val pisa = Light.Entity("pisa")
+
+    val allLights = listOf(bed, bedroomLamp, globe, pisa)
 
     override suspend fun initialize() {
-
-        allLights {
-            println(state)
-        }
-
-        Switch["bedroom_switch"].onTurnOn {
+        Switch.Entity("bedroom_switch").onTurnOn {
             if (allLights.any { it.isOn })
                 allLights.turnOff()
             else
                 allLights.turnOn()
 
-            turnOff()
+            this.turnOff()
         }
     }
 }
@@ -47,13 +48,19 @@ fun main() {
             automations = listOf(
                 automation("1") {
 
-                    GenericSensor["pixel_2_xl_battery_level"] {
-                        println(this)
-                        this.assumed_state
+                    runEveryDay {
 
                     }
 
 
+//                    Light.callService()
+
+
+                    BatterySensor["pixel_2_xl_battery_level"] {
+                        println(this)
+
+//                        callService()
+                    }
 
 
                     var toiletWindow by InputBoolean["toilet_window"]

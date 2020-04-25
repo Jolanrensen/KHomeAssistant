@@ -71,11 +71,15 @@ open class BaseEntity<StateType : Any>(
 
     suspend fun setState(s: StateType): Unit = TODO()
 
+    /** Get the raw attributes from Home Assistant in json format. */
     val rawAttributes: JsonObject
         get() = kHomeAssistant()!!.getAttributes(this)
 
+    /** Helper function to get raw attributes in json format using yourEntity["attribute"] */
+    operator fun get(name: String) = rawAttributes[name]
+
     val attrsDelegate = object : AttributesDelegate {
-        override operator fun <V : Any?> getValue(thisRef: Any, property: KProperty<*>): V? =
+        override operator fun <V : Any?> getValue(thisRef: Any?, property: KProperty<*>): V? =
             rawAttributes[property.name]?.cast(property.returnType)
     }
 
@@ -156,7 +160,7 @@ open class BaseEntity<StateType : Any>(
 }
 
 interface AttributesDelegate {
-    operator fun <V : Any?> getValue(thisRef: Any, property: KProperty<*>): V?
+    operator fun <V : Any?> getValue(thisRef: Any?, property: KProperty<*>): V?
 }
 
 

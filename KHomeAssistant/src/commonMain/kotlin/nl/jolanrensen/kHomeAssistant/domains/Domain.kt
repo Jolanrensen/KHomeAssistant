@@ -7,13 +7,17 @@ import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
-
+/**
+ * Interface where all domains (like [Light], [MediaPlayer], [Switch]) inherit from.
+ */
 interface Domain<out E: BaseEntity<*>> {
+    /** The Home Assistant name for this domain, like "light". */
     val domainName: String
 
+    /** Function to access the [KHomeAssistant] instance. This is passed around [KHomeAssistantContext] inheritors. */
     var kHomeAssistant: () -> KHomeAssistant?
 
-    /** Function to create an Entity in a domain */
+    /** Function to create an Entity in a domain. */
     fun Entity(name: String): E
 
     /** Shorthand for apply, allows for DSL-like behavior on entities. */
@@ -23,7 +27,7 @@ interface Domain<out E: BaseEntity<*>> {
     /** Helper function to create multiple entities at once in a domain */
     fun Entities(vararg names: String): List<E> = names.map { Entity(it) }
 
-    /** Shorthand for apply for each, allows for DSL-like behavior on collections of entities. */
+    /** Shorthand for [apply] for each, allows for DSL-like behavior on collections of entities. */
     fun Entities(vararg names: String, callback: E.() -> Unit): List<E> = Entities(*names).apply { forEach(callback) }
 
     // TODO maybe allow a way to make an anonymous toggle entity
@@ -40,7 +44,8 @@ interface Domain<out E: BaseEntity<*>> {
 
     /** Call a service with an entity and data
      * For instance, turning on a light would be
-     * Light.callService("turn_on", Light.Entity("kitchen"), mapOf("brightness" to 100))
+     *
+     *     Light.callService("turn_on", Light.Entity("kitchen"), mapOf("brightness" to 100))
      * */
     suspend fun callService(serviceName: String, data: Map<String, JsonElement> = mapOf()): ResultMessage {
         checkContext()
@@ -73,16 +78,3 @@ fun KHomeAssistantContext.Domain(domainName: String) = object : Domain<DefaultEn
 
     override fun checkContext() = Unit // context is always present
 }
-
-
-
-
-/**
- * Light["turn_on"](Light.Entity("kitchen"), mapOf("brightness" to 100))
- * suspend not working
- * */
-//suspend operator fun <D: Domain> D.get(service: String): (entity: Entity<*,*>?, data: Map<String, Any?>?) -> Unit = { entity, data ->
-//    TODO("?")
-//
-//
-//}
