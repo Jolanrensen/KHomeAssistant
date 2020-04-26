@@ -1,18 +1,11 @@
 
-import kotlinx.coroutines.runBlocking
 import nl.jolanrensen.kHomeAssistant.Automation
-import nl.jolanrensen.kHomeAssistant.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.automation
-import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.domains.InputBoolean
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
-import nl.jolanrensen.kHomeAssistant.domains.sensors.BatterySensor
-import nl.jolanrensen.kHomeAssistant.entities.invoke
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
 import nl.jolanrensen.kHomeAssistant.entities.turnOn
-import nl.jolanrensen.kHomeAssistant.runEveryDay
+import nl.jolanrensen.kHomeAssistant.helper.minHeapOf
 
 
 class BedroomLights : Automation() {
@@ -37,38 +30,50 @@ class BedroomLights : Automation() {
 }
 
 fun main() {
-    runBlocking {
-        println("running!")
+    val heap = minHeapOf(3, 8, 6, 1, 6)
+    println(
+        heap.asSortedArray().toList()
+    )
 
-        KHomeAssistant(
-            host = "home.jolanrensen.nl",
-            port = 8123,
-            secure = true,
-            debug = false,
-            accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
-            automations = listOf(
-                automation("1") {
+//    heap.extractMin()
+//    println(heap)
 
-                    runEveryDay {
-
-                    }
-
-
-                    Domain("").domainName
-
-                    BatterySensor["pixel_2_xl_battery_level"] {
-                        println(this)
-
-//                        callService()
-                    }
-
-
-                    var toiletWindow by InputBoolean["toilet_window"]
-
-
-                }
-            )
-        ).run()
-    }
 
 }
+
+//fun main() {
+//    runBlocking {
+//        println("running!")
+//
+//        KHomeAssistant(
+//            host = "home.jolanrensen.nl",
+//            port = 8123,
+//            secure = true,
+//            debug = false,
+//            accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
+//            automations = listOf(
+//                automation("1") {
+//
+//                    runEveryDay {
+//
+//                    }
+//
+//
+//                    Domain("").domainName
+//
+//                    BatterySensor["pixel_2_xl_battery_level"] {
+//                        println(this)
+//
+////                        callService()
+//                    }
+//
+//
+//                    var toiletWindow by InputBoolean["toilet_window"]
+//
+//
+//                }
+//            )
+//        ).run()
+//    }
+//
+//}

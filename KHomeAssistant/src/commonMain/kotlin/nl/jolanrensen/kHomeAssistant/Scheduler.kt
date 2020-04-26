@@ -38,44 +38,44 @@ fun KHomeAssistantContext.runEveryDayAt(time: Time, callback: suspend () -> Unit
     return runEvery(1.days, DateTime(DateTime.EPOCH.date, time).localUnadjusted - offsetAtEpoch, callback)
 }
 
-/** Schedule something to execute each week, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the minute, hour, day, week etc. will be picked. */
+/** Schedule something to execute each week, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the week will be picked. */
 fun KHomeAssistantContext.runEveryWeek(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ) = runEvery(1.weeks, alignWith, callback)
 
-/** Schedule something to execute each day, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the minute, hour, day, week etc. will be picked. */
+/** Schedule something to execute each day, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the day will be picked. */
 fun KHomeAssistantContext.runEveryDay(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ) = runEvery(1.days, alignWith, callback)
 
-/** Schedule something to execute each hour, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the minute, hour, day, week etc. will be picked. */
+/** Schedule something to execute each hour, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the hour will be picked. */
 fun KHomeAssistantContext.runEveryHour(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ) = runEvery(1.hours, alignWith, callback)
 
-/** Schedule something to execute each minute, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the minute, hour, day, week etc. will be picked. */
+/** Schedule something to execute each minute, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the minute will be picked. */
 fun KHomeAssistantContext.runEveryMinute(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ) = runEvery(1.minutes, alignWith, callback)
 
-/** Schedule something to repeatedly execute each given timespan, optionally aligned with a certain point in (local) time. If not aligned, the local epoch will be picked. */
+/** Schedule something to repeatedly execute each given timespan, optionally aligned with a certain point in (local) time. If not aligned, the local epoch (00:00:00 jan 1 1970, local time) will be picked. */
 fun KHomeAssistantContext.runEvery(
     timeSpan: TimeSpan,
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ): Task {
-    val task = RepeatedTask(timeSpan, alignWith.utc, callback)
+    val task = RepeatedRegularTask(alignWith = alignWith.utc, runEvery = timeSpan, callback = callback)
 
-    kHomeAssistant()!!.scheduledRepeatedTasks += task
+    kHomeAssistant()!!.schedule(task)
 
     return object : Task {
         override fun cancel() {
-            try {
-                kHomeAssistant()!!.scheduledRepeatedTasks -= task
+            try { // TODO not sure if try catch necessary
+                kHomeAssistant()!!.cancel(task)
             } catch (e: Exception) {
             }
         }
@@ -128,17 +128,16 @@ fun KHomeAssistantContext.runAt(
     callback: suspend () -> Unit
 ): Task {
     val task = RepeatedIrregularTask(
-        currentNextTime = getDateTimeTz().utc,
         getNextTime = { getDateTimeTz().utc },
         callback = callback
     )
 
-    kHomeAssistant()!!.scheduledRepeatedIrregularTasks += task
+    kHomeAssistant()!!.schedule(task)
 
     return object : Task {
         override fun cancel() {
             try {
-                kHomeAssistant()!!.scheduledRepeatedIrregularTasks -= task
+                kHomeAssistant()!!.cancel(task)
             } catch (e: Exception) {
             }
         }
@@ -150,14 +149,34 @@ interface Task {
     fun cancel()
 }
 
-data class RepeatedTask(
-    val runEvery: TimeSpan,
-    var alignWith: DateTime, // can be adjusted to a alignWith closest to now, yet in the past
-    val callback: suspend () -> Unit
-)
+sealed class RepeatedTask : Comparable<RepeatedTask> {
+    abstract val scheduledNextExecution: DateTime
+    abstract val callback: suspend () -> Unit
+    override fun compareTo(other: RepeatedTask) = scheduledNextExecution.compareTo(other.scheduledNextExecution)
+}
 
-data class RepeatedIrregularTask(
-    var currentNextTime: DateTime,
+class RepeatedRegularTask(
+    alignWith: DateTime,
+    val runEvery: TimeSpan,
+    override val callback: suspend () -> Unit
+) : RepeatedTask() {
+
+    override var scheduledNextExecution = alignWith
+
+    init {
+        val now = DateTime.now()
+        while (scheduledNextExecution < now)
+            scheduledNextExecution += runEvery
+    }
+}
+
+class RepeatedIrregularTask(
     val getNextTime: () -> DateTime,
-    val callback: suspend () -> Unit
-)
+    override val callback: suspend () -> Unit
+) : RepeatedTask() {
+    override var scheduledNextExecution: DateTime = getNextTime()
+
+    fun update() {
+        scheduledNextExecution = getNextTime()
+    }
+}

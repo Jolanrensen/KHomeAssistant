@@ -1,7 +1,7 @@
 package nl.jolanrensen.kHomeAssistant
 
+import com.soywiz.kds.PriorityQueue
 import com.soywiz.klock.DateTime
-import com.soywiz.klock.until
 import io.ktor.client.features.websocket.DefaultClientWebSocketSession
 import io.ktor.client.features.websocket.ws
 import io.ktor.client.features.websocket.wss
@@ -19,7 +19,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.Clock.cancelAllTimers
-import nl.jolanrensen.kHomeAssistant.Clock.fixedRateTimer
 import nl.jolanrensen.kHomeAssistant.WebsocketsHttpClient.httpClient
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
@@ -104,8 +103,58 @@ class KHomeAssistant(
     val stateListeners: HashMap<String, HashSet<suspend (oldState: StateResult, newState: StateResult) -> Unit>> =
         hashMapOf()
 
-    val scheduledRepeatedTasks: HashSet<RepeatedTask> = hashSetOf()
-    val scheduledRepeatedIrregularTasks: HashSet<RepeatedIrregularTask> = hashSetOf()
+
+    private val newScheduler
+        get() = launch {
+            while (scheduledRepeatedTasks.isNotEmpty()) {
+                val now = DateTime.now()
+
+//                scheduledRepeatedTasks.min
+
+                // Get next scheduled task in the future
+                val next = scheduledRepeatedTasks.first { it.scheduledNextExecution < now }
+
+                // Suspend until it's time to execute the next task (can be canceled here)
+                delay((next.scheduledNextExecution - now).millisecondsLong)
+
+                // check whether the next task isn't canceled in the meantime
+                if (next == scheduledRepeatedTasks.head) {
+                    // remove it from the schedule and execute
+//                    scheduledRepeatedTasks.removeHead()
+                    this@KHomeAssistant.launch { next.callback() }
+
+                    // check for a reschedule
+                    when (next) {
+                        is RepeatedRegularTask -> next.apply {
+                            scheduledNextExecution += runEvery
+//                            schedule(this)
+                        }
+                        is RepeatedIrregularTask -> next.apply {
+                            update()
+
+                        }
+                    }
+                }
+            }
+            scheduler = null
+        }
+
+    private var scheduler: Job? = null
+
+    private val scheduledRepeatedTasks: PriorityQueue<RepeatedTask> = PriorityQueue()
+
+    fun schedule(task: RepeatedTask) {
+        scheduledRepeatedTasks += task
+        if (scheduledRepeatedTasks.size == 1 || task < scheduledRepeatedTasks.head) {
+            scheduler?.cancel()
+            scheduler = newScheduler
+        }
+    }
+
+    fun cancel(task: RepeatedTask) {
+        scheduledRepeatedTasks -= task
+    }
+
 
     private val sendQueue: Channel<suspend DefaultClientWebSocketSession.() -> Unit> = Channel(UNLIMITED)
 
@@ -215,24 +264,24 @@ class KHomeAssistant(
             }
 
 
-            fixedRateTimer(1000) {
-                val now = DateTime.now()
-                for (task in scheduledRepeatedTasks) {
-                    while (task.alignWith < now.startOfSecond)
-                        task.alignWith += task.runEvery
-
-                    //println("align with: ${task.alignWith.local}")
-                    if (task.alignWith in now.startOfSecond until now.endOfSecond)
-                        this@KHomeAssistant.launch { task.callback() }
-                }
-                for (task in scheduledRepeatedIrregularTasks) {
-                    println("currentNextTime: ${task.currentNextTime}")
-                    if (task.currentNextTime in now.startOfSecond until now.endOfSecond)
-                        this@KHomeAssistant.launch { task.callback() }
-
-                    task.currentNextTime = task.getNextTime()
-                }
-            }
+//            fixedRateTimer(1000) {
+//                val now = DateTime.now()
+//                for (task in scheduledRepeatedTasks) {
+//                    while (task.alignWith < now.startOfSecond)
+//                        task.alignWith += task.runEvery
+//
+//                    //println("align with: ${task.alignWith.local}")
+//                    if (task.alignWith in now.startOfSecond until now.endOfSecond)
+//                        this@KHomeAssistant.launch { task.callback() }
+//                }
+//                for (task in scheduledRepeatedIrregularTasks) {
+//                    println("currentNextTime: ${task.currentNextTime}")
+//                    if (task.currentNextTime in now.startOfSecond until now.endOfSecond)
+//                        this@KHomeAssistant.launch { task.callback() }
+//
+//                    task.currentNextTime = task.getNextTime()
+//                }
+//            }
 
 
 //            var executionTime = 0.milliseconds
@@ -292,13 +341,13 @@ class KHomeAssistant(
 
             // cancel if there aren't any listeners and the automations are initialized
             println("All automations are initialized")
-            if (stateListeners.isEmpty() && scheduledRepeatedTasks.isEmpty() && scheduledRepeatedIrregularTasks.isEmpty()) {
+            if (stateListeners.isEmpty() && scheduledRepeatedTasks.isEmpty()) {
                 println("There are no state listeners or scheduled tasks so KHomeAssistant is stopping...")
                 cancelAllTimers()
                 receiver.cancelAndJoin()
                 sender.cancelAndJoin()
             } else {
-                println("There are ${stateListeners.size} state listeners and ${scheduledRepeatedTasks.size + scheduledRepeatedIrregularTasks.size} scheduled repeated tasks, so KHomeAssistant keeps running...")
+                println("There are ${stateListeners.size} state listeners and ${scheduledRepeatedTasks.size} scheduled repeated tasks, so KHomeAssistant keeps running...")
                 receiver.join()
                 sender.join()
             }
@@ -457,7 +506,10 @@ class KHomeAssistant(
         return try {
             entity.parseStateValue(stateValue)!!
         } catch (e: Exception) {
-            throw Exception("Could not parse state value \"$stateValue\" to entity with domain ${entity.domain::class.simpleName}, have you overridden the parseStateValue() function or are you perhaps querying the wrong entity?", e)
+            throw Exception(
+                "Could not parse state value \"$stateValue\" to entity with domain ${entity.domain::class.simpleName}, have you overridden the parseStateValue() function or are you perhaps querying the wrong entity?",
+                e
+            )
         }
     }
 
