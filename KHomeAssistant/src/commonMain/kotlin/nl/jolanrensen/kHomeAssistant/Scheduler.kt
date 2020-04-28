@@ -2,6 +2,7 @@ package nl.jolanrensen.kHomeAssistant
 
 import com.soywiz.klock.*
 import nl.jolanrensen.kHomeAssistant.domains.sun
+import nl.jolanrensen.kHomeAssistant.entities.onAttributeChanged
 
 /**
  * The scheduler always assumes local time instead of UTC time to give you a piece of mind.
@@ -82,29 +83,37 @@ fun KHomeAssistantContext.runEvery(
     }
 }
 
-/** Schedule something to execute each day at sunrise. */
-fun KHomeAssistantContext.runEveryDayAtSunrise(callback: suspend () -> Unit) =
-    runAt({ sun.next_rising.local }, callback)
-
-/** Schedule something to execute each day at sunset. */
-fun KHomeAssistantContext.runEveryDayAtSunset(callback: suspend () -> Unit) =
-    runAt({ sun.next_setting.local }, callback)
-
-/** Schedule something to execute each day at dawn. */
-fun KHomeAssistantContext.runEveryDayAtDawn(callback: suspend () -> Unit) =
-    runAt({ sun.next_dawn.local }, callback)
-
-/** Schedule something to execute each day at dusk. */
-fun KHomeAssistantContext.runEveryDayAtDusk(callback: suspend () -> Unit) =
-    runAt({ sun.next_dusk.local }, callback)
-
-/** Schedule something to execute each day at noon. */
-fun KHomeAssistantContext.runEveryDayAtNoon(callback: suspend () -> Unit) =
-    runAt({ sun.next_noon.local }, callback)
+///** Schedule something to execute each day at sunrise. */
+//fun KHomeAssistantContext.runEveryDayAtSunrise(callback: suspend () -> Unit) =
+//    runAt({ sun.next_rising.local }, callback)
+//
+///** Schedule something to execute each day at sunset. */
+//fun KHomeAssistantContext.runEveryDayAtSunset(callback: suspend () -> Unit) =
+//    runAt({ sun.next_setting.local }, callback)
+//
+///** Schedule something to execute each day at dawn. */
+//fun KHomeAssistantContext.runEveryDayAtDawn(callback: suspend () -> Unit) =
+//    runAt({ sun.next_dawn.local }, callback)
+//
+///** Schedule something to execute each day at dusk. */
+//fun KHomeAssistantContext.runEveryDayAtDusk(callback: suspend () -> Unit) =
+//    runAt({ sun.next_dusk.local }, callback)
+//
+///** Schedule something to execute each day at noon. */
+//fun KHomeAssistantContext.runEveryDayAtNoon(callback: suspend () -> Unit) =
+//    runAt({ sun.next_noon.local }, { doUpdate -> sun.onAttributeChanged() }, callback)
 
 /** Schedule something to execute each day at midnight. */
 fun KHomeAssistantContext.runEveryDayAtMidnight(callback: suspend () -> Unit) =
-    runAt({ sun.next_midnight.local }, callback)
+    runAt(
+        getNextExecutionTime = { sun.next_midnight.local },
+        whenToUpdate = { doUpdate ->
+            sun.onAttributeChanged(sun::next_midnight) {
+                doUpdate()
+            }
+        },
+        callback = callback
+    )
 
 /** Schedule something to execute at a given point in (local) time. The task will automatically be canceled after execution. */
 fun KHomeAssistantContext.runAt(
@@ -112,7 +121,10 @@ fun KHomeAssistantContext.runAt(
     callback: suspend () -> Unit
 ): Task {
     var cancel: (() -> Unit)? = null
-    val task = runAt({ dateTimeTz }) {
+    val task = runAt(
+        getNextExecutionTime = { dateTimeTz },
+        whenToUpdate = {}
+    ) {
         callback()
         cancel!!.invoke()
     }
@@ -124,13 +136,16 @@ fun KHomeAssistantContext.runAt(
 /** Schedule something to run at a point in (local) time that can be obtained using the given getDateTimeTz callback.
  * This is ideal for sunsets or -rises, that shift every day, or, for instance, for scheduling something to execute based on an input_datetime from the Home Assistant UI. */
 fun KHomeAssistantContext.runAt(
-    getDateTimeTz: () -> DateTimeTz,
+    getNextExecutionTime: () -> DateTimeTz,
+    whenToUpdate: (doUpdate: () -> Unit) -> Unit,
     callback: suspend () -> Unit
 ): Task {
     val task = RepeatedIrregularTask(
-        getNextTime = { getDateTimeTz().utc },
+        getNextTime = { getNextExecutionTime().utc },
+        whenToUpdate = whenToUpdate,
         callback = callback
     )
+
 
     kHomeAssistant()!!.schedule(task)
 
@@ -172,9 +187,16 @@ class RepeatedRegularTask(
 
 class RepeatedIrregularTask(
     val getNextTime: () -> DateTime,
+    whenToUpdate: (doUpdate: () -> Unit) -> Unit,
     override val callback: suspend () -> Unit
 ) : RepeatedTask() {
     override var scheduledNextExecution: DateTime = getNextTime()
+
+    init {
+        whenToUpdate {
+            update()
+        }
+    }
 
     fun update() {
         scheduledNextExecution = getNextTime()

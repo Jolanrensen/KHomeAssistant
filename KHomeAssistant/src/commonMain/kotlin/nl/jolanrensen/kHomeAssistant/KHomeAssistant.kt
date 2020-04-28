@@ -1,6 +1,5 @@
 package nl.jolanrensen.kHomeAssistant
 
-import com.soywiz.kds.PriorityQueue
 import com.soywiz.klock.DateTime
 import io.ktor.client.features.websocket.DefaultClientWebSocketSession
 import io.ktor.client.features.websocket.ws
@@ -22,6 +21,8 @@ import nl.jolanrensen.kHomeAssistant.Clock.cancelAllTimers
 import nl.jolanrensen.kHomeAssistant.WebsocketsHttpClient.httpClient
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.helper.PriorityQueue
+import nl.jolanrensen.kHomeAssistant.helper.priorityQueueOf
 import nl.jolanrensen.kHomeAssistant.messages.*
 import kotlin.jvm.Volatile
 import kotlin.time.ExperimentalTime
@@ -109,16 +110,14 @@ class KHomeAssistant(
             while (scheduledRepeatedTasks.isNotEmpty()) {
                 val now = DateTime.now()
 
-//                scheduledRepeatedTasks.min
-
                 // Get next scheduled task in the future
-                val next = scheduledRepeatedTasks.first { it.scheduledNextExecution < now }
+                val next = scheduledRepeatedTasks.first { now < it.scheduledNextExecution }
 
                 // Suspend until it's time to execute the next task (can be canceled here)
                 delay((next.scheduledNextExecution - now).millisecondsLong)
 
                 // check whether the next task isn't canceled in the meantime
-                if (next == scheduledRepeatedTasks.head) {
+                if (next == scheduledRepeatedTasks.next) {
                     // remove it from the schedule and execute
 //                    scheduledRepeatedTasks.removeHead()
                     this@KHomeAssistant.launch { next.callback() }
@@ -141,11 +140,11 @@ class KHomeAssistant(
 
     private var scheduler: Job? = null
 
-    private val scheduledRepeatedTasks: PriorityQueue<RepeatedTask> = PriorityQueue()
+    private val scheduledRepeatedTasks: PriorityQueue<RepeatedTask> = priorityQueueOf()
 
     fun schedule(task: RepeatedTask) {
         scheduledRepeatedTasks += task
-        if (scheduledRepeatedTasks.size == 1 || task < scheduledRepeatedTasks.head) {
+        if (scheduledRepeatedTasks.size == 1 || task < scheduledRepeatedTasks.next) {
             scheduler?.cancel()
             scheduler = newScheduler
         }

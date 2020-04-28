@@ -1,11 +1,11 @@
 
 import nl.jolanrensen.kHomeAssistant.Automation
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
+import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
-import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
-import nl.jolanrensen.kHomeAssistant.entities.turnOff
-import nl.jolanrensen.kHomeAssistant.entities.turnOn
-import nl.jolanrensen.kHomeAssistant.helper.minHeapOf
+import nl.jolanrensen.kHomeAssistant.entities.*
 
 
 class BedroomLights : Automation() {
@@ -29,51 +29,33 @@ class BedroomLights : Automation() {
     }
 }
 
+
 fun main() {
-    val heap = minHeapOf(3, 8, 6, 1, 6)
-    println(
-        heap.asSortedArray().toList()
-    )
+    runBlocking {
+        println("running!")
 
-//    heap.extractMin()
-//    println(heap)
+        KHomeAssistant(
+            host = "home.jolanrensen.nl",
+            port = 8123,
+            secure = true,
+            debug = false,
+            accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
+            automations = listOf(
+                automation("1") {
 
+                    val batik = Light["batik"] {
+                        onAttributeChanged(::brightness) {
+
+                        }
+
+                        ::brightness.onChanged(this) {
+                            println("brightness changed to $brightness")
+                        }
+                    }
+
+                }
+            )
+        ).run()
+    }
 
 }
-
-//fun main() {
-//    runBlocking {
-//        println("running!")
-//
-//        KHomeAssistant(
-//            host = "home.jolanrensen.nl",
-//            port = 8123,
-//            secure = true,
-//            debug = false,
-//            accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
-//            automations = listOf(
-//                automation("1") {
-//
-//                    runEveryDay {
-//
-//                    }
-//
-//
-//                    Domain("").domainName
-//
-//                    BatterySensor["pixel_2_xl_battery_level"] {
-//                        println(this)
-//
-////                        callService()
-//                    }
-//
-//
-//                    var toiletWindow by InputBoolean["toilet_window"]
-//
-//
-//                }
-//            )
-//        ).run()
-//    }
-//
-//}

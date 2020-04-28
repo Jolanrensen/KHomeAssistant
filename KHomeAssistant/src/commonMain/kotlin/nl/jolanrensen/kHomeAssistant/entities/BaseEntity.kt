@@ -11,8 +11,15 @@ import nl.jolanrensen.kHomeAssistant.messages.Context
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
+import kotlin.reflect.KProperty1
 
 typealias DefaultEntity = BaseEntity<String>
+
+/** Type returned when using myEntity::myAttribute */
+typealias Attribute<A> = KProperty0<A>
+
+/** Type returned when using SomeDomain.Entity::myAttribute */
+typealias NonSpecificAttribute<E, A> = KProperty1<E, A>
 
 open class BaseEntity<StateType : Any>(
     open val kHomeAssistant: () -> KHomeAssistant? = { null },
@@ -30,7 +37,7 @@ open class BaseEntity<StateType : Any>(
         }
     }
 
-    val attributes: ArrayList<KProperty0<*>> = arrayListOf()
+    val attributes: ArrayList<Attribute<*>> = arrayListOf()
 
     init {
         this.checkEntityExists()
@@ -79,8 +86,10 @@ open class BaseEntity<StateType : Any>(
     operator fun get(name: String) = rawAttributes[name]
 
     val attrsDelegate = object : AttributesDelegate {
+        override var alternativeAttributes: JsonObject? = null
+
         override operator fun <V : Any?> getValue(thisRef: Any?, property: KProperty<*>): V? =
-            rawAttributes[property.name]?.cast(property.returnType)
+            (alternativeAttributes ?: rawAttributes)[property.name]?.cast(property.returnType)
     }
 
     // Default attributes
@@ -160,20 +169,10 @@ open class BaseEntity<StateType : Any>(
 }
 
 interface AttributesDelegate {
+    /** ONLY USE TEMPORARILY */
+    var alternativeAttributes: JsonObject?
     operator fun <V : Any?> getValue(thisRef: Any?, property: KProperty<*>): V?
 }
-
-
-/** Used to get attributes using a delegate. */
-//inline operator fun <reified Entity: BaseEntity<*>, reified V: Any?> Attributes.getValue(baseEntity: Entity, property: KProperty<*>): V? =
-//    get(property.name)?.cast()
-
-
-///** Used to get attributes using a delegate. */
-//inline operator fun <S : Any, E : BaseEntity<S>, reified V : Any?> E.getValue(
-//    thisRef: BaseEntity<*>?,
-//    property: KProperty<*>
-//): V? = attributes[property.name]?.cast()
 
 /** Shorthand for apply, allows for DSL-like behavior on entities. */
 inline operator fun <S : Any, E : BaseEntity<S>> E.invoke(callback: E.() -> Unit): E = apply(callback)
@@ -183,50 +182,3 @@ inline operator fun <S : Any, E : BaseEntity<S>> Iterable<E>.invoke(callback: E.
     apply { forEach(callback) }
 
 
-fun <S : Any, E : BaseEntity<S>> E.onStateChangedToNot(
-    newState: S,
-    callback: suspend E.() -> Unit
-): E {
-    onStateChanged { it ->
-        if (newState != it)
-            callback()
-    }
-    return this
-}
-
-fun <S : Any, E : BaseEntity<S>> E.onStateChangedTo(
-    newState: S,
-    callback: suspend E.() -> Unit
-): E {
-    onStateChanged { it ->
-        if (newState == it)
-            callback()
-    }
-    return this
-}
-
-fun <S : Any, E : BaseEntity<S>> E.onStateChanged(
-    callback: suspend E.(newState: S?) -> Unit
-): E {
-    checkEntityExists()
-    kHomeAssistant()!!.stateListeners
-        .getOrPut(entityID) { hashSetOf() }
-        .add { oldState, newState ->
-            if (oldState.state != newState.state)
-                callback(parseStateValue(newState.state))
-        }
-    return this
-}
-
-fun <S : Any, E : BaseEntity<S>> E.onAttributesChanged(
-    callback: suspend E.(newAttributes: JsonObject?) -> Unit
-): E {
-    checkEntityExists()
-    kHomeAssistant()!!.stateListeners
-        .getOrPut(entityID) { hashSetOf() }
-        .add { oldState, newState ->
-            if (oldState.attributes != newState.attributes)
-                callback(newState.attributes)
-        }
-    return this
-}
