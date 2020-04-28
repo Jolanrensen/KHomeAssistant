@@ -111,29 +111,29 @@ class KHomeAssistant(
                 val now = DateTime.now()
 
                 // Get next scheduled task in the future
-                val next = scheduledRepeatedTasks.first { now < it.scheduledNextExecution }
+                val next = try {
+                    scheduledRepeatedTasksLock.withLock {
+                        scheduledRepeatedTasks.first { now < it.scheduledNextExecution }
+                    }
+                } catch (e: NoSuchElementException) {
+                    break // if there is no task to wait for, cancel the scheduler
+                }
 
                 // Suspend until it's time to execute the next task (can be canceled here)
                 delay((next.scheduledNextExecution - now).millisecondsLong)
 
                 // check whether the next task isn't canceled in the meantime
-                if (next == scheduledRepeatedTasks.next) {
+                if (scheduledRepeatedTasksLock.withLock {
+                        scheduledRepeatedTasks.isNotEmpty() && next == scheduledRepeatedTasks.next
+                    }
+                ) {
                     // remove it from the schedule and execute
-//                    scheduledRepeatedTasks.removeHead()
                     this@KHomeAssistant.launch { next.callback() }
 
-                    // check for a reschedule
-                    when (next) {
-                        is RepeatedRegularTask -> next.apply {
-                            scheduledNextExecution += runEvery
-//                            schedule(this)
-                        }
-                        is RepeatedIrregularTask -> next.apply {
-                            update()
-
-                        }
-                    }
+                    // check for a reschedule, probably not needed for RepeatedIrregularTask
+                    next.update()
                 }
+
             }
             scheduler = null
         }
@@ -141,17 +141,31 @@ class KHomeAssistant(
     private var scheduler: Job? = null
 
     private val scheduledRepeatedTasks: PriorityQueue<RepeatedTask> = priorityQueueOf()
+    private val scheduledRepeatedTasksLock = Mutex()
 
-    fun schedule(task: RepeatedTask) {
-        scheduledRepeatedTasks += task
-        if (scheduledRepeatedTasks.size == 1 || task < scheduledRepeatedTasks.next) {
-            scheduler?.cancel()
-            scheduler = newScheduler
+    suspend fun reschedule(task: RepeatedTask) {
+        cancel(task)
+        schedule(task)
+    }
+
+    suspend fun schedule(task: RepeatedTask) {
+        scheduledRepeatedTasksLock.withLock {
+            println("scheduledRepeatedTasks.isEmpty(): ${scheduledRepeatedTasks.isEmpty()}")
+            println("priority queue: ${scheduledRepeatedTasks.heap.toList()}")
+            if (scheduledRepeatedTasks.isEmpty() || task < scheduledRepeatedTasks.next) {
+                scheduler?.cancel()
+                scheduledRepeatedTasks += task
+                scheduler = newScheduler
+            } else {
+                scheduledRepeatedTasks += task
+            }
         }
     }
 
-    fun cancel(task: RepeatedTask) {
-        scheduledRepeatedTasks -= task
+    suspend fun cancel(task: RepeatedTask) {
+        scheduledRepeatedTasksLock.withLock {
+            scheduledRepeatedTasks -= task
+        }
     }
 
 

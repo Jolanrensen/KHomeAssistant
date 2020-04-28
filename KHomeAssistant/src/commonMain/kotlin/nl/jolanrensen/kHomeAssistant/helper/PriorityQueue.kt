@@ -10,7 +10,7 @@ package nl.jolanrensen.kHomeAssistant.helper
 class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
 
     /** The dataset, unsorted except for the root, which is at heap[0].] */
-    private var heap: Array<E?>
+    /* TODO MAKE PRIVATE */var heap: Array<E?>
 
     /** The number of elements in the MinHeap. */
     override var size: Int
@@ -72,7 +72,7 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
 
 
     /** Get the element currently at the root without removing it.
-     * @throws NullPointerException if [isEmpty] is true
+     * @throws Exception if [isEmpty] is true
      * @see next
      * */
     fun peek(): E = heap[0]!!
@@ -80,7 +80,7 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
     /**
      * Remove and get the element currently at the root.
      * @return the element formerly at the root
-     * @throws NullPointerException if [isEmpty] is true
+     * @throws Exception if [isEmpty] is true
      * @see extractNext
      * */
     fun poll(): E {
@@ -88,11 +88,12 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
         heap[0] = heap[size - 1]
         size--
         heapify()
+        shrink()
         return min
     }
 
     /** Get the element currently at the root without removing it.
-     * @throws NullPointerException if [isEmpty] is true
+     * @throws Exception if [isEmpty] is true
      * @see peek
      * */
     val next: E get() = peek()
@@ -100,7 +101,7 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
     /**
      * Remove and get the element currently at the root.
      * @return the element formerly at the root
-     * @throws NullPointerException if [isEmpty] is true
+     * @throws Exception if [isEmpty] is true
      * @see poll
      */
     fun extractNext(): E = poll()
@@ -149,12 +150,17 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
         heap.fill(null)
     }
 
+    private fun shrink() {
+        heap = heap.copyOf(size)
+    }
+
     override fun remove(element: E): Boolean {
         val index = heap.indexOf(element)
         if (index < 0) return false
-        heap[index] = null
+        heap[index] = heap[size - 1]
         size--
         heapify()
+        shrink()
         return true
     }
 
