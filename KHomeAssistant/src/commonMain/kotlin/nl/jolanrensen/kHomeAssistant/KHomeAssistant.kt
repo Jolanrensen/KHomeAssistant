@@ -108,32 +108,29 @@ class KHomeAssistant(
     private val newScheduler
         get() = launch {
             while (scheduledRepeatedTasks.isNotEmpty()) {
-                val now = DateTime.now()
-
                 // Get next scheduled task in the future
-                val next = try {
-                    scheduledRepeatedTasksLock.withLock {
-                        scheduledRepeatedTasks.first { now < it.scheduledNextExecution }
-                    }
-                } catch (e: NoSuchElementException) {
-                    break // if there is no task to wait for, cancel the scheduler
-                }
+                val next = scheduledRepeatedTasksLock.withLock {
+                    if (scheduledRepeatedTasks.isEmpty())
+                        null
+                    else
+                        scheduledRepeatedTasks.next
+                } ?: break // break if there are no tasks left
 
                 // Suspend until it's time to execute the next task (can be canceled here)
-                delay((next.scheduledNextExecution - now).millisecondsLong)
+                delay((next.scheduledNextExecution - DateTime.now()).millisecondsLong.also {
+                    debugPrintln("Waiting for $it milliseconds until the next scheduled execution")
+                })
 
                 // check whether the next task isn't canceled in the meantime
                 if (scheduledRepeatedTasksLock.withLock {
-                        scheduledRepeatedTasks.isNotEmpty() && next == scheduledRepeatedTasks.next
-                    }
-                ) {
-                    // remove it from the schedule and execute
-                    this@KHomeAssistant.launch { next.callback() }
+                        scheduledRepeatedTasks.isEmpty() || next != scheduledRepeatedTasks.next
+                    }) continue
 
-                    // check for a reschedule, probably not needed for RepeatedIrregularTask
-                    next.update()
-                }
+                // remove it from the schedule and execute
+                this@KHomeAssistant.launch { next.callback() }
 
+                // check for a reschedule, probably not needed for RepeatedIrregularTask
+                next.update()
             }
             scheduler = null
         }
@@ -150,8 +147,6 @@ class KHomeAssistant(
 
     suspend fun schedule(task: RepeatedTask) {
         scheduledRepeatedTasksLock.withLock {
-            println("scheduledRepeatedTasks.isEmpty(): ${scheduledRepeatedTasks.isEmpty()}")
-            println("priority queue: ${scheduledRepeatedTasks.heap.toList()}")
             if (scheduledRepeatedTasks.isEmpty() || task < scheduledRepeatedTasks.next) {
                 scheduler?.cancel()
                 scheduledRepeatedTasks += task

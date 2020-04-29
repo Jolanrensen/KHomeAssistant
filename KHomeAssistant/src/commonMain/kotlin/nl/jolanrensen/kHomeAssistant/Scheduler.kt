@@ -63,6 +63,12 @@ suspend fun KHomeAssistantContext.runEveryMinute(
     callback: suspend () -> Unit
 ) = runEvery(1.minutes, alignWith, callback)
 
+/** Schedule something to execute each second, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the second will be picked. */
+suspend fun KHomeAssistantContext.runEverySecond(
+    alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
+    callback: suspend () -> Unit
+) = runEvery(1.seconds, alignWith, callback)
+
 /** Schedule something to repeatedly execute each given timespan, optionally aligned with a certain point in (local) time. If not aligned, the local epoch (00:00:00 jan 1 1970, local time) will be picked. */
 suspend fun KHomeAssistantContext.runEvery(
     timeSpan: TimeSpan,

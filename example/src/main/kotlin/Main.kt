@@ -1,5 +1,4 @@
 
-import com.soywiz.klock.seconds
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
@@ -9,7 +8,6 @@ import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
 import nl.jolanrensen.kHomeAssistant.entities.turnOn
-import nl.jolanrensen.kHomeAssistant.runEvery
 
 
 class BedroomLights : Automation() {
@@ -55,19 +53,45 @@ fun main() {
             host = "home.jolanrensen.nl",
             port = 8123,
             secure = true,
-            debug = false,
+            debug = true,
             accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
             automations = listOf(
                 automation("1") {
-                    var i = 0
-                    runEvery(10.seconds) {
-                        println("a: ${++i * 10} seconds have passed!")
-                    }
+//                    var i = 0
+//                    runEvery(5.seconds) {
+//                        println("a: ${++i * 5} seconds have passed!")
+//                    }
+//
+//                    var j = 0
+//                    runEvery(7.seconds) {
+//                        println("b: ${++j * 7} seconds have passed!")
+//                    }
 
-                    var j = 0
-                    runEvery(5.seconds) {
-                        println("b: ${++j * 5} seconds have passed!")
-                    }
+//                    var l = 0
+//                    runEverySecond {
+//                        println("c: ${++l} seconds have passed!")
+//                    }
+//                    runEverySecond {
+//                        println("d: $l seconds have passed")
+//                    }
+
+//                    runEveryDayAtSunrise {
+//                        ""
+//                    }
+//
+//                    runEveryMinute {
+//                        ""
+//                    }
+
+//                    var k = 0
+//                    runAt(
+//                        getNextExecutionTime = { DateTime.now().local + (++k).seconds },
+//                        whenToUpdate = {}
+//                    ) {
+//                        println("IRREGULAR! waited for $k seconds")
+//                    }
+
+
                 }
             )
         ).run()
