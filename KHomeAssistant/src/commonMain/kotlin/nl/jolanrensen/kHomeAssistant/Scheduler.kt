@@ -1,6 +1,7 @@
 package nl.jolanrensen.kHomeAssistant
 
 import com.soywiz.klock.*
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.sun
 import nl.jolanrensen.kHomeAssistant.entities.onChanged
 

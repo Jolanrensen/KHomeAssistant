@@ -2,7 +2,7 @@ package nl.jolanrensen.kHomeAssistant.domains
 
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.parseUtc
-import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT_SUN

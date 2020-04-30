@@ -1,6 +1,6 @@
 
 import nl.jolanrensen.kHomeAssistant.Automation
-import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.Light
@@ -57,40 +57,22 @@ fun main() {
             accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
             automations = listOf(
                 automation("1") {
-//                    var i = 0
-//                    runEvery(5.seconds) {
-//                        println("a: ${++i * 5} seconds have passed!")
-//                    }
-//
-//                    var j = 0
-//                    runEvery(7.seconds) {
-//                        println("b: ${++j * 7} seconds have passed!")
-//                    }
+                    val dreamWorld = Light["dream_world"]
 
-//                    var l = 0
-//                    runEverySecond {
-//                        println("c: ${++l} seconds have passed!")
-//                    }
-//                    runEverySecond {
-//                        println("d: $l seconds have passed")
-//                    }
+                    var timesTurnedOn = 0
+                    var timesTurnedOff = 0
 
-//                    runEveryDayAtSunrise {
-//                        ""
-//                    }
-//
-//                    runEveryMinute {
-//                        ""
-//                    }
+                    (1..20).forEach {
+                        if (dreamWorld.isOn) {
+                            dreamWorld.turnOff()
+                            timesTurnedOff++
+                        } else {
+                            dreamWorld.turnOn()
+                            timesTurnedOn++
+                        }
+                    }
 
-//                    var k = 0
-//                    runAt(
-//                        getNextExecutionTime = { DateTime.now().local + (++k).seconds },
-//                        whenToUpdate = {}
-//                    ) {
-//                        println("IRREGULAR! waited for $k seconds")
-//                    }
-
+                    println("$timesTurnedOn times turned on and $timesTurnedOff times turned off")
 
                 }
             )

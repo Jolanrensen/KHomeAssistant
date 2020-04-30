@@ -3,7 +3,7 @@ package nl.jolanrensen.kHomeAssistant.entities
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.HomeAssistant
 import nl.jolanrensen.kHomeAssistant.helper.cast

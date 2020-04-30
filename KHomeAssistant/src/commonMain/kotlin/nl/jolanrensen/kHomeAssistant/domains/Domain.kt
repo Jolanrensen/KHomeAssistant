@@ -3,7 +3,7 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.json.JsonElement
-import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
@@ -97,7 +97,7 @@ interface Domain<out E : BaseEntity<*>> {
     suspend fun callService(serviceName: String, data: Map<String, JsonElement> = mapOf()): ResultMessage {
         checkContext()
         return kHomeAssistant()!!.callService(
-            domain = this,
+            serviceDomain = this,
             serviceName = serviceName,
             data = data
         )

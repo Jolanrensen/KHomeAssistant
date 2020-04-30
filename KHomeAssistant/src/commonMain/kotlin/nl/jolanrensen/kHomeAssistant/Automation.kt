@@ -1,5 +1,6 @@
 package nl.jolanrensen.kHomeAssistant
 
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
 
