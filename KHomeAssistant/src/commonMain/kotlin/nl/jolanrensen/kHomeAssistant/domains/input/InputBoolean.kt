@@ -1,9 +1,11 @@
-package nl.jolanrensen.kHomeAssistant.domains
+package nl.jolanrensen.kHomeAssistant.domains.input
 
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.domains.Domain
+import nl.jolanrensen.kHomeAssistant.domains.withContext
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 import kotlin.reflect.KProperty
 
@@ -11,7 +13,8 @@ import kotlin.reflect.KProperty
 /**
  * https://www.home-assistant.io/integrations/input_boolean/
  */
-object InputBoolean : Domain<InputBoolean.Entity> {
+object InputBoolean :
+    Domain<InputBoolean.Entity> {
     override var kHomeAssistant: () -> KHomeAssistant? = { null }
     override val domainName = "input_boolean"
 
@@ -25,7 +28,11 @@ object InputBoolean : Domain<InputBoolean.Entity> {
 
     // TODO check https://www.home-assistant.io/integrations/input_boolean/ you also need area ids maybe?
 
-    override fun Entity(name: String) = Entity(kHomeAssistant = kHomeAssistant, name = name)
+    override fun Entity(name: String) =
+        Entity(
+            kHomeAssistant = kHomeAssistant,
+            name = name
+        )
 
     class Entity(
         override val kHomeAssistant: () -> KHomeAssistant?,

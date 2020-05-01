@@ -1,10 +1,12 @@
-package nl.jolanrensen.kHomeAssistant.domains
+package nl.jolanrensen.kHomeAssistant.domains.input
 
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.domains.Domain
+import nl.jolanrensen.kHomeAssistant.domains.withContext
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.helper.cast
 import kotlin.reflect.KProperty
@@ -21,7 +23,7 @@ object InputNumber : Domain<InputNumber.Entity> {
             Make sure to use the helper function 'InputNumber.' from a KHomeAssistantContext instead of using InputNumber directly.""".trimMargin()
     }
 
-    /** Reload input_number configuration */
+    /** Reload input_number configuration. */
     suspend fun reload() = callService("reload")
 
 
@@ -62,10 +64,12 @@ object InputNumber : Domain<InputNumber.Entity> {
 
         override fun getStateValue(state: Float) = state.toString()
 
-        /** state can also be writable. */
+        /** [state] can also be writable. */
         override var state: Float
             get() = super.state
-            set(value) { runBlocking { setValue(value) } }
+            set(value) {
+                runBlocking { setValue(value) }
+            }
 
         // Attributes
         // read only
@@ -95,8 +99,6 @@ object InputNumber : Domain<InputNumber.Entity> {
         val editable: Boolean? by attrsDelegate
 
 
-
-
         /** Decrement the value by 'step'. */
         suspend fun decrement() = callService("decrement")
 
@@ -116,11 +118,10 @@ object InputNumber : Domain<InputNumber.Entity> {
                     }
                 }
             )
-
     }
 }
 
-/** Access the InputNumber Domain */
+/** Access the InputNumber Domain. */
 typealias InputNumberDomain = InputNumber
 
 val KHomeAssistantContext.InputNumber: InputNumberDomain
