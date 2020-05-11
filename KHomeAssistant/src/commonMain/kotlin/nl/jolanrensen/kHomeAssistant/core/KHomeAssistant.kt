@@ -243,8 +243,8 @@ class KHomeAssistant(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun DefaultClientWebSocketSession.startReceiver(ioScope: CoroutineScope) {
         receiver = ioScope.launch {
+            debugPrintln("receiver running!")
             while (true) {
-                debugPrintln("receiver running!")
                 if (incoming.isEmpty) {
                     canSend = true
                     canSendChannel.offer(Unit) // update the sender it's okay to send now if it was waiting before

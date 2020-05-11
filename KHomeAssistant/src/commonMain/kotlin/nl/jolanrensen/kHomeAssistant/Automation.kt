@@ -25,7 +25,7 @@ open class Automation : KHomeAssistantContext {
 
 }
 
-/** Functional invokation of Automation */
+/** Functional invocation of Automation */
 fun automation(automationName: String, initialize: suspend Automation.() ->  Unit) = object : Automation() {
     override val automationName = automationName
     override suspend fun initialize() = initialize(this)

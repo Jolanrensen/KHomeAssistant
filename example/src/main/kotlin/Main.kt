@@ -1,13 +1,13 @@
-
+import com.soywiz.klock.Month
+import com.soywiz.klock.Year
 import nl.jolanrensen.kHomeAssistant.Automation
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.automation
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
-import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
-import nl.jolanrensen.kHomeAssistant.entities.turnOff
-import nl.jolanrensen.kHomeAssistant.entities.turnOn
+import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
+import nl.jolanrensen.kHomeAssistant.entities.*
 
 
 class BedroomLights : Automation() {
@@ -57,22 +57,56 @@ fun main() {
             accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
             automations = listOf(
                 automation("1") {
-                    val dreamWorld = Light["dream_world"]
+                    val bothDateAndTime = InputDatetime["both_date_and_time"]
+                    val onlyDate = InputDatetime["only_date"]
+                    val onlyTime = InputDatetime["input_time"]
 
-                    var timesTurnedOn = 0
-                    var timesTurnedOff = 0
+//                    InputText["text1"] {
+//                        onAttributesChanged {
+//                            println("text1 attributes changed! $rawAttributes")
+//                        }
+//                        onStateChanged {
+//                            println("text1 state changed! $state")
+//                        }
+//
+//                        for (i in 0..5)
+//                            state = "test$i"
+//                    }
 
-                    (1..20).forEach {
-                        if (dreamWorld.isOn) {
-                            dreamWorld.turnOff()
-                            timesTurnedOff++
-                        } else {
-                            dreamWorld.turnOn()
-                            timesTurnedOn++
+
+                    bothDateAndTime {
+                        onAttributesChanged {
+                            println("bothDateAndTime attributes changed to $rawAttributes")
                         }
+                        onStateChanged {
+                            println("bothDateAndTime state changed to $state")
+                        }
+
+//                        setDateTime(
+//                            DateTime(2020, 3, 23, 12, 9, 8).localUnadjusted
+//                        )
+
+                        year = Year(2021)
+                        month = Month.November
+                        day = 22
+
+                        hour = 7
+                        minute = 29
+                        second = 4
+
+                        println(this)
                     }
 
-                    println("$timesTurnedOn times turned on and $timesTurnedOff times turned off")
+//                    Light["wall_lamp"] {
+//                        onStateChanged {
+//                            println("lamp is now $state")
+//                        }
+//
+//                        turnOff()
+//                        turnOn()
+//                        turnOff()
+//                        turnOn()
+//                    }
 
                 }
             )
