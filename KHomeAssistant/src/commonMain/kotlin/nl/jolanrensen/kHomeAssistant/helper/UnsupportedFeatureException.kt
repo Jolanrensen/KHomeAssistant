@@ -1,6 +1,6 @@
-package nl.jolanrensen.kHomeAssistant.entities
+package nl.jolanrensen.kHomeAssistant.helper
 
-class EntityNotInHassException : Exception {
+class UnsupportedFeatureException : Exception {
     constructor() : super()
     constructor(message: String?) : super(message)
     constructor(message: String?, cause: Throwable?) : super(message, cause)

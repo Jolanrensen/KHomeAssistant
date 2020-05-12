@@ -1,22 +1,25 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.json.JsonPrimitive
-import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.helper.GeoPoint
 
 /**
  * https://www.home-assistant.io/integrations/homeassistant
  */
-object HomeAssistant : Domain<DefaultEntity> {
+class HomeAssistant(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<DefaultEntity> {
     override val domainName: String = "homeassistant"
-    override var kHomeAssistant: () -> KHomeAssistant? = { null }
 
     override fun checkContext() = require(kHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'HomeAssistant.' from a KHomeAssistantContext instead of using HomeAssistant directly.""".trimMargin()
     }
+
+    /** Making sure HomeAssistant acts as a singleton. */
+    override fun equals(other: Any?) = other is HomeAssistant
+    override fun hashCode(): Int = domainName.hashCode()
 
     /** Reads the configuration files and checks them for correctness, but does not load them into Home Assistant. Creates a persistent notification and log entry if errors are found. */
     suspend fun checkConfig() = callService("check_config")
@@ -46,8 +49,7 @@ object HomeAssistant : Domain<DefaultEntity> {
     override fun Entity(name: String) = throw DomainHasNoEntityException()
 }
 
-/** Access your domain, and set the context correctly */
-typealias HomeAssistantDomain = HomeAssistant
 
-val KHomeAssistantContext.HomeAssistant: HomeAssistantDomain
-    get() = HomeAssistantDomain.also { it.kHomeAssistant = kHomeAssistant }
+/** Access the HomeAssistant Domain. */
+val KHomeAssistantContext.HomeAssistant: HomeAssistant
+    get() = HomeAssistant(kHomeAssistant)

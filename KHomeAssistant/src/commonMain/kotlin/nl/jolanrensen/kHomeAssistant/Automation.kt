@@ -1,5 +1,6 @@
 package nl.jolanrensen.kHomeAssistant
 
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
 
@@ -8,7 +9,9 @@ open class Automation : KHomeAssistantContext {
     open val automationName: String
         get() = this::class.simpleName.toString()
 
-    override var kHomeAssistant: () -> KHomeAssistant? = { null }
+    var kHomeAssistantInstance: KHomeAssistant? = null
+
+    override var kHomeAssistant: () -> KHomeAssistant? = { kHomeAssistantInstance }
 
     override val coroutineContext: CoroutineContext
         get() = kHomeAssistant()!!.coroutineContext
@@ -22,7 +25,7 @@ open class Automation : KHomeAssistantContext {
 
 }
 
-/** Functional invokation of Automation */
+/** Functional invocation of Automation */
 fun automation(automationName: String, initialize: suspend Automation.() ->  Unit) = object : Automation() {
     override val automationName = automationName
     override suspend fun initialize() = initialize(this)

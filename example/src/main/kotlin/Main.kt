@@ -1,93 +1,106 @@
-import com.soywiz.klock.*
-import kotlinx.coroutines.runBlocking
+
 import nl.jolanrensen.kHomeAssistant.Automation
-import nl.jolanrensen.kHomeAssistant.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.Scheduler.runEvery
+import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.automation
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.domains.Entity
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
-import nl.jolanrensen.kHomeAssistant.entities.onStateChanged
+import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
-import kotlin.time.ExperimentalTime
+import nl.jolanrensen.kHomeAssistant.entities.turnOff
+import nl.jolanrensen.kHomeAssistant.entities.turnOn
 
 
-class Test : Automation() {
+class BedroomLights : Automation() {
 
-    val bedroomLamp = Light.Entity("bedroom_lamp")
     val bed = Light.Entity("bed")
+    val bedroomLamp = Light.Entity("bedroom_lamp")
     val globe = Light.Entity("globe")
+    val pisa = Light.Entity("pisa")
 
-    val allLights = listOf(bedroomLamp, bed, globe)
+    val allLights = listOf(bed, bedroomLamp, globe, pisa)
 
     override suspend fun initialize() {
         Switch.Entity("bedroom_switch").onTurnOn {
-            if (allLights.any { it.isOn() })
-                allLights.forEach { it.turnOff() }
+            if (allLights.any { it.isOn })
+                allLights.turnOff()
             else
-                allLights.forEach { it.turnOn() }
+                allLights.turnOn()
 
-            turnOff()
+            this.turnOff()
         }
     }
 }
 
-object Instance {
-    var kHomeAssistant: KHomeAssistant? = null
-}
+//fun main() {
+//    val queue = priorityQueueOf(9, 8, 5, 6)
+//    queue.push(7)
+//    println(queue.heap.toList())
+//
+//    queue.remove(9)
+//    println(queue.heap.toList())
+//
+//    for (item in queue) {
+//        println(queue.extractNext())
+//        println(queue.heap.toList())
+//    }
+//}
 
-
-@OptIn(ExperimentalTime::class)
 fun main() {
     runBlocking {
         println("running!")
 
-        val instance = KHomeAssistant(
+        KHomeAssistant(
             host = "home.jolanrensen.nl",
             port = 8123,
             secure = true,
-            debug = false,
-            useCache = true,
+            debug = true,
             accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
             automations = listOf(
-//                automation("1") {
-//                    launch {
-//                        launch {
-//                            // tesdf
-//                           println("mooie test")
-//                            throw Exception("automation crash")
+                automation("1") {
+
+                     val batik = Light.Entity("batik") {
+                         for (i in 0..10) toggle()
+                     }
+
+                    val bothDateAndTime = InputDatetime["both_date_and_time"]
+                    val onlyDate = InputDatetime["only_date"]
+                    val onlyTime = InputDatetime["input_time"]
+
+//                    InputText["text1"] {
+//                        onAttributesChanged {
+//                            println("text1 attributes changed! $rawAttributes")
+//                        }
+//                        onStateChanged {
+//                            println("text1 state changed! $state")
 //                        }
 //
+//                        for (i in 0..5)
+//                            state = "test$i"
 //                    }
-//                },
-                automation("2") {
-                    // added some sort of test
-                    println(DateTime(DateTime.EPOCH.date, Time(13)).localUnadjusted)
-                    Light["wall_lamp"].onStateChanged {
-                        println("newState: $it")
-                    }
 
-                    runEvery(1.seconds * 2) {
-                        println("1 second has passed! The time is ${DateTime.now().toString(DateFormat("EEE, dd MMM yyyy HH:mm:ss::SSS z"))}")
-                    }
 
-                    runEvery(1.7.seconds) {
-                        println("1.7 seconds have passed! The time is ${DateTime.now().toString(DateFormat("EEE, dd MMM yyyy HH:mm:ss::SSS z"))}")
-                    }
+//                    bothDateAndTime {
+//                       while (true) {
+//                           year = year!! + 1
+//                       }
+//                    }
 
-                    val twoSecondsPastLastMidnight = DateTime(
-                        date = DateTime.now().date,
-                        time = Time(hour = 0, second = 2)
-                    ).localUnadjusted
-                    runEvery(5.seconds, alignWith = twoSecondsPastLastMidnight) {
-                        println("5 seconds have passed! The time is ${DateTime.now().toString(DateFormat("EEE, dd MMM yyyy HH:mm:ss::SSS z"))}")
-                    }
+//                    Light["wall_lamp"] {
+//                        onStateChanged {
+//                            println("lamp is now $state")
+//                        }
+//
+//                        turnOff()
+//                        turnOn()
+//                        turnOff()
+//                        turnOn()
+//                    }
 
                 }
             )
-        )
-
-        Instance.kHomeAssistant = instance
-        instance.run()
+        ).run()
     }
 
 }

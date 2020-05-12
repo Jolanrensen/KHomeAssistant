@@ -1,26 +1,32 @@
+
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.*
-import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
-import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+
 
 // The state can be any type, including enums. Just make sure to implement the getStateValue() and parseStateValue() in your Entity class.
 enum class ExampleState(val stateValue: String) {
     STATE1("state1"), STATE2("state1")
 }
 
-object Example : Domain<Example.Entity> {
+class Example(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Example.Entity> {
     override val domainName: String = "example"
-    override var kHomeAssistant: () -> KHomeAssistant? = { null }
 
     override fun checkContext() = require(kHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'Example.' from a KHomeAssistantContext instead of using ExampleDomain directly.""".trimMargin()
     }
+
+    /** Making sure Example acts as a singleton. */
+    override fun equals(other: Any?) = other is Example
+    override fun hashCode(): Int = domainName.hashCode()
 
     suspend fun exampleDomainServiceCall() = callService("")
 
@@ -36,25 +42,19 @@ object Example : Domain<Example.Entity> {
     class Entity(
         override val kHomeAssistant: () -> KHomeAssistant? = { null },
         override val name: String
-    ) : BaseEntity<ExampleState, Entity.Attributes>(
+    ) : BaseEntity<ExampleState>(
         kHomeAssistant = kHomeAssistant,
         name = name,
-        domain = Example
+        domain = Example(kHomeAssistant)
     ) {
         /** These are the attributes that get parsed from Home Assistant for your entity when calling getAttributes()
          * The names must thus exactly match those of Home Assistant. */
-        @Serializable
-        data class Attributes(
-            override val friendly_name: String = "",
-            val test_attribute: Int? = null,
-            val some_other_attribute: List<String>? = null
-            /** Add attributes here like `val attribute: Type? = null` */
-        ) : BaseAttributes {
-            override var fullJsonObject: JsonObject = JsonObject(mapOf())
-        }
+        // Attributes
+        // read only
+        val test_attribute: Int? by attrsDelegate
+        val some_other_attribute: List<String>? by attrsDelegate
 
-        /** This is used to deserialize your attributes from Home Assistant */
-        override val attributesSerializer: KSerializer<Attributes> = Attributes.serializer()
+        // TODO add examples for read/write and write only attributes
 
         /** Define how to convert your state type into a Home Assistant string state */
         override fun getStateValue(state: ExampleState): String = state.stateValue
@@ -77,7 +77,7 @@ object Example : Domain<Example.Entity> {
 
         /** Want to add data? sure! */
         suspend fun exampleEntityServiceCallWithData(someValue: Int? = null, someOtherValue: String? = null) {
-            val attributes = getAttributes()
+            val attributes = rawAttributes
 
             // Don't forget to check the data if you want more redundancy, otherwise just add it to a Map<String, JsonElement> or JsonObject
             val data = hashMapOf<String, JsonElement>().apply {
@@ -94,7 +94,7 @@ object Example : Domain<Example.Entity> {
 
                     // you can also perform checks with the attributes
                     // for instance checking whether some string is supported by the device
-                    if (it.isEmpty() || it !in attributes.some_other_attribute!!)
+                    if (it.isEmpty() || it !in some_other_attribute!!)
                         throw IllegalArgumentException("incorrect someOtherValue $it")
                     this["some_other_value"] = JsonPrimitive(it)
                 }
@@ -135,13 +135,11 @@ object Example : Domain<Example.Entity> {
 
         // Example function that uses the state
         suspend fun isInState1(): Boolean {
-            return getState() == ExampleState.STATE1
+            return state == ExampleState.STATE1
         }
     }
 }
 
 /** Access your domain, and set the context correctly */
-typealias ExampleDomain = Example
-
-val KHomeAssistantContext.Example: ExampleDomain
-    get() = ExampleDomain.also { it.kHomeAssistant = kHomeAssistant }
+val KHomeAssistantContext.Example: Example
+    get() = Example(kHomeAssistant)

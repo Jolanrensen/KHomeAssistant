@@ -1,23 +1,30 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
 import kotlinx.coroutines.launch
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
-import nl.jolanrensen.kHomeAssistant.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.attributes.BaseAttributes
-import nl.jolanrensen.kHomeAssistant.attributes.DefaultAttributes
-import nl.jolanrensen.kHomeAssistant.attributes.attributesFromJson
+import kotlinx.serialization.json.JsonObject
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.HomeAssistant
+import nl.jolanrensen.kHomeAssistant.helper.cast
 import nl.jolanrensen.kHomeAssistant.messages.Context
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
+import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty0
+import kotlin.reflect.KProperty1
 
-typealias DefaultEntity = BaseEntity<String, DefaultAttributes>
+typealias DefaultEntity = BaseEntity<String>
 
-open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
+/** Type returned when using myEntity::myAttribute */
+typealias Attribute<A> = KProperty0<A>
+
+/** Type returned when using SomeDomain.Entity::myAttribute */
+typealias NonSpecificAttribute<E, A> = KProperty1<E, A>
+
+open class BaseEntity<StateType : Any>(
     open val kHomeAssistant: () -> KHomeAssistant? = { null },
     open val name: String,
-    open val domain: Domain<out BaseEntity<out StateType, out AttributesType>>
+    open val domain: Domain<*>
 ) {
     private var entityExists = false
 
@@ -25,35 +32,99 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
     open fun checkEntityExists() {
         if (entityExists) return
         kHomeAssistant?.invoke()?.launch {
-            getState() // throws error if entity does not exist
+            state // throws error if entity does not exist
             entityExists = true
         }
-
     }
 
-    open val attributesSerializer: KSerializer<AttributesType>? = null
+    val attributes: ArrayList<Attribute<*>> = arrayListOf()
 
     init {
         this.checkEntityExists()
+
+        attributes += arrayOf(
+            ::friendly_name,
+            ::state,
+            ::hidden,
+            ::entity_picture,
+            ::icon,
+            ::assumed_state,
+//            ::device_class,
+            ::unit_of_measurement,
+            ::initial_state,
+            ::entityID,
+            ::rawAttributes
+        )
     }
 
     /** Given a string stateValue, this method should return the correct StateType */
-    open fun parseStateValue(stateValue: String): StateType? = null
+    @OptIn(ExperimentalStdlibApi::class)
+    open fun parseStateValue(stateValue: String): StateType? = try {
+        stateValue as StateType
+    } catch (e: Exception) {
+        throw Exception("Did you forget to override parseStateValue() for ${domain.domainName}?")
+    }
 
     /** This method returns the state for this entity in the original String format */
-    open fun getStateValue(state: StateType): String? = null
+    open fun getStateValue(state: StateType): String? = try {
+        state as String
+    } catch (e: Exception) {
+        throw Exception("Did you forget to override getStateValue() for ${domain.domainName}?")
+    }
 
-    suspend fun getState(): StateType = kHomeAssistant()!!.getState(this)
+    open val state: StateType
+        get() = kHomeAssistant()!!.getState(this)
+    // set() TODO
+
     suspend fun setState(s: StateType): Unit = TODO()
 
-    suspend fun getAttributes(): AttributesType = kHomeAssistant()!!.getAttributes(this, attributesSerializer!!)
+    /** Get the raw attributes from Home Assistant in json format. */
+    val rawAttributes: JsonObject
+        get() = kHomeAssistant()!!.getAttributes(this)
+
+    /** Helper function to get raw attributes in json format using yourEntity["attribute"] */
+    operator fun get(name: String) = rawAttributes[name]
+
+    val attrsDelegate = object : AttributesDelegate {
+        override var alternativeAttributes: JsonObject? = null
+
+        override operator fun <V : Any?> getValue(thisRef: Any?, property: KProperty<*>): V? =
+            (alternativeAttributes ?: rawAttributes)[property.name]?.cast(property.returnType)
+    }
+
+    // Default attributes
+
+    /** Name of the entity as displayed in the UI. */
+    val friendly_name: String? by attrsDelegate
+
+    /** Is true if the entity is hidden. */
+    val hidden: Boolean get() = attrsDelegate.getValue(this, ::hidden) ?: false
+
+    /** URL used as picture for entity. */
+    val entity_picture: Boolean? by attrsDelegate
+
+    /** Icon used for this enitity. Usually of the kind "mdi:icon" */
+    val icon: String? by attrsDelegate
+
+    /** For switches with an assumed state two buttons are shown (turn off, turn on) instead of a switch. If assumed_state is false you will get the default switch icon. */
+    val assumed_state: Boolean get() = attrsDelegate.getValue(this, ::assumed_state) ?: true
+
+//    /** The class of the device as set by configuration, changing the device state and icon that is displayed on the UI (see below). It does not set the unit_of_measurement.*/
+//    val device_class: String? by attrsDelegate // TODO maybe move to binary sensor, sensor, cover and media player only
+
+    /** Defines the units of measurement, if any. This will also influence the graphical presentation in the history visualisation as continuous value. Sensors with missing unit_of_measurement are showing as discrete values. */
+    val unit_of_measurement: String? by attrsDelegate
+
+    /** Defines the initial state for automations, on or off. */
+    val initial_state: String? by attrsDelegate
+
 
     suspend fun getLastChanged(): String = TODO("last_changed uit State")
     suspend fun getLastUpdated(): String = TODO("last_updated uit State")
     suspend fun getContext(): Context = TODO("context uit State")
 
     /** Request the update of an entity, rather than waiting for the next scheduled update, for example Google travel time sensor, a template sensor, or a light */
-    suspend inline fun updateEntity() = callService(HomeAssistant, "update_entity")
+    suspend inline fun updateEntity() = callService(HomeAssistant(kHomeAssistant), "update_entity")
 
     /** Call a service with this entity using a different serviceDomain */
     suspend fun callService(
@@ -87,104 +158,27 @@ open class BaseEntity<StateType : Any, AttributesType : BaseAttributes>(
     val entityID: String
         get() = "${domain.domainName}.$name"
 
+    override fun toString() = "${domain::class.simpleName}.Entity($name) {${
+    attributes
+        .filter { it.get() != null }
+        .map { "\n    ${it.name} = ${it.get()}" }
+        .toString()
+        .run { subSequence(1, length - 1) }
+    }\n}"
+
 }
 
-fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChangedToNot(
-    newState: S,
-    callback: suspend E.() -> Unit
-): E {
-    onStateChanged { it ->
-        if (newState != it)
-            callback()
-    }
-    return this
+interface AttributesDelegate {
+    /** ONLY USE TEMPORARILY */
+    var alternativeAttributes: JsonObject?
+    operator fun <V : Any?> getValue(thisRef: Any?, property: KProperty<*>): V?
 }
 
-fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChangedTo(
-    newState: S,
-    callback: suspend E.() -> Unit
-): E {
-    onStateChanged { it ->
-        if (newState == it)
-            callback()
-    }
-    return this
-}
+/** Shorthand for apply, allows for DSL-like behavior on entities. */
+inline operator fun <S : Any, E : BaseEntity<S>> E.invoke(callback: E.() -> Unit): E = apply(callback)
 
-fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onStateChanged(
-    callback: suspend E.(newState: S?) -> Unit
-): E {
-    checkEntityExists()
-    kHomeAssistant()!!.stateListeners
-        .getOrPut(entityID) { hashSetOf() }
-        .add { oldState, newState ->
-            if (oldState.state != newState.state)
-                callback(parseStateValue(newState.state))
-        }
-    return this
-}
-
-fun <S : Any, A : BaseAttributes, E : BaseEntity<S, A>> E.onAttributesChanged(
-    callback: suspend E.(newAttributes: A?) -> Unit
-): E {
-    checkEntityExists()
-    kHomeAssistant()!!.stateListeners
-        .getOrPut(entityID) { hashSetOf() }
-        .add { oldState, newState ->
-            if (oldState.attributes != newState.attributes)
-                callback(attributesFromJson(newState.attributes, attributesSerializer!!))
-        }
-    return this
-}
-
-/**
- * All entities can be created without KHomeAssistant instance from within an Automation
- * and other classes having an instance as kHomeAssistant can be accessed through there anyways.
- * */
-//inline fun <reified StateType : Any, reified AttributesType : Attributes> KHomeAssistantContext.Entity(domain: Domain<out Entity<out StateType, out AttributesType>>, name: String): Entity<StateType, AttributesType> =
-//        Entity<StateType, AttributesType>(
-//                kHomeAssistant = kHomeAssistant,
-//                domain = domain,
-//                name = name
-//        )
-
-//fun KHomeAssistantContext.Entity(domain: Domain, name: String) =
-//        Entity<Any, Attributes>(
-//                domain = domain,
-//                name = name
-//        )
+/** Shorthand for apply for each, allows for DSL-like behavior on collections of entities. */
+inline operator fun <S : Any, E : BaseEntity<S>> Iterable<E>.invoke(callback: E.() -> Unit): Iterable<E> =
+    apply { forEach(callback) }
 
 
-// TODO probably remove this
-//inline fun <reified StateType : Any, reified AttributesType : Attributes>
-//        KHomeAssistantContext.Entity(domainName: String, name: String): Entity<StateType, AttributesType> {
-//    var e: Entity<StateType, AttributesType>? = null
-//    e = Entity(
-//            kHomeAssistant = kHomeAssistant,
-//            name = name,
-//            domain = Domain(domainName)
-//    )
-//    return e
-//}
-
-//fun KHomeAssistantContext.Entity(domainName: String, name: String) =
-//        Entity<Any, Attributes>(
-//                domainName = domainName,
-//                name = name
-//        )
-
-
-//inline fun <reified StateType : Any, reified AttributesType : Attributes> KHomeAssistantContext.Entity(entityID: String): Entity<StateType, AttributesType> {
-//    if ('.' !in entityID)
-//        throw IllegalArgumentException("entityID must be of type 'domain.name'")
-//
-//    val (domainName, name) = entityID.split('.')
-//
-//    return Entity(
-//            kHomeAssistant = kHomeAssistant,
-//            name = name,
-//            domain = Domain(domainName)
-//    )
-//}
-
-//fun KHomeAssistantContext.Entity(entityID: String) = Entity<Any, Attributes>(entityID = entityID)
