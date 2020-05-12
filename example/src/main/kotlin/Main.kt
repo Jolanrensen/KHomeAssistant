@@ -3,10 +3,10 @@ import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.domains.Entity
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
-import nl.jolanrensen.kHomeAssistant.entities.invoke
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
 import nl.jolanrensen.kHomeAssistant.entities.turnOn
@@ -59,6 +59,11 @@ fun main() {
             accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
             automations = listOf(
                 automation("1") {
+
+                     val batik = Light.Entity("batik") {
+                         for (i in 0..10) toggle()
+                     }
+
                     val bothDateAndTime = InputDatetime["both_date_and_time"]
                     val onlyDate = InputDatetime["only_date"]
                     val onlyTime = InputDatetime["input_time"]
@@ -76,11 +81,11 @@ fun main() {
 //                    }
 
 
-                    bothDateAndTime {
-                       while (true) {
-                           year = year!! + 1
-                       }
-                    }
+//                    bothDateAndTime {
+//                       while (true) {
+//                           year = year!! + 1
+//                       }
+//                    }
 
 //                    Light["wall_lamp"] {
 //                        onStateChanged {

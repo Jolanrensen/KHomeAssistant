@@ -2,21 +2,24 @@ package nl.jolanrensen.kHomeAssistant.domains
 
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.parseUtc
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT_SUN
 import nl.jolanrensen.kHomeAssistant.helper.cast
 
 
-object Sun : Domain<Sun.Entity> {
-    override var kHomeAssistant: () -> KHomeAssistant? = { null }
+class Sun(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.Entity> {
     override val domainName = "sun"
 
     override fun checkContext() = require(kHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'Sun.' from a KHomeAssistantContext instead of using Sun directly.""".trimMargin()
     }
+
+    /** Making sure Light acts as a singleton. */
+    override fun equals(other: Any?) = other is Sun
+    override fun hashCode(): Int = domainName.hashCode()
 
     enum class SunState(val stateValue: String) {
         ABOVE_HORIZON("above_horizon"),
@@ -33,7 +36,7 @@ object Sun : Domain<Sun.Entity> {
     ) : BaseEntity<SunState>(
         kHomeAssistant = kHomeAssistant,
         name = name,
-        domain = Sun
+        domain = Sun(kHomeAssistant)
     ) {
 
         init {
@@ -109,11 +112,10 @@ object Sun : Domain<Sun.Entity> {
 
 }
 
-typealias SunDomain = Sun
 
-/** Access the Sun Domain */
-val KHomeAssistantContext.Sun: SunDomain
-    get() = SunDomain.withContext(kHomeAssistant)
+/** Access the Sun Domain. */
+val KHomeAssistantContext.Sun: Sun
+    get() = Sun(kHomeAssistant)
 
 /** As there is only one sun (duh), let's make the sun entity quickly reachable */
 val KHomeAssistantContext.sun: Sun.Entity

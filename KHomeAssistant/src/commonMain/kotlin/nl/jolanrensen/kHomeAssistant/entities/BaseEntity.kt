@@ -124,7 +124,7 @@ open class BaseEntity<StateType : Any>(
     suspend fun getContext(): Context = TODO("context uit State")
 
     /** Request the update of an entity, rather than waiting for the next scheduled update, for example Google travel time sensor, a template sensor, or a light */
-    suspend inline fun updateEntity() = callService(HomeAssistant, "update_entity")
+    suspend inline fun updateEntity() = callService(HomeAssistant(kHomeAssistant), "update_entity")
 
     /** Call a service with this entity using a different serviceDomain */
     suspend fun callService(

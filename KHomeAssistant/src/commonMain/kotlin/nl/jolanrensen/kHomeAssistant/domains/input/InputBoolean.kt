@@ -5,7 +5,6 @@ import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.domains.withContext
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 import kotlin.reflect.KProperty
 
@@ -13,15 +12,17 @@ import kotlin.reflect.KProperty
 /**
  * https://www.home-assistant.io/integrations/input_boolean/
  */
-object InputBoolean :
-    Domain<InputBoolean.Entity> {
-    override var kHomeAssistant: () -> KHomeAssistant? = { null }
+class InputBoolean(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<InputBoolean.Entity> {
     override val domainName = "input_boolean"
 
     override fun checkContext() = require(kHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'InputBoolean.' from a KHomeAssistantContext instead of using InputBoolean directly.""".trimMargin()
     }
+
+    /** Making sure InputBoolean acts as a singleton. */
+    override fun equals(other: Any?) = other is InputBoolean
+    override fun hashCode(): Int = domainName.hashCode()
 
     /** Reload input_boolean configuration */
     suspend fun reload() = callService("reload")
@@ -40,7 +41,7 @@ object InputBoolean :
     ) : ToggleEntity(
         kHomeAssistant = kHomeAssistant,
         name = name,
-        domain = InputBoolean
+        domain = InputBoolean(kHomeAssistant)
     ) {
         /** Delegate so you can control an InputBoolean like a local variable
          * Simply type "var yourBoolean by InputBoolean.Entity("your_boolean")
@@ -62,7 +63,5 @@ object InputBoolean :
 }
 
 /** Access the InputBoolean Domain */
-typealias InputBooleanDomain = InputBoolean
-
-val KHomeAssistantContext.InputBoolean: InputBooleanDomain
-    get() = InputBooleanDomain.withContext(kHomeAssistant)
+val KHomeAssistantContext.InputBoolean: InputBoolean
+    get() = InputBoolean(kHomeAssistant)

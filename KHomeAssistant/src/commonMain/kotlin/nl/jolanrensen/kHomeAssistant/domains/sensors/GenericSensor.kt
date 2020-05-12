@@ -1,11 +1,14 @@
 package nl.jolanrensen.kHomeAssistant.domains.sensors
 
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
-import nl.jolanrensen.kHomeAssistant.domains.withContext
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 
 /** Generic sensor. The type of state will be a String and the unit_of_measurement will be absent. */
-object GenericSensor : AbstractSensor<String, GenericSensor.Entity>() {
+class GenericSensor(override var kHomeAssistant: () -> KHomeAssistant?) : AbstractSensor<String, GenericSensor.Entity>() {
+
+    /** Making sure GenericSensor acts as a singleton. */
+    override fun equals(other: Any?) = other is GenericSensor
+    override fun hashCode(): Int = domainName.hashCode() + "generic".hashCode()
 
     override fun Entity(name: String): Entity =
         Entity(
@@ -19,7 +22,7 @@ object GenericSensor : AbstractSensor<String, GenericSensor.Entity>() {
     ) : AbstractSensorEntity<String>(
         kHomeAssistant = kHomeAssistant,
         name = name,
-        domain = GenericSensor,
+        domain = GenericSensor(kHomeAssistant),
         deviceClass = null
     ) {
         override fun parseStateValue(stateValue: String) = stateValue
@@ -27,8 +30,7 @@ object GenericSensor : AbstractSensor<String, GenericSensor.Entity>() {
     }
 }
 
-typealias GenericSensorDomain = GenericSensor
 
 /** Access the GenericSensor Domain */
-val KHomeAssistantContext.GenericSensor: GenericSensorDomain
-    get() = GenericSensorDomain.withContext(kHomeAssistant)
+val KHomeAssistantContext.GenericSensor: GenericSensor
+    get() = GenericSensor(kHomeAssistant)

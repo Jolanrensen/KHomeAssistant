@@ -1,13 +1,13 @@
+
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.domains.withContext
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 
 
@@ -16,14 +16,17 @@ enum class ExampleState(val stateValue: String) {
     STATE1("state1"), STATE2("state1")
 }
 
-object Example : Domain<Example.Entity> {
+class Example(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Example.Entity> {
     override val domainName: String = "example"
-    override var kHomeAssistant: () -> KHomeAssistant? = { null }
 
     override fun checkContext() = require(kHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'Example.' from a KHomeAssistantContext instead of using ExampleDomain directly.""".trimMargin()
     }
+
+    /** Making sure Example acts as a singleton. */
+    override fun equals(other: Any?) = other is Example
+    override fun hashCode(): Int = domainName.hashCode()
 
     suspend fun exampleDomainServiceCall() = callService("")
 
@@ -42,7 +45,7 @@ object Example : Domain<Example.Entity> {
     ) : BaseEntity<ExampleState>(
         kHomeAssistant = kHomeAssistant,
         name = name,
-        domain = Example
+        domain = Example(kHomeAssistant)
     ) {
         /** These are the attributes that get parsed from Home Assistant for your entity when calling getAttributes()
          * The names must thus exactly match those of Home Assistant. */
@@ -138,7 +141,5 @@ object Example : Domain<Example.Entity> {
 }
 
 /** Access your domain, and set the context correctly */
-typealias ExampleDomain = Example
-
-val KHomeAssistantContext.Example: ExampleDomain
-    get() = ExampleDomain.withContext(kHomeAssistant)
+val KHomeAssistantContext.Example: Example
+    get() = Example(kHomeAssistant)

@@ -3,8 +3,8 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.json.JsonElement
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
@@ -18,7 +18,8 @@ interface Domain<out E : BaseEntity<*>> {
     /** The Home Assistant name for this domain, like "light". */
     val domainName: String
 
-    /** Function to access the [KHomeAssistant] instance. This is passed around [KHomeAssistantContext] inheritors. */
+    /** Function to access the [KHomeAssistant] instance. This is passed around [KHomeAssistantContext] inheritors,
+     * usually in their constructor. */
     var kHomeAssistant: () -> KHomeAssistant?
 
     /** Function to create an entity instance in a domain with correct context.
@@ -27,40 +28,12 @@ interface Domain<out E : BaseEntity<*>> {
      * */
     fun Entity(name: String): E
 
-    /** Shorthand for [apply], allows for DSL-like behavior on a newly instanced entity.
-     * For example:
-     * ```kotlin
-     * YourDomain.Entity("some_name") {
-     *    someAttribute = 100
-     *    someValue = someOtherValue!! + 1
-     * }
-     * ```
-     * @param name the name of the entity (without domain) as defined in Home Assistant
-     * @param callback the block of code that is executed with the entity as this
-     * @return an instance of the entity
-     * */
-    fun Entity(name: String, callback: E.() -> Unit): E = Entity(name).apply(callback)
-
 
     /** Helper function to create multiple entity instances at once in a domain.
      * @param names the names of the entities (without domain) as defined in Home Assistant
      * @return a list of the instances of the entities
      * */
     fun Entities(vararg names: String): List<E> = names.map { Entity(it) }
-
-    /** Shorthand for [apply] for each, allows for DSL-like behavior on a bunch of newly instanced entities.
-     * For example:
-     * ```kotlin
-     * YourDomain.Entities("some_name", "some_other_name") {
-     *    someAttribute = 100
-     *    someValue = someOtherValue!! + 1
-     * }
-     * ```
-     * @param names the names of the entities (without domain) as defined in Home Assistant
-     * @param callback the block of code that is executed on each of the entities with the entity as this
-     * @return a list of the instances of the entities
-     * */
-    fun Entities(vararg names: String, callback: E.() -> Unit): List<E> = Entities(*names).apply { forEach(callback) }
 
     // TODO maybe allow a way to make an anonymous toggle entity
 
@@ -104,13 +77,41 @@ interface Domain<out E : BaseEntity<*>> {
     }
 }
 
-/** Helper extension function to access a [Domain] inheriting object and set its reference to kHomeAssistant at the same time.
- * @receiver [D], the [Domain] inheriting object
- * @param kHomeAssistant the context parameter
- * @return [D], the [Domain] inheriting object
+/** Shorthand for [apply] for each, allows for DSL-like behavior on a bunch of newly instanced entities.
+ * For example:
+ * ```kotlin
+ * YourDomain.Entities("some_name", "some_other_name") {
+ *    someAttribute = 100
+ *    someValue = someOtherValue!! + 1
+ * }
+ * ```
+ * @param names the names of the entities (without domain) as defined in Home Assistant
+ * @param callback the block of code that is executed on each of the entities with the entity as this
+ * @return a list of the instances of the entities
  * */
-fun <D : Domain<*>> D.withContext(kHomeAssistant: () -> KHomeAssistant?): D =
-    also { it.kHomeAssistant = kHomeAssistant }
+inline fun <E : BaseEntity<*>> Domain<E>.Entities(vararg names: String, callback: E.() -> Unit): List<E> = Entities(*names).apply { forEach(callback) }
+
+/** Shorthand for [apply], allows for DSL-like behavior on a newly instanced entity.
+ * For example:
+ * ```kotlin
+ * YourDomain.Entity("some_name") {
+ *    someAttribute = 100
+ *    someValue = someOtherValue!! + 1
+ * }
+ * ```
+ * @param name the name of the entity (without domain) as defined in Home Assistant
+ * @param callback the block of code that is executed with the entity as this
+ * @return an instance of the entity
+ * */
+inline fun <E : BaseEntity<*>> Domain<E>.Entity(name: String, callback: E.() -> Unit): E = Entity(name).apply(callback)
+
+///** Helper extension function to access a [Domain] inheriting object and set its reference to kHomeAssistant at the same time.
+// * @receiver [D], the [Domain] inheriting object
+// * @param kHomeAssistant the context parameter
+// * @return [D], the [Domain] inheriting object
+// * */
+//fun <D : Domain<*>> D.withContext(kHomeAssistant: () -> KHomeAssistant?): D =
+//    also { it.kHomeAssistant = kHomeAssistant }
 
 /**
  * Create a temporary [Domain]. Useful for quick service calls or for by KHomeAssistant unsupported domains.

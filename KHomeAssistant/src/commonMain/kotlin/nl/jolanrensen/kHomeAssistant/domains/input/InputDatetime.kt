@@ -9,7 +9,6 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.domains.withContext
 import nl.jolanrensen.kHomeAssistant.entities.AttributesDelegate
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.suspendUntilAttributeChangedTo
@@ -20,14 +19,17 @@ import kotlin.reflect.KProperty
  * Input Datetime
  * https://www.home-assistant.io/integrations/input_datetime
  * */
-object InputDatetime : Domain<InputDatetime.Entity> {
-    override var kHomeAssistant: () -> KHomeAssistant? = { null }
+class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<InputDatetime.Entity> {
     override val domainName = "input_datetime"
 
     override fun checkContext() = require(kHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'InputDatetime.' from a KHomeAssistantContext instead of using InputDatetime directly.""".trimMargin()
     }
+
+    /** Making sure InputDatetime acts as a singleton. */
+    override fun equals(other: Any?) = other is InputDatetime
+    override fun hashCode(): Int = domainName.hashCode()
 
     /** Reload input_datetime configuration. */
     suspend fun reload() = callService("reload")
@@ -60,7 +62,7 @@ object InputDatetime : Domain<InputDatetime.Entity> {
     ) : BaseEntity<State>(
         kHomeAssistant = kHomeAssistant,
         name = name,
-        domain = InputDatetime
+        domain = InputDatetime(kHomeAssistant)
     ) {
 
         init {
@@ -277,8 +279,7 @@ object InputDatetime : Domain<InputDatetime.Entity> {
     }
 }
 
-typealias InputDateTimeDomain = InputDatetime
 
 /** Access the InputDateTime Domain */
-val KHomeAssistantContext.InputDatetime: InputDateTimeDomain
-    get() = InputDateTimeDomain.withContext(kHomeAssistant)
+val KHomeAssistantContext.InputDatetime: InputDatetime
+    get() = InputDatetime(kHomeAssistant)

@@ -6,7 +6,6 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.domains.withContext
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.helper.cast
 import kotlin.reflect.KProperty
@@ -14,14 +13,17 @@ import kotlin.reflect.KProperty
 /**
  * https://www.home-assistant.io/integrations/input_number/
  */
-object InputNumber : Domain<InputNumber.Entity> {
-    override var kHomeAssistant: () -> KHomeAssistant? = { null }
+class InputNumber(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<InputNumber.Entity> {
     override val domainName = "input_number"
 
     override fun checkContext() = require(kHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'InputNumber.' from a KHomeAssistantContext instead of using InputNumber directly.""".trimMargin()
     }
+
+    /** Making sure InputNumber acts as a singleton. */
+    override fun equals(other: Any?) = other is InputNumber
+    override fun hashCode(): Int = domainName.hashCode()
 
     /** Reload input_number configuration. */
     suspend fun reload() = callService("reload")
@@ -39,7 +41,7 @@ object InputNumber : Domain<InputNumber.Entity> {
     ) : BaseEntity<Float>(
         kHomeAssistant = kHomeAssistant,
         name = name,
-        domain = InputNumber
+        domain = InputNumber(kHomeAssistant)
     ) {
         /** Delegate so you can control an InputNumber like a local variable
          * Simply type "var yourFloat by InputNumber.Entity("your_float")
@@ -122,7 +124,5 @@ object InputNumber : Domain<InputNumber.Entity> {
 }
 
 /** Access the InputNumber Domain. */
-typealias InputNumberDomain = InputNumber
-
-val KHomeAssistantContext.InputNumber: InputNumberDomain
-    get() = InputNumberDomain.withContext(kHomeAssistant)
+val KHomeAssistantContext.InputNumber: InputNumber
+    get() = InputNumber(kHomeAssistant)

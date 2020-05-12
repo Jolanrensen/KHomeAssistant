@@ -6,7 +6,6 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.domains.withContext
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.helper.cast
 import kotlin.reflect.KProperty
@@ -15,14 +14,17 @@ import kotlin.reflect.KProperty
  * Input Text domain
  * https://www.home-assistant.io/integrations/input_text/
  * */
-object InputText : Domain<InputText.Entity> {
-    override var kHomeAssistant: () -> KHomeAssistant? = { null }
+class InputText(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<InputText.Entity> {
     override val domainName = "input_text"
 
     override fun checkContext() = require(kHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'InputText.' from a KHomeAssistantContext instead of using InputText directly.""".trimMargin()
     }
+
+    /** Making sure InputText acts as a singleton. */
+    override fun equals(other: Any?) = other is InputText
+    override fun hashCode(): Int = domainName.hashCode()
 
     /** Reload input_text configuration. */
     suspend fun reload() = callService("reload")
@@ -39,7 +41,7 @@ object InputText : Domain<InputText.Entity> {
     ) : BaseEntity<String>(
         kHomeAssistant = kHomeAssistant,
         name = name,
-        domain = InputText
+        domain = InputText(kHomeAssistant)
     ) {
         /** Delegate so you can control an [InputText] like a local variable
          * Simply type "var yourString by [InputText].Entity("your_string")
@@ -114,7 +116,5 @@ object InputText : Domain<InputText.Entity> {
 }
 
 /** Access the InputText Domain. */
-typealias InputTextDomain = InputText
-
-val KHomeAssistantContext.InputText: InputTextDomain
-    get() = InputTextDomain.withContext(kHomeAssistant)
+val KHomeAssistantContext.InputText: InputText
+    get() = InputText(kHomeAssistant)

@@ -7,9 +7,9 @@ import com.soywiz.klock.seconds
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaContentType.*
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.SupportedFeatures.*
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
@@ -23,14 +23,17 @@ import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
  *
  * TODO get attributes from here https://github.com/home-assistant/core/blob/dev/homeassistant/components/media_player/__init__.py
  * */
-object MediaPlayer : Domain<MediaPlayer.Entity> {
-    override var kHomeAssistant: () -> KHomeAssistant? = { null }
+class MediaPlayer(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<MediaPlayer.Entity> {
     override val domainName = "media_player"
 
     override fun checkContext() = require(kHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'MediaPlayer.' from a KHomeAssistantContext instead of using MediaPlayer directly.""".trimMargin()
     }
+
+    /** Making sure MediaPlayer acts as a singleton. */
+    override fun equals(other: Any?) = other is MediaPlayer
+    override fun hashCode(): Int = domainName.hashCode()
 
     // TODO maybe. All services also work with "all" as entity_id to control all media players
 
@@ -76,7 +79,7 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
     ) : ToggleEntity(
         kHomeAssistant = kHomeAssistant,
         name = name,
-        domain = MediaPlayer
+        domain = MediaPlayer(kHomeAssistant)
     ) {
 
         init {
@@ -420,8 +423,8 @@ object MediaPlayer : Domain<MediaPlayer.Entity> {
     }
 }
 
-typealias MediaPlayerDomain = MediaPlayer
+
 
 /** Access the MediaPlayer Domain */
-val KHomeAssistantContext.MediaPlayer: MediaPlayerDomain
-    get() = MediaPlayerDomain.withContext(kHomeAssistant)
+val KHomeAssistantContext.MediaPlayer: MediaPlayer
+    get() = MediaPlayer(kHomeAssistant)

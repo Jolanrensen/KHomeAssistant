@@ -5,9 +5,9 @@ import com.soywiz.korim.color.RGBA
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Light.SupportedFeatures.*
 import nl.jolanrensen.kHomeAssistant.entities.AttributesDelegate
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
@@ -16,12 +16,11 @@ import nl.jolanrensen.kHomeAssistant.helper.*
 import kotlin.reflect.KProperty
 
 
-/** Do not use directly! Always use Light.
+/**
  *
  * https://www.home-assistant.io/integrations/light/
  * */
-object Light : Domain<Light.Entity> {
-    override var kHomeAssistant: () -> KHomeAssistant? = { null }
+class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.Entity> {
     override val domainName = "light"
 
     override fun checkContext() = require(kHomeAssistant() != null) {
@@ -29,6 +28,9 @@ object Light : Domain<Light.Entity> {
             Make sure to use the helper function 'Light.' from a KHomeAssistantContext instead of using Light directly.""".trimMargin()
     }
 
+    /** Making sure Light acts as a singleton. */
+    override fun equals(other: Any?) = other is Light
+    override fun hashCode(): Int = domainName.hashCode()
 
     enum class Flash(val value: String) {
         SHORT("short"), LONG("long")
@@ -53,7 +55,7 @@ object Light : Domain<Light.Entity> {
     ) : ToggleEntity(
         kHomeAssistant = kHomeAssistant,
         name = name,
-        domain = Light
+        domain = Light(kHomeAssistant)
     ) {
 
         init {
@@ -354,11 +356,8 @@ object Light : Domain<Light.Entity> {
     }
 }
 
-
-typealias LightDomain = Light
-
 /** Access the Light Domain */
-val KHomeAssistantContext.Light: LightDomain
-    get() = LightDomain.withContext(kHomeAssistant)
+val KHomeAssistantContext.Light: Light
+    get() = Light(kHomeAssistant)
 
 
