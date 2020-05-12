@@ -1,5 +1,13 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
+import com.soywiz.klock.DateTimeTz
+import com.soywiz.klock.TimeSpan
+import com.soywiz.klock.seconds
+import kotlinx.coroutines.channels.Channel
+import nl.jolanrensen.kHomeAssistant.Task
+import nl.jolanrensen.kHomeAssistant.core.StateListener
+import nl.jolanrensen.kHomeAssistant.runAt
+
 /**
  * Creates a listener executed when any attribute of the entity changes.
  * ```
@@ -477,4 +485,38 @@ fun <A : Any?, S: Any, E : BaseEntity<S>> NonSpecificAttribute<E, A>.onChangedNo
 ): NonSpecificAttribute<E, A> {
     entity.onAttributeChangedNotTo(this, newAttributeValue, callback)
     return this
+}
+
+
+suspend fun <A : Any?, S : Any, E : BaseEntity<S>> E.suspendUntilAttributeChangedTo(
+    attribute: Attribute<A>,
+    newAttributeValue: A,
+    timeout: TimeSpan = 1.seconds
+) {
+    checkEntityExists()
+    if (newAttributeValue == attribute.get()) return
+
+    val continueChannel = Channel<Unit>()
+
+    var stateListener: StateListener? = null
+    var task: Task? = null
+
+    stateListener = { _, _ ->
+        if (newAttributeValue == attribute.get()) {
+            kHomeAssistant()!!.stateListeners[entityID]?.remove(stateListener)
+            task?.cancel()
+            continueChannel.send(Unit)
+        }
+    }
+
+    task = kHomeAssistant()!!.runAt(DateTimeTz.nowLocal() + timeout) {
+        kHomeAssistant()!!.stateListeners[entityID]?.remove(stateListener)
+        continueChannel.send(Unit)
+    }
+
+    kHomeAssistant()!!.stateListeners
+        .getOrPut(entityID) { hashSetOf() }
+        .add(stateListener)
+
+    continueChannel.receive()
 }

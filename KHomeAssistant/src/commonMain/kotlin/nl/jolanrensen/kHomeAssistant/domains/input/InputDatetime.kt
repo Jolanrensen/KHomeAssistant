@@ -12,6 +12,7 @@ import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.withContext
 import nl.jolanrensen.kHomeAssistant.entities.AttributesDelegate
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.entities.suspendUntilAttributeChangedTo
 import nl.jolanrensen.kHomeAssistant.helper.cast
 import kotlin.reflect.KProperty
 
@@ -91,31 +92,40 @@ object InputDatetime : Domain<InputDatetime.Entity> {
         ) {
             runBlocking {
                 when (property.name) {
-                    ::day.name -> year?.let { y ->
-                        month?.let { m ->
-                            setDate(localDate = Date(year = y, month = m, day = value as Int))
-                        }
-                    } ?: throw Exception("Can't set day, $name has no date.")
-
-                    ::hour.name -> minute?.let { m ->
-                        second?.let { s ->
-                            setTime(localTime = Time(hour = value as Int, minute = m, second = s))
-                        }
-                    } ?: throw Exception("Can't set hour, $name has no time.")
-
-                    ::minute.name -> hour?.let { h ->
-                        second?.let { s ->
-                            setTime(
-                                localTime = Time(hour = h, minute = value as Int, second = s)
-                            )
-                        }
-                    } ?: throw Exception("Can't set minute, $name has no time.")
-
-                    ::second.name -> hour?.let { h ->
+                    ::day.name -> {
+                        year?.let { y ->
+                            month?.let { m ->
+                                setDate(localDate = Date(year = y, month = m, day = value as Int))
+                            }
+                        } ?: throw Exception("Can't set day, $name has no date.")
+                        suspendUntilAttributeChangedTo(::day, value)
+                    }
+                    ::hour.name -> {
                         minute?.let { m ->
-                            setTime(localTime = Time(hour = h, minute = m, second = value as Int))
-                        }
-                    } ?: throw Exception("Can't set minute, $name has no time.")
+                            second?.let { s ->
+                                setTime(localTime = Time(hour = value as Int, minute = m, second = s))
+                            }
+                        } ?: throw Exception("Can't set hour, $name has no time.")
+                        suspendUntilAttributeChangedTo(::hour, value)
+                    }
+                    ::minute.name -> {
+                        hour?.let { h ->
+                            second?.let { s ->
+                                setTime(
+                                    localTime = Time(hour = h, minute = value as Int, second = s)
+                                )
+                            }
+                        } ?: throw Exception("Can't set minute, $name has no time.")
+                        suspendUntilAttributeChangedTo(::minute, value)
+                    }
+                    ::second.name -> {
+                        hour?.let { h ->
+                            minute?.let { m ->
+                                setTime(localTime = Time(hour = h, minute = m, second = value as Int))
+                            }
+                        } ?: throw Exception("Can't set minute, $name has no time.")
+                        suspendUntilAttributeChangedTo(::second, value)
+                    }
                 }
                 Unit
             }
@@ -152,6 +162,7 @@ object InputDatetime : Domain<InputDatetime.Entity> {
                             setDate(localDate = Date(year = value!!, month = m, day = d))
                         }
                     } ?: throw Exception("Can't set year, $name has no date.")
+                    suspendUntilAttributeChangedTo(::year, value)
                 }
             }
 
@@ -165,6 +176,7 @@ object InputDatetime : Domain<InputDatetime.Entity> {
                             setDate(localDate = Date(year = y, month = value!!, day = d))
                         }
                     } ?: throw Exception("Can't set month, $name has no date.")
+                    suspendUntilAttributeChangedTo(::month, value)
                 }
             }
 
@@ -186,6 +198,7 @@ object InputDatetime : Domain<InputDatetime.Entity> {
             set(value) {
                 runBlocking {
                     setDate(localDate = value!!)
+                    suspendUntilAttributeChangedTo(::date, value)
                 }
             }
 
@@ -195,6 +208,7 @@ object InputDatetime : Domain<InputDatetime.Entity> {
             set(value) {
                 runBlocking {
                     setTime(localTime = value!!)
+                    suspendUntilAttributeChangedTo(::time, value)
                 }
             }
 
@@ -208,6 +222,7 @@ object InputDatetime : Domain<InputDatetime.Entity> {
             set(value) {
                 runBlocking {
                     setDateTime(localDateTime = value!!)
+                    suspendUntilAttributeChangedTo(::dateTime, value)
                 }
             }
 
@@ -233,7 +248,8 @@ object InputDatetime : Domain<InputDatetime.Entity> {
                 data = buildMap<String, JsonElement> {
                     localDate.let {
                         this["date"] = JsonPrimitive("${it.year}-${it.month1}-${it.day}")
-                        if (has_time) this["time"] = JsonPrimitive(time!!.let { "${it.hour}:${it.minute}:${it.second}" })
+                        if (has_time) this["time"] =
+                            JsonPrimitive(time!!.let { "${it.hour}:${it.minute}:${it.second}" })
                     }
                 }
             )

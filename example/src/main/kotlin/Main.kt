@@ -1,5 +1,4 @@
-import com.soywiz.klock.Month
-import com.soywiz.klock.Year
+
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.automation
@@ -7,7 +6,10 @@ import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
-import nl.jolanrensen.kHomeAssistant.entities.*
+import nl.jolanrensen.kHomeAssistant.entities.invoke
+import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
+import nl.jolanrensen.kHomeAssistant.entities.turnOff
+import nl.jolanrensen.kHomeAssistant.entities.turnOn
 
 
 class BedroomLights : Automation() {
@@ -75,26 +77,9 @@ fun main() {
 
 
                     bothDateAndTime {
-                        onAttributesChanged {
-                            println("bothDateAndTime attributes changed to $rawAttributes")
-                        }
-                        onStateChanged {
-                            println("bothDateAndTime state changed to $state")
-                        }
-
-//                        setDateTime(
-//                            DateTime(2020, 3, 23, 12, 9, 8).localUnadjusted
-//                        )
-
-                        year = Year(2021)
-                        month = Month.November
-                        day = 22
-
-                        hour = 7
-                        minute = 29
-                        second = 4
-
-                        println(this)
+                       while (true) {
+                           year = year!! + 1
+                       }
                     }
 
 //                    Light["wall_lamp"] {
