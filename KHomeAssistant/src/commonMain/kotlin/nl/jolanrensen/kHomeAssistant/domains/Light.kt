@@ -1,18 +1,19 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
+import com.soywiz.klock.seconds
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Light.SupportedFeatures.*
-import nl.jolanrensen.kHomeAssistant.entities.AttributesDelegate
-import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
-import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
+import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.helper.*
+import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 
 
@@ -82,11 +83,26 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
         ) {
             runBlocking {
                 when (property.name) {
-                    ::brightness.name -> turnOn(brightness = value as Int)
-                    ::hs_color.name -> turnOn(hs_color = value as HSColor)
-                    ::rgb_color.name -> turnOn(rgb_color = value as RGBColor)
-                    ::xy_color.name -> turnOn(xy_color = value as XYColor)
-                    ::white_value.name -> turnOn(white_value = value as Int)
+                    ::brightness.name -> {
+                        turnOn(brightness = value as Int)
+                        suspendUntilAttributeChangedTo(::brightness, value)
+                    }
+                    ::hs_color.name -> {
+                        turnOn(hs_color = value as HSColor)
+                        suspendUntilAttributeChangedTo(::hs_color, value)
+                    }
+                    ::rgb_color.name -> {
+                        turnOn(rgb_color = value as RGBColor)
+                        suspendUntilAttributeChangedTo(::rgb_color, value)
+                    }
+                    ::xy_color.name -> {
+                        turnOn(xy_color = value as XYColor)
+                        suspendUntilAttributeChangedTo(::xy_color, value)
+                    }
+                    ::white_value.name -> {
+                        turnOn(white_value = value as Int)
+                        suspendUntilAttributeChangedTo(::white_value, value)
+                    }
                 }
                 Unit
             }
@@ -108,7 +124,7 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
         val supported_features: Set<SupportedFeatures>
             get() = buildSet {
                 val value: Int? = rawAttributes[::supported_features.name]?.cast()
-                SupportedFeatures.values().forEach {
+                values().forEach {
                     if (it.value and value!! == it.value)
                         add(it)
                 }
@@ -120,9 +136,12 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
          * You can find a lot of colors in com.soywiz.korim.color.Colors
          * */
         var color: RGBA?
-            get() = rgb_color?.run { RGBA(r.toInt(), g.toInt(), b.toInt()) }
+            get() = rgb_color?.run { RGBA(r, g, b) }
             set(value) {
-                runBlocking { turnOn(color = value!!) }
+                runBlocking {
+                    turnOn(color = value!!)
+                    suspendUntilAttributeChangedTo(::color, value)
+                }
             }
 
         /** Integer between 0 and 255 for how bright the light should be, where 0 means the light is off, 1 is the minimum brightness and 255 is the maximum brightness supported by the light. */
@@ -147,7 +166,9 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
             @Deprecated("'profile' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'profile' is write only")
             set(value) {
-                runBlocking { turnOn(profile = value) }
+                runBlocking {
+                    turnOn(profile = value)
+                }
             }
 
         /** An integer in mireds representing the color temperature you want the light to be. */
@@ -155,7 +176,9 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
             @Deprecated("'color_temp' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'color_temp' is write only")
             set(value) {
-                runBlocking { turnOn(color_temp = value) }
+                runBlocking {
+                    turnOn(color_temp = value)
+                }
             }
 
         /** Alternatively, you can specify the color temperature in Kelvin. */
@@ -163,7 +186,9 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
             @Deprecated("'kelvin' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'kelvin' is write only")
             set(value) {
-                runBlocking { turnOn(kelvin = value) }
+                runBlocking {
+                    turnOn(kelvin = value)
+                }
             }
 
         /** A human-readable string of a color name, such as blue or goldenrod. All CSS3 color names are supported. */
@@ -171,7 +196,9 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
             @Deprecated("'color_name' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'color_name' is write only")
             set(value) {
-                runBlocking { turnOn(color_name = value) }
+                runBlocking {
+                    turnOn(color_name = value)
+                }
             }
 
         /** Alternatively, you can specify brightness in percent (a number between 0 and 100), where 0 means the light is off, 1 is the minimum brightness and 100 is the maximum brightness supported by the light. */
@@ -179,7 +206,9 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
             @Deprecated("'brightness_pct' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_pct' is write only")
             set(value) {
-                runBlocking { turnOn(brightness_pct = value) }
+                runBlocking {
+                    turnOn(brightness_pct = value)
+                }
             }
 
         /** Change brightness by an amount. Should be between -255..255. */
@@ -187,7 +216,9 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
             @Deprecated("'brightness_step' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_step' is write only")
             set(value) {
-                runBlocking { turnOn(brightness_step = value) }
+                runBlocking {
+                    turnOn(brightness_step = value)
+                }
             }
 
         /** Change brightness by a percentage. Should be between -100..100. */
@@ -195,7 +226,9 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
             @Deprecated("'brightness_step_pct' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_step_pct' is write only")
             set(value) {
-                runBlocking { turnOn(brightness_step_pct = value) }
+                runBlocking {
+                    turnOn(brightness_step_pct = value)
+                }
             }
 
         /** Tell light to flash, can be either value Flash.SHORT or Flash.LONG. */
@@ -203,7 +236,9 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
             @Deprecated("'flash' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'flash' is write only")
             set(value) {
-                runBlocking { turnOn(flash = value) }
+                runBlocking {
+                    turnOn(flash = value)
+                }
             }
 
         /** Applies an effect such as colorloop or random. */
@@ -211,7 +246,9 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
             @Deprecated("'effect' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'effect' is write only")
             set(value) {
-                runBlocking { turnOn(effect = value) }
+                runBlocking {
+                    turnOn(effect = value)
+                }
             }
 
         private fun checkIfSupported(supportedFeature: SupportedFeatures) {
@@ -236,114 +273,124 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
             brightness_step: Float? = null,
             brightness_step_pct: Float? = null,
             flash: Flash? = null,
-            effect: String? = null
-        ) = callService(
-            serviceName = "turn_on",
-            data = buildMap<String, JsonElement> {
-                transition?.let {
-                    checkIfSupported(SUPPORT_TRANSITION)
-                    if (it < 0)
-                        throw IllegalArgumentException("incorrect transition $it")
-                    this["transition"] = JsonPrimitive(it)
-                }
-                profile?.let {
-                    this["profile"] = JsonPrimitive(it)
-                }
-                hs_color?.let {
-                    checkIfSupported(SUPPORT_COLOR)
-                    if (it.isEmpty() || it.size > 2 || it.h !in 0f..360f || it.s !in 0f..100f)
-                        throw IllegalArgumentException("incorrect hs_color $it")
-                    this["hs_color"] = JsonArray(it.map { JsonPrimitive(it) })
-                }
-                xy_color?.let {
-                    checkIfSupported(SUPPORT_COLOR)
-                    if (it.isEmpty() || it.size > 2)
-                        throw IllegalArgumentException("incorrect xy_color $it")
-                    this["xy_color"] = JsonArray(it.map { JsonPrimitive(it) })
-                }
-                rgb_color?.let {
-                    checkIfSupported(SUPPORT_COLOR)
-                    if (it.isEmpty() || it.size > 3 || it.any { it !in 0..255 })
-                        throw IllegalArgumentException("incorrect rgb_color $it")
-                    this["rgb_color"] = JsonArray(it.map { JsonPrimitive(it) })
-                }
-                color?.let {
-                    checkIfSupported(SUPPORT_COLOR)
-                    this["rgb_color"] = JsonArray(
-                        listOf(
-                            JsonPrimitive(it.r),
-                            JsonPrimitive(it.g),
-                            JsonPrimitive(it.b)
+            effect: String? = null,
+            async: Boolean = false
+        ): ResultMessage {
+            val result = callService(
+                serviceName = "turn_on",
+                data = buildMap<String, JsonElement> {
+                    transition?.let {
+                        checkIfSupported(SUPPORT_TRANSITION)
+                        if (it < 0)
+                            throw IllegalArgumentException("incorrect transition $it")
+                        this["transition"] = JsonPrimitive(it)
+                    }
+                    profile?.let {
+                        this["profile"] = JsonPrimitive(it)
+                    }
+                    hs_color?.let {
+                        checkIfSupported(SUPPORT_COLOR)
+                        if (it.isEmpty() || it.size > 2 || it.h !in 0f..360f || it.s !in 0f..100f)
+                            throw IllegalArgumentException("incorrect hs_color $it")
+                        this["hs_color"] = JsonArray(it.map { JsonPrimitive(it) })
+                    }
+                    xy_color?.let {
+                        checkIfSupported(SUPPORT_COLOR)
+                        if (it.isEmpty() || it.size > 2)
+                            throw IllegalArgumentException("incorrect xy_color $it")
+                        this["xy_color"] = JsonArray(it.map { JsonPrimitive(it) })
+                    }
+                    rgb_color?.let {
+                        checkIfSupported(SUPPORT_COLOR)
+                        if (it.isEmpty() || it.size > 3 || it.any { it !in 0..255 })
+                            throw IllegalArgumentException("incorrect rgb_color $it")
+                        this["rgb_color"] = JsonArray(it.map { JsonPrimitive(it) })
+                    }
+                    color?.let {
+                        checkIfSupported(SUPPORT_COLOR)
+                        this["rgb_color"] = JsonArray(
+                            listOf(
+                                JsonPrimitive(it.r),
+                                JsonPrimitive(it.g),
+                                JsonPrimitive(it.b)
+                            )
                         )
-                    )
+                    }
+                    white_value?.let {
+                        checkIfSupported(SUPPORT_WHITE_VALUE)
+                        if (it !in 0..255)
+                            throw IllegalArgumentException("incorrect white_value $it")
+                        this["white_value"] = JsonPrimitive(it)
+                    }
+                    color_temp?.let {
+                        checkIfSupported(SUPPORT_COLOR_TEMP)
+                        if (min_mireds == null || max_mireds == null)
+                            throw IllegalArgumentException("mireds not supported for this device")
+                        if (it !in min_mireds!!..max_mireds!!)
+                            throw IllegalArgumentException("incorrect color_temp $it")
+                        this["color_temp"] = JsonPrimitive(it)
+                    }
+                    kelvin?.let {
+                        checkIfSupported(SUPPORT_COLOR_TEMP)
+                        if (it < 0)
+                            throw IllegalArgumentException("incorrect kelvin $it")
+                        this["kelvin"] = JsonPrimitive(it)
+                    }
+                    color_name?.let {
+                        checkIfSupported(SUPPORT_COLOR)
+                        if (it !in Colors.colorsByName)
+                            throw IllegalArgumentException("incorrect color_name $it")
+                        this["color_name"] = JsonPrimitive(it)
+                    }
+                    brightness?.let {
+                        checkIfSupported(SUPPORT_BRIGHTNESS)
+                        if (it !in 0..255)
+                            throw IllegalArgumentException("incorrect brightness $it")
+                        this["brightness"] = JsonPrimitive(it)
+                    }
+                    brightness_pct?.let {
+                        checkIfSupported(SUPPORT_BRIGHTNESS)
+                        if (it !in 0f..100f)
+                            throw IllegalArgumentException("incorrect brightness_pct $it")
+                        this["brightness_pct"] = JsonPrimitive(it)
+                    }
+                    brightness_step?.let {
+                        checkIfSupported(SUPPORT_BRIGHTNESS)
+                        if (it !in -255f..255f)
+                            throw IllegalArgumentException("incorrect brightness_step $it")
+                        this["brightness_step"] = JsonPrimitive(it)
+                    }
+                    brightness_step_pct?.let {
+                        checkIfSupported(SUPPORT_BRIGHTNESS)
+                        if (it !in -100f..100f)
+                            throw IllegalArgumentException("incorrect brightness_step_pct $it")
+                        this["brightness_step_pct"] = JsonPrimitive(it)
+                    }
+                    flash?.let {
+                        checkIfSupported(SUPPORT_FLASH)
+                        this["flash"] = JsonPrimitive(it.value)
+                    }
+                    effect?.let {
+                        checkIfSupported(SUPPORT_EFFECT)
+                        if (effect_list == null || it !in effect_list!!)
+                            throw IllegalArgumentException("incorrect effect $it")
+                        this["effect"] = JsonPrimitive(it)
+                    }
                 }
-                white_value?.let {
-                    checkIfSupported(SUPPORT_WHITE_VALUE)
-                    if (it !in 0..255)
-                        throw IllegalArgumentException("incorrect white_value $it")
-                    this["white_value"] = JsonPrimitive(it)
-                }
-                color_temp?.let {
-                    checkIfSupported(SUPPORT_COLOR_TEMP)
-                    if (min_mireds == null || max_mireds == null)
-                        throw IllegalArgumentException("mireds not supported for this device")
-                    if (it !in min_mireds!!..max_mireds!!)
-                        throw IllegalArgumentException("incorrect color_temp $it")
-                    this["color_temp"] = JsonPrimitive(it)
-                }
-                kelvin?.let {
-                    checkIfSupported(SUPPORT_COLOR_TEMP)
-                    if (it < 0)
-                        throw IllegalArgumentException("incorrect kelvin $it")
-                    this["kelvin"] = JsonPrimitive(it)
-                }
-                color_name?.let {
-                    checkIfSupported(SUPPORT_COLOR)
-                    if (it !in Colors.colorsByName)
-                        throw IllegalArgumentException("incorrect color_name $it")
-                    this["color_name"] = JsonPrimitive(it)
-                }
-                brightness?.let {
-                    checkIfSupported(SUPPORT_BRIGHTNESS)
-                    if (it !in 0..255)
-                        throw IllegalArgumentException("incorrect brightness $it")
-                    this["brightness"] = JsonPrimitive(it)
-                }
-                brightness_pct?.let {
-                    checkIfSupported(SUPPORT_BRIGHTNESS)
-                    if (it !in 0f..100f)
-                        throw IllegalArgumentException("incorrect brightness_pct $it")
-                    this["brightness_pct"] = JsonPrimitive(it)
-                }
-                brightness_step?.let {
-                    checkIfSupported(SUPPORT_BRIGHTNESS)
-                    if (it !in -255f..255f)
-                        throw IllegalArgumentException("incorrect brightness_step $it")
-                    this["brightness_step"] = JsonPrimitive(it)
-                }
-                brightness_step_pct?.let {
-                    checkIfSupported(SUPPORT_BRIGHTNESS)
-                    if (it !in -100f..100f)
-                        throw IllegalArgumentException("incorrect brightness_step_pct $it")
-                    this["brightness_step_pct"] = JsonPrimitive(it)
-                }
-                flash?.let {
-                    checkIfSupported(SUPPORT_FLASH)
-                    this["flash"] = JsonPrimitive(it.value)
-                }
-                effect?.let {
-                    checkIfSupported(SUPPORT_EFFECT)
-                    if (effect_list == null || it !in effect_list!!)
-                        throw IllegalArgumentException("incorrect effect $it")
-                    this["effect"] = JsonPrimitive(it)
-                }
-            }
-        )
+            )
+
+            if (!async) suspendUntilStateChangedTo(OnOff.ON, (transition ?: 0 + 1).seconds)
+
+            return result
+        }
 
 
+        /**
+         * @param transition time in seconds in which to turn off
+         */
         @OptIn(ExperimentalStdlibApi::class)
-        suspend fun turnOff(transition: Int) =
-            callService(
+        suspend fun turnOff(transition: Int, async: Boolean = false): ResultMessage {
+            val result = callService(
                 serviceName = "turn_off",
                 data = buildMap<String, JsonElement> {
                     transition.let {
@@ -353,6 +400,9 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
                     }
                 }
             )
+            if (!async) suspendUntilStateChangedTo(OnOff.OFF, (transition + 1).seconds)
+            return result
+        }
     }
 }
 

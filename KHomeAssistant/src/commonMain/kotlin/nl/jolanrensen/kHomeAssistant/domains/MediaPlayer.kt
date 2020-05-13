@@ -4,7 +4,6 @@ import com.soywiz.klock.DateTime
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.parseUtc
 import com.soywiz.klock.seconds
-import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
@@ -13,10 +12,13 @@ import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaContentType.*
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.SupportedFeatures.*
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
+import nl.jolanrensen.kHomeAssistant.entities.suspendUntilAttributeChanged
+import nl.jolanrensen.kHomeAssistant.entities.suspendUntilAttributeChangedTo
 import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT
 import nl.jolanrensen.kHomeAssistant.helper.UnsupportedFeatureException
 import nl.jolanrensen.kHomeAssistant.helper.cast
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
+import kotlin.math.max
 
 /**
  * https://www.home-assistant.io/integrations/media_player/
@@ -166,14 +168,10 @@ class MediaPlayer(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<M
             @Deprecated(level = DeprecationLevel.WARNING, message = "Should work but use with caution!")
             set(value) {
                 runBlocking {
-                    while (media_track!! < value!!) {
+                    while (media_track!! < value!!)
                         mediaNextTrack()
-                        delay(100)
-                    }
-                    while (media_track!! > value) {
+                    while (media_track!! > value)
                         mediaPreviousTrack()
-                        delay(100)
-                    }
                 }
             }
 
@@ -274,19 +272,35 @@ class MediaPlayer(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<M
         }
 
 
-        suspend fun volumeUp(): ResultMessage {
+        suspend fun volumeUp(async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_VOLUME_STEP, SUPPORT_VOLUME_SET)
-            return callService("volume_up")
+            val currentVolumeLevel = volume_level
+            val result = callService("volume_up")
+
+            try {
+                if (!async) suspendUntilAttributeChanged(::volume_level, { it!! > currentVolumeLevel!! })
+            } catch (e: Exception) {
+            }
+
+            return result
         }
 
-        suspend fun volumeDown(): ResultMessage {
+        suspend fun volumeDown(async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_VOLUME_STEP, SUPPORT_VOLUME_SET)
-            return callService("volume_down")
+            val currentVolumeLevel = volume_level
+            val result = callService("volume_down")
+
+            try {
+                if (!async) suspendUntilAttributeChanged(::volume_level, { it!! < currentVolumeLevel!! })
+            } catch (e: Exception) {
+            }
+
+            return result
         }
 
-        suspend fun volumeSet(volumeLevel: Float): ResultMessage {
+        suspend fun volumeSet(volumeLevel: Float, async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_VOLUME_SET)
-            return callService(
+            val result = callService(
                 serviceName = "volume_set",
                 data = buildMap<String, JsonElement> {
                     volumeLevel.let {
@@ -296,16 +310,24 @@ class MediaPlayer(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<M
                     }
                 }
             )
+
+            if (!async) suspendUntilAttributeChangedTo(::volume_level, volumeLevel)
+
+            return result
         }
 
-        suspend fun volumeMute(mute: Boolean = true): ResultMessage {
+        suspend fun volumeMute(mute: Boolean = true, async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_VOLUME_MUTE)
-            return callService(
+            val result = callService(
                 serviceName = "volume_mute",
                 data = buildMap<String, JsonPrimitive> {
                     this["is_volume_muted"] = JsonPrimitive(mute)
                 }
             )
+
+            if (!async) suspendUntilAttributeChangedTo(::is_volume_muted, mute)
+
+            return result
         }
 
         suspend fun volumeUnmute() = volumeMute(false)
@@ -330,14 +352,31 @@ class MediaPlayer(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<M
             return callService("media_stop")
         }
 
-        suspend fun mediaNextTrack(): ResultMessage {
+        suspend fun mediaNextTrack(async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_NEXT_TRACK)
-            return callService("media_next_track")
+            val currentTrack = media_track
+            val result = callService("media_next_track")
+
+            try {
+                if (!async) suspendUntilAttributeChangedTo(::media_track, currentTrack!! + 1)
+            } catch (e: Exception) {
+            }
+
+            return result
         }
 
-        suspend fun mediaPreviousTrack(): ResultMessage {
+        suspend fun mediaPreviousTrack(async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_PREVIOUS_TRACK)
-            return callService("media_previous_track")
+            val currentTrack = media_track
+            val result = callService("media_previous_track")
+
+            // TODO test if it's skipping to the beginning of the song or the previous one
+            try {
+                if (!async) suspendUntilAttributeChangedTo(::media_track, max(currentTrack!! - 1, 1))
+            } catch (e: Exception) {
+            }
+
+            return result
         }
 
         suspend fun clearPlaylist(): ResultMessage {
@@ -345,14 +384,18 @@ class MediaPlayer(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<M
             return callService("clear_playlist")
         }
 
-        suspend fun mediaSeek(seekPosition: TimeSpan): ResultMessage {
+        suspend fun mediaSeek(seekPosition: TimeSpan, async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_SEEK)
-            return callService(
+            val result = callService(
                 serviceName = "media_seek",
                 data = buildMap<String, JsonElement> {
                     this["seek_position"] = JsonPrimitive(seekPosition.seconds)
                 }
             )
+
+            if (!async) suspendUntilAttributeChangedTo(::media_position, seekPosition)
+
+            return result
         }
 
         suspend fun playMedia(mediaContentType: String, mediaContentId: String): ResultMessage {
@@ -380,9 +423,9 @@ class MediaPlayer(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<M
         suspend fun playGame(mediaContentId: String) = playMedia(GAME, mediaContentId)
         suspend fun playApp(mediaContentId: String) = playMedia(APP, mediaContentId)
 
-        suspend fun selectSource(source: String): ResultMessage {
+        suspend fun selectSource(source: String, async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_SELECT_SOURCE)
-            return callService(
+            val result = callService(
                 serviceName = "select_source",
                 data = buildMap<String, JsonElement> {
                     source.let {
@@ -392,11 +435,13 @@ class MediaPlayer(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<M
                     }
                 }
             )
+            if (!async) suspendUntilAttributeChangedTo(::source, source)
+            return result
         }
 
-        suspend fun selectSoundMode(soundMode: String): ResultMessage {
+        suspend fun selectSoundMode(soundMode: String, async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_SELECT_SOUND_MODE)
-            return callService(
+            val result = callService(
                 serviceName = "select_sound_mode",
                 data = buildMap<String, JsonElement> {
                     soundMode.let {
@@ -406,23 +451,25 @@ class MediaPlayer(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<M
                     }
                 }
             )
+            if (!async) suspendUntilAttributeChangedTo(::sound_mode, soundMode)
+            return result
         }
 
-        suspend fun shuffleSet(shuffle: Boolean): ResultMessage {
+        suspend fun shuffleSet(shuffle: Boolean, async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_SHUFFLE_SET)
-            return callService(
+            val result = callService(
                 serviceName = "shuffle_set",
                 data = buildMap<String, JsonElement> {
                     shuffle.let {
-
                         this["shuffle"] = JsonPrimitive(it)
                     }
                 }
             )
+            if (!async) suspendUntilAttributeChangedTo(::shuffle, shuffle)
+            return result
         }
     }
 }
-
 
 
 /** Access the MediaPlayer Domain */

@@ -200,7 +200,7 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChangedTo(
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S: Any, E : BaseEntity<S>> Attribute<A>.onChangedTo(
+fun <A : Any?, S : Any, E : BaseEntity<S>> Attribute<A>.onChangedTo(
     entity: E,
     newAttributeValue: A,
     callback: suspend E.() -> Unit
@@ -266,7 +266,7 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChangedNotTo(
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S: Any, E : BaseEntity<S>> Attribute<A>.onChangedNotTo(
+fun <A : Any?, S : Any, E : BaseEntity<S>> Attribute<A>.onChangedNotTo(
     entity: E,
     newAttributeValue: A,
     callback: suspend E.() -> Unit
@@ -412,7 +412,7 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChangedTo(
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S: Any, E : BaseEntity<S>> NonSpecificAttribute<E, A>.onChangedTo(
+fun <A : Any?, S : Any, E : BaseEntity<S>> NonSpecificAttribute<E, A>.onChangedTo(
     entity: E,
     newAttributeValue: A,
     callback: suspend E.() -> Unit
@@ -478,7 +478,7 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChangedNotTo(
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S: Any, E : BaseEntity<S>> NonSpecificAttribute<E, A>.onChangedNotTo(
+fun <A : Any?, S : Any, E : BaseEntity<S>> NonSpecificAttribute<E, A>.onChangedNotTo(
     entity: E,
     newAttributeValue: A,
     callback: suspend E.() -> Unit
@@ -487,14 +487,19 @@ fun <A : Any?, S: Any, E : BaseEntity<S>> NonSpecificAttribute<E, A>.onChangedNo
     return this
 }
 
-
 suspend fun <A : Any?, S : Any, E : BaseEntity<S>> E.suspendUntilAttributeChangedTo(
     attribute: Attribute<A>,
     newAttributeValue: A,
-    timeout: TimeSpan = 1.seconds
+    timeout: TimeSpan = 2.seconds
+) = suspendUntilAttributeChanged(attribute, { it == newAttributeValue }, timeout)
+
+suspend fun <A : Any?, S : Any, E : BaseEntity<S>> E.suspendUntilAttributeChanged(
+    attribute: Attribute<A>,
+    condition: (A) -> Boolean,
+    timeout: TimeSpan = 2.seconds
 ) {
     checkEntityExists()
-    if (newAttributeValue == attribute.get()) return
+    if (condition(attribute.get())) return
 
     val continueChannel = Channel<Unit>()
 
@@ -502,7 +507,7 @@ suspend fun <A : Any?, S : Any, E : BaseEntity<S>> E.suspendUntilAttributeChange
     var task: Task? = null
 
     stateListener = { _, _ ->
-        if (newAttributeValue == attribute.get()) {
+        if (condition(attribute.get())) {
             kHomeAssistant()!!.stateListeners[entityID]?.remove(stateListener)
             task?.cancel()
             continueChannel.send(Unit)

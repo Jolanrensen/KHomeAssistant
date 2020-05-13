@@ -76,7 +76,7 @@ open class BaseEntity<StateType : Any>(
         get() = kHomeAssistant()!!.getState(this)
     // set() TODO
 
-    suspend fun setState(s: StateType): Unit = TODO()
+//    suspend fun setState(s: StateType): Unit = TODO()
 
     /** Get the raw attributes from Home Assistant in json format. */
     val rawAttributes: JsonObject
