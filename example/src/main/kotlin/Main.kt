@@ -4,9 +4,7 @@ import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Light
-import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.domains.Switch
-import nl.jolanrensen.kHomeAssistant.domains.getValue
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
@@ -48,14 +46,16 @@ fun main() {
             automations = listOf(
                 automation("1") {
 
-                    val denon_avrx2200w by MediaPlayer
-                    denon_avrx2200w.toggle()
+//                    val denon_avrx2200w by MediaPlayer
+//                    denon_avrx2200w.toggle()
 
 
 
                     val bothDateAndTime = InputDatetime["both_date_and_time"]
                     val onlyDate = InputDatetime["only_date"]
-                    val onlyTime = InputDatetime["input_time"]
+                    val onlyTime = InputDatetime["only_time"]
+
+
 
 
 //                    InputText["text1"] {

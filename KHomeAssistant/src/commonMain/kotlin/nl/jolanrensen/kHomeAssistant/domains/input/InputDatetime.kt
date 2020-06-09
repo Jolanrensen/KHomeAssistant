@@ -228,17 +228,17 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                 }
             }
 
-
-        // TODO make sure that if has_time and no has_date, only setTime is called
-
         /** Set the state value. To make a [DateTimeTz] (like 9 am local time), use `DateTime(someDate, Time(hour=9)).localUnadjusted`. */
         suspend fun setDateTime(localDateTime: DateTimeTz) =
             callService(
                 serviceName = "set_datetime",
                 data = buildMap<String, JsonElement> {
                     localDateTime.let {
-                        this["date"] = JsonPrimitive("${it.yearInt}-${it.month1}-${it.dayOfMonth}")
-                        this["time"] = JsonPrimitive("${it.hours}:${it.minutes}:${it.seconds}")
+                        if (has_date)
+                            this["date"] = JsonPrimitive("${it.yearInt}-${it.month1}-${it.dayOfMonth}")
+
+                        if (has_time)
+                            this["time"] = JsonPrimitive("${it.hours}:${it.minutes}:${it.seconds}")
                     }
                 }
             )
@@ -250,8 +250,8 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                 data = buildMap<String, JsonElement> {
                     localDate.let {
                         this["date"] = JsonPrimitive("${it.year}-${it.month1}-${it.day}")
-                        if (has_time) this["time"] =
-                            JsonPrimitive(time!!.let { "${it.hour}:${it.minute}:${it.second}" })
+                        if (has_time)
+                            this["time"] = JsonPrimitive(time!!.let { "${it.hour}:${it.minute}:${it.second}" })
                     }
                 }
             )
@@ -262,7 +262,8 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                 serviceName = "set_datetime",
                 data = buildMap<String, JsonElement> {
                     localTime.let {
-                        if (has_date) this["date"] = JsonPrimitive(date!!.let { "${it.year}-${it.month1}-${it.day}" })
+                        if (has_date)
+                            this["date"] = JsonPrimitive(date!!.let { "${it.year}-${it.month1}-${it.day}" })
                         this["time"] = JsonPrimitive("${it.hour}:${it.minute}:${it.second}")
                     }
                 }
