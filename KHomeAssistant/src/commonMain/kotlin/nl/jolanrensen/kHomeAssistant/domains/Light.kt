@@ -133,7 +133,7 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
         // read / write
 
         /** RGBA Color representing the color of the light. The easiest way to control the light's color. The A component is ignored.
-         * You can find a lot of colors in com.soywiz.korim.color.Colors
+         * You can find a lot of colors in [com.soywiz.korim.color.Colors]
          * */
         var color: RGBA?
             get() = rgb_color?.run { RGBA(r, g, b) }

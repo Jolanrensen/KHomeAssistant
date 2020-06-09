@@ -78,13 +78,23 @@ open class BaseEntity<StateType : Any>(
 
 //    suspend fun setState(s: StateType): Unit = TODO()
 
-    /** Get the raw attributes from Home Assistant in json format. */
+    /** Get the raw attributes from Home Assistant in json format.
+     * Raw attributes can also directly be obtained using yourEntity["raw_attribute"] */
     val rawAttributes: JsonObject
         get() = kHomeAssistant()!!.getAttributes(this)
 
-    /** Helper function to get raw attributes in json format using yourEntity["attribute"] */
-    operator fun get(name: String) = rawAttributes[name]
+    /** Helper function to get raw attributes in json format using yourEntity["attribute"]
+     * @see [BaseEntity.rawAttributes]
+     *
+     * For example:
+     * ```
+     * val attrValue: String = myEntity["my_attribute"]!!.content
+     * ``` */
+    operator fun get(name: String): JsonElement? = rawAttributes[name]
 
+    /** Makes delegated attributes possible for entities.
+     * It tries to take the name of the variable as attribute name and cast the result
+     * to the type of the variable. */
     val attrsDelegate = object : AttributesDelegate {
         override var alternativeAttributes: JsonObject? = null
 
@@ -171,14 +181,34 @@ open class BaseEntity<StateType : Any>(
 interface AttributesDelegate {
     /** ONLY USE TEMPORARILY */
     var alternativeAttributes: JsonObject?
+
+    /** Makes delegated attributes possible for entities. */
     operator fun <V : Any?> getValue(thisRef: Any?, property: KProperty<*>): V?
 }
 
-/** Shorthand for apply, allows for DSL-like behavior on entities. */
+/**
+ * Shorthand for apply, allows for DSL-like behavior on entities.
+ *
+ * For example:
+ * ```
+ * myLight {
+ *     color = Colors.BLUE
+ *     white_value = 125
+ * }
+ * ```
+ * */
 inline operator fun <S : Any, E : BaseEntity<S>> E.invoke(callback: E.() -> Unit): E = apply(callback)
 
-/** Shorthand for apply for each, allows for DSL-like behavior on collections of entities. */
+/**
+ * Shorthand for apply for each, allows for DSL-like behavior on collections of entities.
+ *
+ * For example:
+ * ```
+ * myListOfLights {
+ *     color = Colors.BLUE
+ *     white_value = 125
+ * }
+ * ```
+ * */
 inline operator fun <S : Any, E : BaseEntity<S>> Iterable<E>.invoke(callback: E.() -> Unit): Iterable<E> =
     apply { forEach(callback) }
-
-

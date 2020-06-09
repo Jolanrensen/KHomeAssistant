@@ -205,6 +205,7 @@ class KHomeAssistant(
 
         // cancel if there aren't any listeners and the automations are initialized
         println("All automations are initialized")
+        //delay(1000) // wait for a second, as [suspendUntilStateChangedTo] could still be running
         if (stateListeners.isEmpty() && scheduler.isEmpty) {
             println("There are no state listeners or scheduled tasks so KHomeAssistant is stopping...")
             cancelAllTimers()

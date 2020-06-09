@@ -8,6 +8,7 @@ import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
+import kotlin.reflect.KProperty
 
 /**
  * Interface where all domains (like [Light], [MediaPlayer], [Switch]) inherit from.
@@ -25,6 +26,8 @@ interface Domain<out E : BaseEntity<*>> {
     /** Function to create an entity instance in a domain with correct context.
      * @param name the name of the entity (without domain) as defined in Home Assistant
      * @return an instance of the entity
+     * @see [get]
+     * @see [getValue]
      * */
     fun Entity(name: String): E
 
@@ -37,17 +40,19 @@ interface Domain<out E : BaseEntity<*>> {
 
     // TODO maybe allow a way to make an anonymous toggle entity
 
-    /** Shorthand to be able to type `YourDomain["entity"]` instead of `YourDomain.Entity("entity")`.
+    /**
+     * Shorthand to be able to type `YourDomain["entity"]` instead of `YourDomain.Entity("entity")`.
      * @param name the name of the entity (without domain) as defined in Home Assistant
      * @return an instance of the entity
-     * @see Entity
+     * @see [Entity]
+     * @see [getValue]
      * */
     operator fun get(name: String): E = Entity(name)
 
     /** Shorthand to be able to type `YourDomain["entity", "other_entity"]` instead of `YourDomain.Entities("entity", "other_entity")`.
      * @param names the names of the entities (without domain) as defined in Home Assistant
      * @return a list of the instances of the entities
-     * @see Entities
+     * @see [Entities]
      * */
     operator fun get(name: String, vararg names: String): List<E> = Entities(name, *names)
 
@@ -136,3 +141,15 @@ fun KHomeAssistantContext.Domain(domainName: String): Domain<BaseEntity<String>>
 
         override fun checkContext() = Unit // context is always present
     }
+
+/**
+ * Alternative to creating defining an entity.
+ * @see [Domain.Entity]
+ * @see [Domain.get]
+ *
+ * For example:
+ * ```
+ * val my_light by Light
+ * ```
+ */
+operator fun <E : BaseEntity<*>> Domain<E>.getValue(thisRef: Any?, property: KProperty<*>): E = Entity(property.name)
