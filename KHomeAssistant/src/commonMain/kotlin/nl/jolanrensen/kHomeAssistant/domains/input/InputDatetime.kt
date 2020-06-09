@@ -13,6 +13,7 @@ import nl.jolanrensen.kHomeAssistant.entities.AttributesDelegate
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.suspendUntilAttributeChangedTo
 import nl.jolanrensen.kHomeAssistant.helper.cast
+import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 
 /**
@@ -71,6 +72,7 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                 ::has_date,
                 ::hasDateAndTime,
                 ::timestamp,
+                ::editable,
                 ::year,
                 ::month,
                 ::day,
@@ -100,7 +102,6 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                                 setDate(localDate = Date(year = y, month = m, day = value as Int))
                             }
                         } ?: throw Exception("Can't set day, $name has no date.")
-                        suspendUntilAttributeChangedTo(::day, value)
                     }
                     ::hour.name -> {
                         minute?.let { m ->
@@ -108,7 +109,6 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                                 setTime(localTime = Time(hour = value as Int, minute = m, second = s))
                             }
                         } ?: throw Exception("Can't set hour, $name has no time.")
-                        suspendUntilAttributeChangedTo(::hour, value)
                     }
                     ::minute.name -> {
                         hour?.let { h ->
@@ -118,7 +118,6 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                                 )
                             }
                         } ?: throw Exception("Can't set minute, $name has no time.")
-                        suspendUntilAttributeChangedTo(::minute, value)
                     }
                     ::second.name -> {
                         hour?.let { h ->
@@ -126,7 +125,6 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                                 setTime(localTime = Time(hour = h, minute = m, second = value as Int))
                             }
                         } ?: throw Exception("Can't set minute, $name has no time.")
-                        suspendUntilAttributeChangedTo(::second, value)
                     }
                 }
                 Unit
@@ -151,6 +149,8 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
         /** A UNIX timestamp representing the (UTC) date and time (in seconds) held in the input. */
         val timestamp: Long? by attrsDelegate
 
+        val editable: Boolean? by attrsDelegate
+
 
         // read/write
 
@@ -164,7 +164,6 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                             setDate(localDate = Date(year = value!!, month = m, day = d))
                         }
                     } ?: throw Exception("Can't set year, $name has no date.")
-                    suspendUntilAttributeChangedTo(::year, value)
                 }
             }
 
@@ -178,7 +177,6 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                             setDate(localDate = Date(year = y, month = value!!, day = d))
                         }
                     } ?: throw Exception("Can't set month, $name has no date.")
-                    suspendUntilAttributeChangedTo(::month, value)
                 }
             }
 
@@ -200,7 +198,6 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
             set(value) {
                 runBlocking {
                     setDate(localDate = value!!)
-                    suspendUntilAttributeChangedTo(::date, value)
                 }
             }
 
@@ -210,7 +207,6 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
             set(value) {
                 runBlocking {
                     setTime(localTime = value!!)
-                    suspendUntilAttributeChangedTo(::time, value)
                 }
             }
 
@@ -224,13 +220,12 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
             set(value) {
                 runBlocking {
                     setDateTime(localDateTime = value!!)
-                    suspendUntilAttributeChangedTo(::dateTime, value)
                 }
             }
 
         /** Set the state value. To make a [DateTimeTz] (like 9 am local time), use `DateTime(someDate, Time(hour=9)).localUnadjusted`. */
-        suspend fun setDateTime(localDateTime: DateTimeTz) =
-            callService(
+        suspend fun setDateTime(localDateTime: DateTimeTz, async: Boolean = false): ResultMessage {
+            val result = callService(
                 serviceName = "set_datetime",
                 data = buildMap<String, JsonElement> {
                     localDateTime.let {
@@ -242,10 +237,14 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                     }
                 }
             )
+            if (!async) suspendUntilAttributeChangedTo(::dateTime, localDateTime)
+            return result
+        }
+
 
         /** Set the state value, but just the date part. The date must be in local time for Home Assistant. */
-        suspend fun setDate(localDate: Date) =
-            callService(
+        suspend fun setDate(localDate: Date, async: Boolean = false): ResultMessage {
+            val result = callService(
                 serviceName = "set_datetime",
                 data = buildMap<String, JsonElement> {
                     localDate.let {
@@ -255,10 +254,13 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                     }
                 }
             )
+            if (!async) suspendUntilAttributeChangedTo(::date, localDate)
+            return result
+        }
 
         /** Set the state value but just the time part. The time must be in local time for Home Assistant. */
-        suspend fun setTime(localTime: Time) =
-            callService(
+        suspend fun setTime(localTime: Time, async: Boolean = false): ResultMessage {
+            val result = callService(
                 serviceName = "set_datetime",
                 data = buildMap<String, JsonElement> {
                     localTime.let {
@@ -268,6 +270,9 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                     }
                 }
             )
+            if (!async) suspendUntilAttributeChangedTo(::time, localTime)
+            return result
+        }
 
         /** Set the state value. You can set just the time, date or both at once.
          * The date and time must be in local time for Home Assistant. */

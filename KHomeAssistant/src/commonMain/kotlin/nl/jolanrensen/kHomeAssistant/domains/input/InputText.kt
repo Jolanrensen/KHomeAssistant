@@ -7,7 +7,9 @@ import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.entities.suspendUntilStateChangedTo
 import nl.jolanrensen.kHomeAssistant.helper.cast
+import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 
 /**
@@ -101,8 +103,8 @@ class InputText(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Inp
 
         /** Set the state value. */
         @OptIn(ExperimentalStdlibApi::class)
-        suspend fun setValue(value: String) =
-            callService(
+        suspend fun setValue(value: String, async: Boolean = false): ResultMessage {
+            val result = callService(
                 serviceName = "set_value",
                 data = buildMap<String, JsonElement> {
                     value.let {
@@ -112,6 +114,9 @@ class InputText(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Inp
                     }
                 }
             )
+            if (!async) suspendUntilStateChangedTo(value)
+            return result
+        }
     }
 }
 

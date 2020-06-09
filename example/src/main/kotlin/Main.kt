@@ -1,11 +1,14 @@
-
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
+import nl.jolanrensen.kHomeAssistant.domains.getValue
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
+import nl.jolanrensen.kHomeAssistant.domains.input.InputSelect
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
 import nl.jolanrensen.kHomeAssistant.entities.turnOn
@@ -50,12 +53,17 @@ fun main() {
 //                    denon_avrx2200w.toggle()
 
 
-
                     val bothDateAndTime = InputDatetime["both_date_and_time"]
                     val onlyDate = InputDatetime["only_date"]
                     val onlyTime = InputDatetime["only_time"]
 
+                    val test by InputSelect
 
+                    test.callService(
+                        "set_options",
+                        mapOf("options" to JsonArray(
+                            (test.options!! + "extra option").map { JsonPrimitive(it) }
+                        )))
 
 
 //                    InputText["text1"] {
