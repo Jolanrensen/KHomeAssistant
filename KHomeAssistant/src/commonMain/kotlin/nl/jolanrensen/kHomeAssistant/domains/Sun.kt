@@ -67,47 +67,47 @@ class Sun(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.Entit
         /** Date and time of the next sun rising (in UTC). */
         val next_rising: DateTime
             get() = HASS_DATE_FORMAT_SUN.parseUtc(
-                rawAttributes[::next_rising.name]?.cast()!!
+                rawAttributes[::next_rising.name]!!.cast()!!
             )
 
         /** Date and time of the next sun setting (in UTC). */
         val next_setting: DateTime
             get() = HASS_DATE_FORMAT_SUN.parseUtc(
-                rawAttributes[::next_setting.name]?.cast()!!
+                rawAttributes[::next_setting.name]!!.cast()!!
             )
 
         /** Date and time of the next dawn (in UTC). */
         val next_dawn: DateTime
             get() = HASS_DATE_FORMAT_SUN.parseUtc(
-                rawAttributes[::next_dawn.name]?.cast()!!
+                rawAttributes[::next_dawn.name]!!.cast()!!
             )
 
         /** Date and time of the next dusk (in UTC). */
         val next_dusk: DateTime
             get() = HASS_DATE_FORMAT_SUN.parseUtc(
-                rawAttributes[::next_dusk.name]?.cast()!!
+                rawAttributes[::next_dusk.name]!!.cast()!!
             )
 
         /** Date and time of the next solar noon (in UTC). */
         val next_noon: DateTime
             get() = HASS_DATE_FORMAT_SUN.parseUtc(
-                rawAttributes[::next_noon.name]?.cast()!!
+                rawAttributes[::next_noon.name]!!.cast()!!
             )
 
         /** Date and time of the next solar midnight (in UTC). */
         val next_midnight: DateTime
             get() = HASS_DATE_FORMAT_SUN.parseUtc(
-                rawAttributes[::next_midnight.name]?.cast()!!
+                rawAttributes[::next_midnight.name]!!.cast()!!
             )
 
         /** Solar elevation. This is the angle between the sun and the horizon. Negative values mean the sun is below the horizon. */
-        val elevation: Float? by attrsDelegate
+        val elevation: Float by attrsDelegate()
 
         /** Solar azimuth. The angle is shown clockwise from north. */
-        val azimuth: Float? by attrsDelegate
+        val azimuth: Float by attrsDelegate()
 
         /** True if the Sun is currently rising, after solar midnight and before solar noon. */
-        val rising: Boolean? by attrsDelegate
+        val rising: Boolean by attrsDelegate()
     }
 
 }

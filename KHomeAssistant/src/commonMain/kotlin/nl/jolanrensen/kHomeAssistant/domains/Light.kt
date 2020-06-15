@@ -76,7 +76,7 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
 
         /** Some attributes can be set using the turn_on command. For those, we define a setter-companion to getValue. */
         @Suppress("UNCHECKED_CAST")
-        operator fun <V : Any?> AttributesDelegate.setValue(
+        operator fun <V : Any?> AttributesDelegate<V>.setValue(
             thisRef: BaseEntity<*>?,
             property: KProperty<*>,
             value: V
@@ -112,13 +112,13 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
         // read only
 
         /** Minimum color temperature in mireds. */
-        val min_mireds: Int? by attrsDelegate
+        val min_mireds: Int by attrsDelegate()
 
         /** Maximum color temperature in mireds. */
-        val max_mireds: Int? by attrsDelegate
+        val max_mireds: Int by attrsDelegate()
 
         /** List of supported effects. */
-        val effect_list: List<String>? by attrsDelegate
+        val effect_list: List<String> by attrsDelegate(listOf())
 
         /** Set of supported features. */
         val supported_features: Set<SupportedFeatures>
@@ -135,29 +135,29 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
         /** RGBA Color representing the color of the light. The easiest way to control the light's color. The A component is ignored.
          * You can find a lot of colors in [com.soywiz.korim.color.Colors]
          * */
-        var color: RGBA?
-            get() = rgb_color?.run { RGBA(r, g, b) }
+        var color: RGBA
+            get() = rgb_color.run { RGBA(r, g, b) }
             set(value) {
                 runBlocking {
-                    turnOn(color = value!!)
+                    turnOn(color = value)
                     suspendUntilAttributeChangedTo(::color, value)
                 }
             }
 
         /** Integer between 0 and 255 for how bright the light should be, where 0 means the light is off, 1 is the minimum brightness and 255 is the maximum brightness supported by the light. */
-        var brightness: Int? by attrsDelegate
+        var brightness: Int by attrsDelegate()
 
         /** An HSColor containing two floats representing the hue and saturation of the color you want the light to be. Hue is scaled 0-360, and saturation is scaled 0-100. */
-        var hs_color: HSColor? by attrsDelegate
+        var hs_color: HSColor by attrsDelegate()
 
         /** An RGBColor containing three integers between 0 and 255 representing the RGB color you want the light to be. Note that the specified RGB value will not change the light brightness, only the color. */
-        var rgb_color: RGBColor? by attrsDelegate
+        var rgb_color: RGBColor by attrsDelegate()
 
         /** An XYColor containing two floats representing the xy color you want the light to be. */
-        var xy_color: XYColor? by attrsDelegate
+        var xy_color: XYColor by attrsDelegate()
 
         /** Integer between 0 and 255 for how bright a dedicated white LED should be. */
-        var white_value: Int? by attrsDelegate
+        var white_value: Int by attrsDelegate()
 
         // write only
 
@@ -324,9 +324,13 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
                     }
                     color_temp?.let {
                         checkIfSupported(SUPPORT_COLOR_TEMP)
-                        if (min_mireds == null || max_mireds == null)
-                            throw IllegalArgumentException("mireds not supported for this device")
-                        if (it !in min_mireds!!..max_mireds!!)
+                        try {
+                            min_mireds
+                            max_mireds
+                        } catch (e: Exception) {
+                            throw IllegalArgumentException("mireds not supported for this device", e)
+                        }
+                        if (it !in min_mireds..max_mireds)
                             throw IllegalArgumentException("incorrect color_temp $it")
                         this["color_temp"] = JsonPrimitive(it)
                     }
@@ -372,7 +376,7 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
                     }
                     effect?.let {
                         checkIfSupported(SUPPORT_EFFECT)
-                        if (effect_list == null || it !in effect_list!!)
+                        if (it !in effect_list)
                             throw IllegalArgumentException("incorrect effect $it")
                         this["effect"] = JsonPrimitive(it)
                     }

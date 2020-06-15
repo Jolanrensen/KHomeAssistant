@@ -78,28 +78,30 @@ class InputText(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Inp
         // Attributes
         // read only
 
-        /** Friendly name of the text input. */
-        val min: Int
-            get() = rawAttributes[::min.name]?.cast() ?: 0
+        /** Minimum length for the text value. 0 is the minimum number of characters allowed in an entity state. */
+        val min: Int by attrsDelegate(0)
 
         /** Maximum length for the text value. 255 is the maximum number of characters allowed in an entity state. */
-        val max: Int
-            get() = rawAttributes[::max.name]?.cast() ?: 100
+        val max: Int by attrsDelegate(255)
 
         /** Initial value when Home Assistant starts. */
-        val initial: String? by attrsDelegate
+        val initial: String by attrsDelegate()
 
         /** Regex pattern for client-side validation. */
-        val pattern: Regex?
-            get() = rawAttributes[::pattern.name]?.cast<String>()?.let { Regex(it) }
+        val pattern: Regex
+            get() = Regex(rawAttributes[::pattern.name]!!.cast<String>()!!)
 
         /** Can specify text or password. Elements of type “password” provide a way for the user to securely enter a value. */
         val mode: InputTextMode
-            get() = rawAttributes[::mode.name]?.cast<String>()
-                ?.let { value -> InputTextMode.values().find { it.stateValue == value } }
-                ?: InputTextMode.TEXT
+            get() =
+                try {
+                    InputTextMode.values()
+                        .find { it.stateValue == rawAttributes[::mode.name]!!.cast<String>()!! }!!
+                } catch (e: Exception) {
+                    InputTextMode.TEXT
+                }
 
-        val editable: Boolean? by attrsDelegate
+        val editable: Boolean by attrsDelegate()
 
         /** Set the state value. */
         @OptIn(ExperimentalStdlibApi::class)
@@ -108,7 +110,8 @@ class InputText(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Inp
                 serviceName = "set_value",
                 data = buildMap<String, JsonElement> {
                     value.let {
-                        if (it.length !in min..max || pattern != null && pattern!!.matches(it))
+                        val pattern = try { pattern } catch (e: Exception) { null }
+                        if (it.length !in min..max || pattern != null && pattern.matches(it))
                             throw IllegalArgumentException("incorrect value $it")
                         this["value"] = JsonPrimitive(it)
                     }

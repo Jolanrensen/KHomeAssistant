@@ -11,6 +11,7 @@ import nl.jolanrensen.kHomeAssistant.entities.AttributesDelegate
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.suspendUntilAttributeChanged
 import nl.jolanrensen.kHomeAssistant.entities.suspendUntilStateChangedTo
+import nl.jolanrensen.kHomeAssistant.helper.contentEquals
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 
@@ -53,7 +54,7 @@ class InputSelect(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<I
 
         /** Some attributes are writable. */
         @Suppress("UNCHECKED_CAST")
-        operator fun <V : Any?> AttributesDelegate.setValue(
+        operator fun <V : Any?> AttributesDelegate<V>.setValue(
             thisRef: BaseEntity<*>?,
             property: KProperty<*>,
             value: V
@@ -70,12 +71,12 @@ class InputSelect(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<I
 
         // Read only attributes
 
-        val editable: Boolean? by attrsDelegate
+        val editable: Boolean by attrsDelegate()
 
         // Read-write attributes
 
         /** List of options to choose from. */
-        var options: List<String>? by attrsDelegate
+        var options: List<String> by attrsDelegate()
 
         override fun parseStateValue(stateValue: String) = stateValue
 
@@ -88,6 +89,30 @@ class InputSelect(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<I
                 runBlocking { selectOption(value) }
             }
 
+        /** Select the previous option. */
+        suspend fun selectPrevious(async: Boolean = false): ResultMessage {
+            var previous: String? = null
+            if (!async) {
+                val entityOptions = options
+                previous = entityOptions[(entityOptions.indexOf(state) - 1) % entityOptions.size]
+            }
+            val result = callService(serviceName = "select_previous")
+            if (!async) suspendUntilStateChangedTo(previous!!)
+            return result
+        }
+
+        /** Select the next option. */
+        suspend fun selectNext(async: Boolean = false): ResultMessage {
+            var next: String? = null
+            if (!async) {
+                val entityOptions = options
+                next = entityOptions[(entityOptions.indexOf(state) + 1) % entityOptions.size]
+            }
+            val result = callService(serviceName = "select_next")
+            if (!async) suspendUntilStateChangedTo(next!!)
+            return result
+        }
+
         /** Change the available options. */
         @OptIn(ExperimentalStdlibApi::class)
         suspend fun setOptions(options: List<String>, async: Boolean = false): ResultMessage {
@@ -96,10 +121,7 @@ class InputSelect(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<I
                 data = buildMap<String, JsonElement> {
                     options.let {
                         val entityOptions = this@Entity.options
-                        if (entityOptions == null
-                            || !options.containsAll(entityOptions)
-                            || !entityOptions.containsAll(options)
-                        ) {
+                        if (!options.contentEquals(entityOptions)) {
                             this["options"] = jsonArray {
                                 options.forEach { +it }
                             }
@@ -110,11 +132,7 @@ class InputSelect(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<I
             if (!async) suspendUntilAttributeChanged(
                 attribute = ::options,
                 condition = {
-                    if (it == null) {
-                        it == options
-                    } else {
-                        options.containsAll(it) && it.containsAll(options)
-                    }
+                    options.contentEquals(it)
                 })
             return result
         }

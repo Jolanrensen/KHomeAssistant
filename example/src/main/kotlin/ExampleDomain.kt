@@ -51,8 +51,8 @@ class Example(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Examp
          * The names must thus exactly match those of Home Assistant. */
         // Attributes
         // read only
-        val test_attribute: Int? by attrsDelegate
-        val some_other_attribute: List<String>? by attrsDelegate
+        val test_attribute: Int by attrsDelegate()
+        val some_other_attribute: List<String> by attrsDelegate()
 
         // TODO add examples for read/write and write only attributes
 

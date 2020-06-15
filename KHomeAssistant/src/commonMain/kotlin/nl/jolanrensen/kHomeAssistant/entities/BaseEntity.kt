@@ -58,6 +58,7 @@ open class BaseEntity<StateType : Any>(
     }
 
     /** Given a string stateValue, this method should return the correct StateType */
+    @Suppress("UNCHECKED_CAST")
     @OptIn(ExperimentalStdlibApi::class)
     open fun parseStateValue(stateValue: String): StateType? = try {
         stateValue as StateType
@@ -92,41 +93,63 @@ open class BaseEntity<StateType : Any>(
      * ``` */
     operator fun get(name: String): JsonElement? = rawAttributes[name]
 
+    /** ONLY USE TEMPORARILY */
+    internal var alternativeAttributes: JsonObject? = null
+
     /** Makes delegated attributes possible for entities.
      * It tries to take the name of the variable as attribute name and cast the result
-     * to the type of the variable. */
-    val attrsDelegate = object : AttributesDelegate {
-        override var alternativeAttributes: JsonObject? = null
+     * to the type of the variable.
+     * @throws IllegalArgumentException when the attribute can't be found
+     * */
+    fun <V : Any?> attrsDelegate() = object : AttributesDelegate<V> {
+        override operator fun getValue(thisRef: Any?, property: KProperty<*>): V =
+            (alternativeAttributes ?: rawAttributes)[property.name]
+                .let { it ?: throw IllegalArgumentException("Couldn't find attribute ${property.name}") }
+                .cast(property.returnType)
+    }
 
-        override operator fun <V : Any?> getValue(thisRef: Any?, property: KProperty<*>): V? =
-            (alternativeAttributes ?: rawAttributes)[property.name]?.cast(property.returnType)
+    /** Makes delegated attributes possible for entities.
+     * It tries to take the name of the variable as attribute name and cast the result
+     * to the type of the variable.
+     * @param default is returned when attribute cannot be found or cast
+     * */
+    fun <V : Any?> attrsDelegate(default: V) = object : AttributesDelegate<V> {
+        override operator fun getValue(thisRef: Any?, property: KProperty<*>): V =
+            when (val attr = (alternativeAttributes ?: rawAttributes)[property.name]) {
+                null -> default
+                else -> try {
+                    attr.cast<V>(property.returnType)
+                } catch (e: Exception) {
+                    default
+                }
+            }
     }
 
     // Default attributes
 
     /** Name of the entity as displayed in the UI. */
-    val friendly_name: String? by attrsDelegate
+    val friendly_name: String by attrsDelegate()
 
     /** Is true if the entity is hidden. */
-    val hidden: Boolean get() = attrsDelegate.getValue(this, ::hidden) ?: false
+    val hidden: Boolean by attrsDelegate(false)
 
     /** URL used as picture for entity. */
-    val entity_picture: Boolean? by attrsDelegate
+    val entity_picture: String by attrsDelegate()
 
     /** Icon used for this enitity. Usually of the kind "mdi:icon" */
-    val icon: String? by attrsDelegate
+    val icon: String by attrsDelegate()
 
     /** For switches with an assumed state two buttons are shown (turn off, turn on) instead of a switch. If assumed_state is false you will get the default switch icon. */
-    val assumed_state: Boolean get() = attrsDelegate.getValue(this, ::assumed_state) ?: true
+    val assumed_state: Boolean by attrsDelegate(true)
 
 //    /** The class of the device as set by configuration, changing the device state and icon that is displayed on the UI (see below). It does not set the unit_of_measurement.*/
 //    val device_class: String? by attrsDelegate // TODO maybe move to binary sensor, sensor, cover and media player only
 
     /** Defines the units of measurement, if any. This will also influence the graphical presentation in the history visualisation as continuous value. Sensors with missing unit_of_measurement are showing as discrete values. */
-    val unit_of_measurement: String? by attrsDelegate
+    val unit_of_measurement: String? by attrsDelegate(null)
 
     /** Defines the initial state for automations, on or off. */
-    val initial_state: String? by attrsDelegate
+    val initial_state: String by attrsDelegate()
 
 
     suspend fun getLastChanged(): String = TODO("last_changed uit State")
@@ -170,7 +193,13 @@ open class BaseEntity<StateType : Any>(
 
     override fun toString() = "${domain::class.simpleName}.Entity($name) {${
     attributes
-        .filter { it.get() != null }
+        .filter {
+            try {
+                it.get()
+            } catch (e: Exception) {
+                null
+            } != null
+        }
         .map { "\n    ${it.name} = ${it.get()}" }
         .toString()
         .run { subSequence(1, length - 1) }
@@ -178,12 +207,9 @@ open class BaseEntity<StateType : Any>(
 
 }
 
-interface AttributesDelegate {
-    /** ONLY USE TEMPORARILY */
-    var alternativeAttributes: JsonObject?
-
+interface AttributesDelegate<V : Any?> {
     /** Makes delegated attributes possible for entities. */
-    operator fun <V : Any?> getValue(thisRef: Any?, property: KProperty<*>): V?
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): V
 }
 
 /**

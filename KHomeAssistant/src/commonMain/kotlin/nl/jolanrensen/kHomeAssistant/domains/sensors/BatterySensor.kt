@@ -33,10 +33,10 @@ class BatterySensor(override var kHomeAssistant: () -> KHomeAssistant?) : Abstra
         }
 
         /**  Boolean to indicate whether the device is charging.  */
-        val is_charging: Boolean? by attrsDelegate
+        val is_charging: Boolean by attrsDelegate()
 
         /** Can be for instance 'AC', or 'N/A'. */
-        val charger_type: String? by attrsDelegate
+        val charger_type: String by attrsDelegate()
     }
 }
 

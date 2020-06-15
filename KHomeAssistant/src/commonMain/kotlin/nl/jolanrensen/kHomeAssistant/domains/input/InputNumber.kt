@@ -78,20 +78,16 @@ class InputNumber(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<I
         // read only
 
         /** Minimum value. */
-        val min: Float? by attrsDelegate
+        val min: Float by attrsDelegate(Float.MIN_VALUE)
 
         /** Maximum value. */
-        val max: Float? by attrsDelegate
+        val max: Float by attrsDelegate(Float.MIN_VALUE)
 
         /** Initial value when Home Assistant starts. */ // TODO different than initial_state?
-        val initial: Float? by attrsDelegate
+        val initial: Float by attrsDelegate()
 
         /** Step value. Smallest value 0.001. */
-        val step: Float
-            get() {
-                val value: Float? = attrsDelegate.getValue(this, ::step)
-                return value ?: 1f
-            }
+        val step: Float by attrsDelegate(1f)
 
         /** Can specify box or slider. */
         val mode: InputNumberMode
@@ -99,7 +95,7 @@ class InputNumber(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<I
                 ?.let { value -> InputNumberMode.values().find { it.stateValue == value } }
                 ?: InputNumberMode.SLIDER
 
-        val editable: Boolean? by attrsDelegate
+        val editable: Boolean by attrsDelegate()
 
 
         /** Decrement the value by 'step'. */
@@ -115,7 +111,7 @@ class InputNumber(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<I
                 serviceName = "set_value",
                 data = buildMap<String, JsonElement> {
                     value.let {
-                        if (it !in min!!..max!!)
+                        if (it !in min..max)
                             throw IllegalArgumentException("incorrect value $it")
                         this["value"] = JsonPrimitive(it)
                     }

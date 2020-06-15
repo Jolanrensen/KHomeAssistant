@@ -57,7 +57,7 @@ class InputBoolean(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<
 
         // Attributes
         // read only
-        val editable: Boolean? by attrsDelegate
+        val editable: Boolean by attrsDelegate()
 
     }
 }

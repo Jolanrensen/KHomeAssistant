@@ -89,7 +89,7 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
         override fun getStateValue(state: State) = state.value
 
         /** Some attributes can be set using the set_datetime command. For those, we define a setter-companion to getValue. */
-        operator fun <V : Any?> AttributesDelegate.setValue(
+        operator fun <V : Any?> AttributesDelegate<V>.setValue(
             thisRef: BaseEntity<*>?,
             property: KProperty<*>,
             value: V
@@ -97,34 +97,32 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
             runBlocking {
                 when (property.name) {
                     ::day.name -> {
-                        year?.let { y ->
-                            month?.let { m ->
-                                setDate(localDate = Date(year = y, month = m, day = value as Int))
-                            }
-                        } ?: throw Exception("Can't set day, $name has no date.")
+                        try {
+                            setDate(localDate = Date(year = year, month = month, day = value as Int))
+                        } catch (e: Exception) {
+                            throw Exception("Can't set day, $name has no date.", e)
+                        }
                     }
                     ::hour.name -> {
-                        minute?.let { m ->
-                            second?.let { s ->
-                                setTime(localTime = Time(hour = value as Int, minute = m, second = s))
-                            }
-                        } ?: throw Exception("Can't set hour, $name has no time.")
+                        try {
+                            setTime(localTime = Time(hour = value as Int, minute = minute, second = second))
+                        } catch (e: Exception) {
+                            throw Exception("Can't set hour, $name has no time.", e)
+                        }
                     }
                     ::minute.name -> {
-                        hour?.let { h ->
-                            second?.let { s ->
-                                setTime(
-                                    localTime = Time(hour = h, minute = value as Int, second = s)
-                                )
-                            }
-                        } ?: throw Exception("Can't set minute, $name has no time.")
+                        try {
+                            setTime(localTime = Time(hour = hour, minute = value as Int, second = second))
+                        } catch (e: Exception) {
+                            throw Exception("Can't set minute, $name has no time.", e)
+                        }
                     }
                     ::second.name -> {
-                        hour?.let { h ->
-                            minute?.let { m ->
-                                setTime(localTime = Time(hour = h, minute = m, second = value as Int))
-                            }
-                        } ?: throw Exception("Can't set minute, $name has no time.")
+                        try {
+                            setTime(localTime = Time(hour = hour, minute = minute, second = value as Int))
+                        } catch (e: Exception) {
+                            throw Exception("Can't set second, $name has no time.", e)
+                        }
                     }
                 }
                 Unit
@@ -135,78 +133,76 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
         // read only
 
         /** true if this entity has a time. */
-        val has_time: Boolean
-            get() = rawAttributes[::has_time.name]?.cast() ?: false
+        val has_time: Boolean by attrsDelegate(false)
 
         /** true if this entity has a date. */
-        val has_date: Boolean
-            get() = rawAttributes[::has_date.name]?.cast() ?: false
+        val has_date: Boolean by attrsDelegate(false)
 
         /** true if this entity has a date and a time */
         val hasDateAndTime: Boolean
             get() = has_date && has_time
 
         /** A UNIX timestamp representing the (UTC) date and time (in seconds) held in the input. */
-        val timestamp: Long? by attrsDelegate
+        val timestamp: Long by attrsDelegate()
 
-        val editable: Boolean? by attrsDelegate
+        val editable: Boolean by attrsDelegate()
 
 
         // read/write
 
         /** The year of the date, if [has_date]. Use `year!!.year` to get the year as [Int].*/
-        var year: Year?
-            get() = rawAttributes[::year.name]?.cast<Int>()?.let { Year(it) }
+        var year: Year
+            get() = Year(this[::year.name]!!.cast<Int>()!!)
             set(value) {
                 runBlocking {
-                    month?.let { m ->
-                        day?.let { d ->
-                            setDate(localDate = Date(year = value!!, month = m, day = d))
-                        }
-                    } ?: throw Exception("Can't set year, $name has no date.")
+                    try {
+                        setDate(localDate = Date(year = value, month = month, day = day))
+                    } catch (e: Exception) {
+                        throw Exception("Can't set year, $name has no date.", e)
+                    }
                 }
             }
 
         /** The month of the date, if [has_date]. Use `month!!.index1` to get the month as [Int] (with January == 1). */
-        var month: Month?
-            get() = rawAttributes[::month.name]?.cast<Int>()?.let { Month(it) }
+        var month: Month
+            get() = Month(this[::month.name]!!.cast<Int>()!!)
             set(value) {
                 runBlocking {
-                    year?.let { y ->
-                        day?.let { d ->
-                            setDate(localDate = Date(year = y, month = value!!, day = d))
-                        }
-                    } ?: throw Exception("Can't set month, $name has no date.")
+                    try {
+                        setDate(localDate = Date(year = year, month = value, day = day))
+                    } catch (e: Exception) {
+                        throw Exception("Can't set month, $name has no date.", e)
+                    }
                 }
             }
 
         /** The day (of the month) of the date, if [has_date]. */
-        var day: Int? by attrsDelegate
+        var day: Int by attrsDelegate()
 
         /** The hour of the time, if [has_time]. */
-        var hour: Int? by attrsDelegate
+        var hour: Int by attrsDelegate()
 
         /** The minute of the time, if [has_time]. */
-        var minute: Int? by attrsDelegate
+        var minute: Int by attrsDelegate()
 
         /** The second of the time, if [has_time]. */
-        var second: Int? by attrsDelegate
+        var second: Int by attrsDelegate()
 
         /** The date (in local time) as represented in Home Assistant, if [has_date]. */
-        var date: Date?
-            get() = year?.let { y -> month?.let { m -> day?.let { d -> Date(y, m, d) } } }
+        var date: Date
+            get() = Date(year, month, day)
             set(value) {
                 runBlocking {
-                    setDate(localDate = value!!)
+                    setDate(localDate = value)
                 }
             }
 
         /** The time (in local time) as represented in Home Assistant, if [has_time]. */
-        var time: Time?
-            get() = hour?.let { h -> minute?.let { m -> second?.let { s -> Time(h, m, s) } } }
+        var time: Time
+            get() = Time(hour, minute, second)
             set(value) {
                 runBlocking {
-                    setTime(localTime = value!!)
+                    setTime(localTime = value)
                 }
             }
 
@@ -215,11 +211,11 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
          * Convert to [DateTime] using local time with `dateTime!!.local`.
          * ([DateTime] is usually only for calculating with UTC time, but it has more functionality than [DateTimeTz])
          * */
-        var dateTime: DateTimeTz?
-            get() = date?.let { d -> time?.let { t -> DateTime(d, t).localUnadjusted } }
+        var dateTime: DateTimeTz
+            get() = DateTime(date, time).localUnadjusted
             set(value) {
                 runBlocking {
-                    setDateTime(localDateTime = value!!)
+                    setDateTime(localDateTime = value)
                 }
             }
 
@@ -250,7 +246,7 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                     localDate.let {
                         this["date"] = JsonPrimitive("${it.year}-${it.month1}-${it.day}")
                         if (has_time)
-                            this["time"] = JsonPrimitive(time!!.let { "${it.hour}:${it.minute}:${it.second}" })
+                            this["time"] = JsonPrimitive(time.let { "${it.hour}:${it.minute}:${it.second}" })
                     }
                 }
             )
@@ -265,7 +261,7 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
                 data = buildMap<String, JsonElement> {
                     localTime.let {
                         if (has_date)
-                            this["date"] = JsonPrimitive(date!!.let { "${it.year}-${it.month1}-${it.day}" })
+                            this["date"] = JsonPrimitive(date.let { "${it.year}-${it.month1}-${it.day}" })
                         this["time"] = JsonPrimitive("${it.hour}:${it.minute}:${it.second}")
                     }
                 }

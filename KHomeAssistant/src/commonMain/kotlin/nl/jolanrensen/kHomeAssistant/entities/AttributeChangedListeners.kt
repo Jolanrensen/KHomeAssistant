@@ -97,12 +97,12 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChanged(
     checkEntityExists()
     kHomeAssistant()!!.stateListeners
         .getOrPut(entityID) { hashSetOf() }
-        .add { oldState, newState ->
+        .add { oldState, _ ->
 
             // get the old attribute value by temporarily setting the old attributes as alternative in the delegate
-            attrsDelegate.alternativeAttributes = oldState.attributes
+            alternativeAttributes = oldState.attributes
             val oldAttributeValue = attribute.get()
-            attrsDelegate.alternativeAttributes = null
+            alternativeAttributes = null
 
             val newAttributeValue = attribute.get()
 
@@ -309,12 +309,12 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChanged(
     checkEntityExists()
     kHomeAssistant()!!.stateListeners
         .getOrPut(entityID) { hashSetOf() }
-        .add { oldState, newState ->
+        .add { oldState, _ ->
 
             // get the old attribute value by temporarily setting the old attributes as alternative in the delegate
-            attrsDelegate.alternativeAttributes = oldState.attributes
+            alternativeAttributes = oldState.attributes
             val oldAttributeValue = attribute.get(this)
-            attrsDelegate.alternativeAttributes = null
+            alternativeAttributes = null
 
             val newAttributeValue = attribute.get(this)
 
