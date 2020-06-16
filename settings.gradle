@@ -1,2 +1,3 @@
-include ":KHomeAssistant", ":example"
+rootProject.name = 'KHomeAssistant'
+include ":KHomeAssistant-library", ":KHomeAssistant-example"
 enableFeaturePreview('GRADLE_METADATA')

@@ -1,4 +1,0 @@
-rootProject.name = 'KHomeAssistant'
-
-
-enableFeaturePreview('GRADLE_METADATA')
