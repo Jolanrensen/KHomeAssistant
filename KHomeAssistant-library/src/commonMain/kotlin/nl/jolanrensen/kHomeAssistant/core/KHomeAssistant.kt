@@ -19,6 +19,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.Clock.cancelAllTimers
+import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
@@ -59,7 +60,7 @@ class KHomeAssistant(
 
     /** A collection of [Automation] instances that should be run by [KHomeAssistant]. */
     val automations: Collection<Automation>
-) : KHomeAssistantContext {
+) : HasContext {
 
     /**
      * KHomeAssistant instance.
@@ -99,7 +100,7 @@ class KHomeAssistant(
     )
 
     /** The function providing the kHomeAssistant instace as context to other objects. */
-    override val kHomeAssistant = { this }
+    override val getKHomeAssistant = { this }
 
     /** All exceptions from couroutines in this scope will be handled here. */
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->

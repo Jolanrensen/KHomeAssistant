@@ -27,16 +27,16 @@ class Sun(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.Entit
     }
 
     /** No need to specify a name, it's just 'sun' */
-    fun Entity(): Entity = Entity(kHomeAssistant = kHomeAssistant)
+    fun Entity(): Entity = Entity(getKHomeAssistant = kHomeAssistant)
     override fun Entity(name: String): Entity = Entity()
 
     class Entity(
-        override val kHomeAssistant: () -> KHomeAssistant?,
+        override val getKHomeAssistant: () -> KHomeAssistant?,
         override val name: String = "sun"
     ) : BaseEntity<SunState>(
-        kHomeAssistant = kHomeAssistant,
+        getKHomeAssistant = getKHomeAssistant,
         name = name,
-        domain = Sun(kHomeAssistant)
+        domain = Sun(getKHomeAssistant)
     ) {
 
         init {
@@ -112,7 +112,7 @@ class Sun(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.Entit
         /** Schedule something to execute each day at sunrise.
          * @see runEveryDayAtSunrise */
         suspend fun onSunrise(callback: suspend Entity.() -> Unit): Entity {
-            kHomeAssistant()!!.runEveryDayAtSunrise {
+            getKHomeAssistant()!!.runEveryDayAtSunrise {
                 callback(this)
             }
             return this
@@ -121,7 +121,7 @@ class Sun(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.Entit
         /** Schedule something to execute each day at sunset.
          * @see runEveryDayAtSunset */
         suspend fun onSunSet(callback: suspend Entity.() -> Unit): Entity {
-            kHomeAssistant()!!.runEveryDayAtSunset {
+            getKHomeAssistant()!!.runEveryDayAtSunset {
                 callback(this)
             }
             return this
@@ -130,7 +130,7 @@ class Sun(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.Entit
         /** Schedule something to execute each day at dawn.
          * @see runEveryDayAtDawn */
         suspend fun onDawn(callback: suspend Entity.() -> Unit): Entity {
-            kHomeAssistant()!!.runEveryDayAtDawn {
+            getKHomeAssistant()!!.runEveryDayAtDawn {
                 callback(this)
             }
             return this
@@ -139,7 +139,7 @@ class Sun(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.Entit
         /** Schedule something to execute each day at dusk.
          * @see runEveryDayAtDusk */
         suspend fun onDusk(callback: suspend Entity.() -> Unit): Entity {
-            kHomeAssistant()!!.runEveryDayAtDusk {
+            getKHomeAssistant()!!.runEveryDayAtDusk {
                 callback(this)
             }
             return this
@@ -148,7 +148,7 @@ class Sun(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.Entit
         /** Schedule something to execute each day at noon.
          * @see runEveryDayAtNoon */
         suspend fun onNoon(callback: suspend Entity.() -> Unit): Entity {
-            kHomeAssistant()!!.runEveryDayAtNoon {
+            getKHomeAssistant()!!.runEveryDayAtNoon {
                 callback(this)
             }
             return this
@@ -157,7 +157,7 @@ class Sun(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.Entit
         /** Schedule something to execute each day at midnight.
          * @see runEveryDayAtMidnight */
         suspend fun onMidnight(callback: suspend Entity.() -> Unit): Entity {
-            kHomeAssistant()!!.runEveryDayAtMidnight {
+            getKHomeAssistant()!!.runEveryDayAtMidnight {
                 callback(this)
             }
             return this
@@ -168,9 +168,9 @@ class Sun(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.Entit
 
 
 /** Access the Sun Domain. */
-val KHomeAssistantContext.Sun: Sun
-    get() = Sun(kHomeAssistant)
+val HasContext.Sun: Sun
+    get() = Sun(getKHomeAssistant)
 
 /** As there is only one sun (duh), let's make the sun entity quickly reachable */
-val KHomeAssistantContext.sun: Sun.Entity
+val HasContext.sun: Sun.Entity
     get() = Sun.Entity()

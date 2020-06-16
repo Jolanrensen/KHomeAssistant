@@ -5,7 +5,7 @@ import com.soywiz.klock.DateFormat.Companion.FORMAT_DATE
 import com.soywiz.klock.TimeFormat.Companion.FORMAT_TIME
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
@@ -35,7 +35,7 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
     /** Reload input_datetime configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String) = Entity(kHomeAssistant = kHomeAssistant, name = name)
+    override fun Entity(name: String) = Entity(getKHomeAssistant = kHomeAssistant, name = name)
 
     class State(val value: String) {
         /** Only use if `has_time == true && has_date == false`. */
@@ -58,12 +58,12 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
 
     @OptIn(ExperimentalStdlibApi::class)
     class Entity(
-        override val kHomeAssistant: () -> KHomeAssistant?,
+        override val getKHomeAssistant: () -> KHomeAssistant?,
         override val name: String
     ) : BaseEntity<State>(
-        kHomeAssistant = kHomeAssistant,
+        getKHomeAssistant = getKHomeAssistant,
         name = name,
-        domain = InputDatetime(kHomeAssistant)
+        domain = InputDatetime(getKHomeAssistant)
     ) {
 
         init {
@@ -283,5 +283,5 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
 
 
 /** Access the InputDateTime Domain */
-val KHomeAssistantContext.InputDatetime: InputDatetime
-    get() = InputDatetime(kHomeAssistant)
+val HasContext.InputDatetime: InputDatetime
+    get() = InputDatetime(getKHomeAssistant)

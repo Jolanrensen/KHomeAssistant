@@ -1,7 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.json.JsonPrimitive
-import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.helper.GeoPoint
@@ -51,5 +51,5 @@ class HomeAssistant(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
 
 
 /** Access the HomeAssistant Domain. */
-val KHomeAssistantContext.HomeAssistant: HomeAssistant
-    get() = HomeAssistant(kHomeAssistant)
+val HasContext.HomeAssistant: HomeAssistant
+    get() = HomeAssistant(getKHomeAssistant)

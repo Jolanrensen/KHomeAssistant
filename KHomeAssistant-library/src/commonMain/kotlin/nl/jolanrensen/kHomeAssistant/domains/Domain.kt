@@ -3,7 +3,7 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.json.JsonElement
-import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
@@ -19,7 +19,7 @@ interface Domain<out E : BaseEntity<*>> {
     /** The Home Assistant name for this domain, like "light". */
     val domainName: String
 
-    /** Function to access the [KHomeAssistant] instance. This is passed around [KHomeAssistantContext] inheritors,
+    /** Function to access the [KHomeAssistant] instance. This is passed around [HasContext] inheritors,
      * usually in their constructor. */
     var kHomeAssistant: () -> KHomeAssistant?
 
@@ -125,16 +125,16 @@ inline fun <E : BaseEntity<*>> Domain<E>.Entity(name: String, callback: E.() -> 
  * Domain("some_domain").Entity("some_entity").callService("some_service")
  * Domain("some_domain").callService("some_service")
  * ```
- * @receiver any [KHomeAssistantContext] inheriting class like [nl.jolanrensen.kHomeAssistant.Automation]
+ * @receiver any [HasContext] inheriting class like [nl.jolanrensen.kHomeAssistant.Automation]
  * @param domainName the Home Assistant name for this domain, like "light"
  * @return a [Domain] inheriting object with [DefaultEntity] as its entity
  **/
-fun KHomeAssistantContext.Domain(domainName: String): Domain<BaseEntity<String>> =
+fun HasContext.Domain(domainName: String): Domain<BaseEntity<String>> =
     object : Domain<DefaultEntity> {
         override val domainName = domainName
-        override var kHomeAssistant = this@Domain.kHomeAssistant
+        override var kHomeAssistant = this@Domain.getKHomeAssistant
         override fun Entity(name: String): DefaultEntity =
-            object : DefaultEntity(kHomeAssistant = kHomeAssistant, name = name, domain = this) {
+            object : DefaultEntity(getKHomeAssistant = kHomeAssistant, name = name, domain = this) {
                 override fun parseStateValue(stateValue: String) = stateValue
                 override fun getStateValue(state: String) = state
             }

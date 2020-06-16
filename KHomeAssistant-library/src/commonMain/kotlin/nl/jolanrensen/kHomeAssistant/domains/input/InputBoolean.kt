@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains.input
 
-import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
@@ -31,17 +31,17 @@ class InputBoolean(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<
 
     override fun Entity(name: String) =
         Entity(
-            kHomeAssistant = kHomeAssistant,
+            getKHomeAssistant = kHomeAssistant,
             name = name
         )
 
     class Entity(
-        override val kHomeAssistant: () -> KHomeAssistant?,
+        override val getKHomeAssistant: () -> KHomeAssistant?,
         override val name: String
     ) : ToggleEntity(
-        kHomeAssistant = kHomeAssistant,
+        getKHomeAssistant = getKHomeAssistant,
         name = name,
-        domain = InputBoolean(kHomeAssistant)
+        domain = InputBoolean(getKHomeAssistant)
     ) {
         /** Delegate so you can control an InputBoolean like a local variable
          * Simply type "var yourBoolean by InputBoolean.Entity("your_boolean")
@@ -63,5 +63,5 @@ class InputBoolean(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<
 }
 
 /** Access the InputBoolean Domain */
-val KHomeAssistantContext.InputBoolean: InputBoolean
-    get() = InputBoolean(kHomeAssistant)
+val HasContext.InputBoolean: InputBoolean
+    get() = InputBoolean(getKHomeAssistant)

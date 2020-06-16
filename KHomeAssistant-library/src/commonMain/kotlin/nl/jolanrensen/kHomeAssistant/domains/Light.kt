@@ -6,7 +6,7 @@ import com.soywiz.korim.color.RGBA
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
@@ -47,16 +47,16 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
         SUPPORT_WHITE_VALUE(128)
     }
 
-    override fun Entity(name: String): Entity = Entity(kHomeAssistant = kHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = kHomeAssistant, name = name)
 
     @OptIn(ExperimentalStdlibApi::class)
     class Entity(
-        override val kHomeAssistant: () -> KHomeAssistant?,
+        override val getKHomeAssistant: () -> KHomeAssistant?,
         override val name: String
     ) : ToggleEntity(
-        kHomeAssistant = kHomeAssistant,
+        getKHomeAssistant = getKHomeAssistant,
         name = name,
-        domain = Light(kHomeAssistant)
+        domain = Light(getKHomeAssistant)
     ) {
 
         init {
@@ -411,7 +411,7 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
 }
 
 /** Access the Light Domain */
-val KHomeAssistantContext.Light: Light
-    get() = Light(kHomeAssistant)
+val HasContext.Light: Light
+    get() = Light(getKHomeAssistant)
 
 

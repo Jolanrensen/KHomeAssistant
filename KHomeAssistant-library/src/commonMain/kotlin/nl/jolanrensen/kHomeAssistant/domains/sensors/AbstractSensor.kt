@@ -16,12 +16,12 @@ abstract class AbstractSensor<StateType : Any, E : AbstractSensorEntity<StateTyp
 }
 
 abstract class AbstractSensorEntity<StateType : Any>(
-    override val kHomeAssistant: () -> KHomeAssistant?,
+    override val getKHomeAssistant: () -> KHomeAssistant?,
     override val name: String,
     override val domain: AbstractSensor<StateType, out AbstractSensorEntity<StateType>>,
     private val deviceClass: String?
 ) : BaseEntity<StateType>(
-    kHomeAssistant = kHomeAssistant,
+    getKHomeAssistant = getKHomeAssistant,
     name = name,
     domain = domain
 ) {
@@ -30,7 +30,7 @@ abstract class AbstractSensorEntity<StateType : Any>(
 
     @Suppress("UNNECESSARY_SAFE_CALL")
     override fun checkEntityExists() {
-        if (!isCorrectDevice && kHomeAssistant?.invoke() != null) {
+        if (!isCorrectDevice && getKHomeAssistant?.invoke() != null) {
             if (deviceClass != device_class)
                 throw IllegalArgumentException("It appears the sensor $name is a $device_class while you are using a $deviceClass")
             isCorrectDevice = true

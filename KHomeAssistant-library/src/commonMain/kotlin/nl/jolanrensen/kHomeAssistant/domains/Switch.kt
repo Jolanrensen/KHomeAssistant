@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 
@@ -22,18 +22,18 @@ class Switch(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Switch
     override fun hashCode(): Int = domainName.hashCode()
 
     /** Constructor of Switch.Entity with right context */
-    override fun Entity(name: String) = Entity(kHomeAssistant = kHomeAssistant, name = name)
+    override fun Entity(name: String) = Entity(getKHomeAssistant = kHomeAssistant, name = name)
 
     class Entity(
-        override val kHomeAssistant: () -> KHomeAssistant?,
+        override val getKHomeAssistant: () -> KHomeAssistant?,
         override val name: String
     ) : ToggleEntity(
-        kHomeAssistant = kHomeAssistant,
-        domain = Switch(kHomeAssistant),
+        getKHomeAssistant = getKHomeAssistant,
+        domain = Switch(getKHomeAssistant),
         name = name
     )
 }
 
 /** Access the Switch Domain. */
-val KHomeAssistantContext.Switch: Switch
-    get() = Switch(kHomeAssistant)
+val HasContext.Switch: Switch
+    get() = Switch(getKHomeAssistant)

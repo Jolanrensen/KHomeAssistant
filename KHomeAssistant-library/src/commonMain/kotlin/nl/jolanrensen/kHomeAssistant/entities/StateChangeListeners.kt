@@ -34,7 +34,7 @@ fun <S : Any, E : BaseEntity<S>> E.onStateChanged(
     callback: suspend E.() -> Unit
 ): E {
     checkEntityExists()
-    kHomeAssistant()!!.stateListeners
+    getKHomeAssistant()!!.stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add { oldState, newState ->
             if (oldState.state != newState.state)
@@ -62,18 +62,18 @@ suspend fun <S : Any, E : BaseEntity<S>> E.suspendUntilStateChanged(
 
     stateListener = { _, _ ->
         if (condition(state)) {
-            kHomeAssistant()!!.stateListeners[entityID]?.remove(stateListener)
+            getKHomeAssistant()!!.stateListeners[entityID]?.remove(stateListener)
             task?.cancel()
             continueChannel.send(Unit)
         }
     }
 
-    task = kHomeAssistant()!!.runAt(DateTimeTz.nowLocal() + timeout) {
-        kHomeAssistant()!!.stateListeners[entityID]?.remove(stateListener)
+    task = runAt(DateTimeTz.nowLocal() + timeout) {
+        getKHomeAssistant()!!.stateListeners[entityID]?.remove(stateListener)
         continueChannel.send(Unit)
     }
 
-    kHomeAssistant()!!.stateListeners
+    getKHomeAssistant()!!.stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add(stateListener)
 

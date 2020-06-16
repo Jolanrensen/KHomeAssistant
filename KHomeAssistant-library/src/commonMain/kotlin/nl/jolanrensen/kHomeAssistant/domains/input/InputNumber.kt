@@ -2,7 +2,7 @@ package nl.jolanrensen.kHomeAssistant.domains.input
 
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
@@ -30,19 +30,19 @@ class InputNumber(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<I
     /** Reload input_number configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String) = Entity(kHomeAssistant = kHomeAssistant, name = name)
+    override fun Entity(name: String) = Entity(getKHomeAssistant = kHomeAssistant, name = name)
 
     enum class InputNumberMode(val stateValue: String) {
         BOX("box"), SLIDER("slider")
     }
 
     class Entity(
-        override val kHomeAssistant: () -> KHomeAssistant?,
+        override val getKHomeAssistant: () -> KHomeAssistant?,
         override val name: String
     ) : BaseEntity<Float>(
-        kHomeAssistant = kHomeAssistant,
+        getKHomeAssistant = getKHomeAssistant,
         name = name,
-        domain = InputNumber(kHomeAssistant)
+        domain = InputNumber(getKHomeAssistant)
     ) {
         /** Delegate so you can control an InputNumber like a local variable
          * Simply type "var yourFloat by InputNumber.Entity("your_float")
@@ -124,5 +124,5 @@ class InputNumber(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<I
 }
 
 /** Access the InputNumber Domain. */
-val KHomeAssistantContext.InputNumber: InputNumber
-    get() = InputNumber(kHomeAssistant)
+val HasContext.InputNumber: InputNumber
+    get() = InputNumber(getKHomeAssistant)

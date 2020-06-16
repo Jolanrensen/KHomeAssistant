@@ -1,7 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.json.JsonPrimitive
-import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 
@@ -80,5 +80,5 @@ class Hassio(override var kHomeAssistant: () -> KHomeAssistant? ) : Domain<Defau
 }
 
 /** Access the Hassio Domain. */
-val KHomeAssistantContext.Hassio: Hassio
-    get() = Hassio(kHomeAssistant)
+val HasContext.Hassio: Hassio
+    get() = Hassio(getKHomeAssistant)

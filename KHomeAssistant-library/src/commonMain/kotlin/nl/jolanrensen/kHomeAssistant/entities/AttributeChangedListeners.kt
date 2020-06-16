@@ -25,7 +25,7 @@ fun <S : Any, E : BaseEntity<S>> E.onAttributesChanged(
     callback: suspend E.() -> Unit
 ): E {
     checkEntityExists()
-    kHomeAssistant()!!.stateListeners
+    getKHomeAssistant()!!.stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add { oldState, newState ->
             if (oldState.attributes != newState.attributes)
@@ -54,7 +54,7 @@ fun <S : Any, E : BaseEntity<S>> E.onAttributeChanged(
     callback: suspend E.() -> Unit
 ): E {
     checkEntityExists()
-    kHomeAssistant()!!.stateListeners
+    getKHomeAssistant()!!.stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add { oldState, newState ->
             if (oldState.attributes[attribute] != newState.attributes[attribute])
@@ -95,7 +95,7 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChanged(
     callback: suspend E.() -> Unit
 ): E {
     checkEntityExists()
-    kHomeAssistant()!!.stateListeners
+    getKHomeAssistant()!!.stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add { oldState, _ ->
 
@@ -307,7 +307,7 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChanged(
     callback: suspend E.() -> Unit
 ): E {
     checkEntityExists()
-    kHomeAssistant()!!.stateListeners
+    getKHomeAssistant()!!.stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add { oldState, _ ->
 
@@ -508,18 +508,18 @@ suspend fun <A : Any?, S : Any, E : BaseEntity<S>> E.suspendUntilAttributeChange
 
     stateListener = { _, _ ->
         if (condition(attribute.get())) {
-            kHomeAssistant()!!.stateListeners[entityID]?.remove(stateListener)
+            getKHomeAssistant()!!.stateListeners[entityID]?.remove(stateListener)
             task?.cancel()
             continueChannel.send(Unit)
         }
     }
 
-    task = kHomeAssistant()!!.runAt(DateTimeTz.nowLocal() + timeout) {
-        kHomeAssistant()!!.stateListeners[entityID]?.remove(stateListener)
+    task = runAt(DateTimeTz.nowLocal() + timeout) {
+        getKHomeAssistant()!!.stateListeners[entityID]?.remove(stateListener)
         continueChannel.send(Unit)
     }
 
-    kHomeAssistant()!!.stateListeners
+    getKHomeAssistant()!!.stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add(stateListener)
 

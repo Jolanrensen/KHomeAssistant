@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains.sensors
 
-import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 
 /** Battery sensor. The type of state will be a Float and the unit_of_measurement will be '%'. */
@@ -12,17 +12,17 @@ class BatterySensor(override var kHomeAssistant: () -> KHomeAssistant?) : Abstra
 
     override fun Entity(name: String): Entity =
         Entity(
-            kHomeAssistant = kHomeAssistant,
+            getKHomeAssistant = kHomeAssistant,
             name = name
         )
 
     class Entity(
-        override val kHomeAssistant: () -> KHomeAssistant?,
+        override val getKHomeAssistant: () -> KHomeAssistant?,
         override val name: String
     ) : AbstractSensorEntity<Float>(
-        kHomeAssistant = kHomeAssistant,
+        getKHomeAssistant = getKHomeAssistant,
         name = name,
-        domain = BatterySensor(kHomeAssistant),
+        domain = BatterySensor(getKHomeAssistant),
         deviceClass = "battery"
     ) {
         override fun parseStateValue(stateValue: String) = stateValue.toFloatOrNull()
@@ -40,5 +40,5 @@ class BatterySensor(override var kHomeAssistant: () -> KHomeAssistant?) : Abstra
     }
 }
 
-val KHomeAssistantContext.BatterySensor: BatterySensor
-    get() = BatterySensor(kHomeAssistant)
+val HasContext.BatterySensor: BatterySensor
+    get() = BatterySensor(getKHomeAssistant)

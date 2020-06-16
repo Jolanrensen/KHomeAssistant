@@ -6,7 +6,7 @@ import com.soywiz.klock.parseUtc
 import com.soywiz.klock.seconds
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaContentType.*
@@ -71,17 +71,17 @@ class MediaPlayer(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<M
         SUPPORT_SELECT_SOUND_MODE(65536)
     }
 
-    override fun Entity(name: String): Entity = Entity(kHomeAssistant = kHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = kHomeAssistant, name = name)
 
     @Suppress("RemoveExplicitTypeArguments")
     @OptIn(ExperimentalStdlibApi::class)
     class Entity(
-        override val kHomeAssistant: () -> KHomeAssistant?,
+        override val getKHomeAssistant: () -> KHomeAssistant?,
         override val name: String
     ) : ToggleEntity(
-        kHomeAssistant = kHomeAssistant,
+        getKHomeAssistant = getKHomeAssistant,
         name = name,
-        domain = MediaPlayer(kHomeAssistant)
+        domain = MediaPlayer(getKHomeAssistant)
     ) {
 
         init {
@@ -473,5 +473,5 @@ class MediaPlayer(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<M
 
 
 /** Access the MediaPlayer Domain */
-val KHomeAssistantContext.MediaPlayer: MediaPlayer
-    get() = MediaPlayer(kHomeAssistant)
+val HasContext.MediaPlayer: MediaPlayer
+    get() = MediaPlayer(getKHomeAssistant)

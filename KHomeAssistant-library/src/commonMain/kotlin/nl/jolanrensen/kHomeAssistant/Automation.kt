@@ -4,17 +4,17 @@ import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
 
-open class Automation : KHomeAssistantContext {
+open class Automation : HasContext {
 
     open val automationName: String
         get() = this::class.simpleName.toString()
 
     var kHomeAssistantInstance: KHomeAssistant? = null
 
-    override var kHomeAssistant: () -> KHomeAssistant? = { kHomeAssistantInstance }
+    override var getKHomeAssistant: () -> KHomeAssistant? = { kHomeAssistantInstance }
 
     override val coroutineContext: CoroutineContext
-        get() = kHomeAssistant()!!.coroutineContext
+        get() = getKHomeAssistant()!!.coroutineContext
 
     /**
      * This method is called to start the automation

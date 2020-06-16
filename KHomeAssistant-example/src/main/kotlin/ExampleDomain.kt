@@ -5,7 +5,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
@@ -40,12 +40,12 @@ class Example(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Examp
      * This also includes listeners for state changes
      */
     class Entity(
-        override val kHomeAssistant: () -> KHomeAssistant? = { null },
+        override val getKHomeAssistant: () -> KHomeAssistant? = { null },
         override val name: String
     ) : BaseEntity<ExampleState>(
-        kHomeAssistant = kHomeAssistant,
+        getKHomeAssistant = getKHomeAssistant,
         name = name,
-        domain = Example(kHomeAssistant)
+        domain = Example(getKHomeAssistant)
     ) {
         /** These are the attributes that get parsed from Home Assistant for your entity when calling getAttributes()
          * The names must thus exactly match those of Home Assistant. */
@@ -141,5 +141,5 @@ class Example(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Examp
 }
 
 /** Access your domain, and set the context correctly */
-val KHomeAssistantContext.Example: Example
-    get() = Example(kHomeAssistant)
+val HasContext.Example: Example
+    get() = Example(getKHomeAssistant)

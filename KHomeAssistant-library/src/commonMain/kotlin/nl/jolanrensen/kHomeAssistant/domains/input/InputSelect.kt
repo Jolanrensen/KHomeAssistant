@@ -3,7 +3,7 @@ package nl.jolanrensen.kHomeAssistant.domains.input
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
-import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
@@ -35,15 +35,15 @@ class InputSelect(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<I
     /** Reload input_select configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String): Entity = Entity(kHomeAssistant = kHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = kHomeAssistant, name = name)
 
     class Entity(
-        override val kHomeAssistant: () -> KHomeAssistant?,
+        override val getKHomeAssistant: () -> KHomeAssistant?,
         override val name: String
     ) : BaseEntity<String>(
-        kHomeAssistant = kHomeAssistant,
+        getKHomeAssistant = getKHomeAssistant,
         name = name,
-        domain = InputSelect(kHomeAssistant)
+        domain = InputSelect(getKHomeAssistant)
     ) {
         init {
             attributes += arrayOf(
@@ -157,5 +157,5 @@ class InputSelect(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<I
 }
 
 /** Access the InputSelect Domain. */
-val KHomeAssistantContext.InputSelect: InputSelect
-    get() = InputSelect(kHomeAssistant)
+val HasContext.InputSelect: InputSelect
+    get() = InputSelect(getKHomeAssistant)

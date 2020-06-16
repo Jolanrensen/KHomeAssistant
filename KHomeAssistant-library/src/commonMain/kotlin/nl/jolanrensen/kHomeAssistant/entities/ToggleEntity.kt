@@ -9,11 +9,11 @@ import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
 
 open class ToggleEntity(
-    override val kHomeAssistant: () -> KHomeAssistant?,
+    override val getKHomeAssistant: () -> KHomeAssistant?,
     override val name: String,
     override val domain: Domain<BaseEntity<OnOff>>
 ) : BaseEntity<OnOff>(
-    kHomeAssistant = kHomeAssistant,
+    getKHomeAssistant = getKHomeAssistant,
     name = name,
     domain = domain
 ) {

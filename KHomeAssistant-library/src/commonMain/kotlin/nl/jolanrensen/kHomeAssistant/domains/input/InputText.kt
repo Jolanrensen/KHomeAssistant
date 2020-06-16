@@ -2,7 +2,7 @@ package nl.jolanrensen.kHomeAssistant.domains.input
 
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import nl.jolanrensen.kHomeAssistant.KHomeAssistantContext
+import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
@@ -31,19 +31,19 @@ class InputText(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Inp
     /** Reload input_text configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String) = Entity(kHomeAssistant = kHomeAssistant, name = name)
+    override fun Entity(name: String) = Entity(getKHomeAssistant = kHomeAssistant, name = name)
 
     enum class InputTextMode(val stateValue: String) {
         TEXT("text"), PASSWORD("password")
     }
 
     class Entity(
-        override val kHomeAssistant: () -> KHomeAssistant?,
+        override val getKHomeAssistant: () -> KHomeAssistant?,
         override val name: String
     ) : BaseEntity<String>(
-        kHomeAssistant = kHomeAssistant,
+        getKHomeAssistant = getKHomeAssistant,
         name = name,
-        domain = InputText(kHomeAssistant)
+        domain = InputText(getKHomeAssistant)
     ) {
         /** Delegate so you can control an [InputText] like a local variable
          * Simply type "var yourString by [InputText].Entity("your_string")
@@ -124,5 +124,5 @@ class InputText(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Inp
 }
 
 /** Access the InputText Domain. */
-val KHomeAssistantContext.InputText: InputText
-    get() = InputText(kHomeAssistant)
+val HasContext.InputText: InputText
+    get() = InputText(getKHomeAssistant)
