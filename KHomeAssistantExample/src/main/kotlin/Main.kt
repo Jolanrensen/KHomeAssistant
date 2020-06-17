@@ -1,26 +1,21 @@
-import com.soywiz.klock.minutes
-import com.soywiz.klock.plus
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.core.onEventFired
-import nl.jolanrensen.kHomeAssistant.domains.Light
-import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
-import nl.jolanrensen.kHomeAssistant.domains.Switch
-import nl.jolanrensen.kHomeAssistant.domains.getValue
+import nl.jolanrensen.kHomeAssistant.domains.*
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
-import nl.jolanrensen.kHomeAssistant.entities.*
+import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
+import nl.jolanrensen.kHomeAssistant.entities.turnOff
+import nl.jolanrensen.kHomeAssistant.entities.turnOn
 
 
 class BedroomLights : Automation() {
-
 
 
 //    val bed = Light.Entity("bed")
 //    val bedroomLamp = Light.Entity("bedroom_lamp")
 //    val globe = Light.Entity("globe")
 //    val pisa = Light.Entity("pisa")
-    
+
     override suspend fun initialize() {
         val (bed, bedroomLamp, globe, pisa) = Light["bed", "bedroom_lamp", "globe", "pisa"]
         val allLights = listOf(bed, bedroomLamp, globe, pisa)
@@ -44,23 +39,30 @@ class TestAutomation : Automation() {
     val onlyTime = InputDatetime.Entity("only_time")
 
     override suspend fun initialize() {
-        println(denon_avrx2200w)
-        println(bothDateAndTime)
-        println(onlyDate)
-        println(onlyTime)
+//        Mqtt.publish(
+//            topic = "cmnd/sonoff1/POWER",
+//            payload = "toggle",
+//            qos = 1,
+//            retain = true
+//        )
 
-        onEventFired("call_service") {
-            println("call service called!")
-            println(it)
-        }
-
-        onlyTime {
-            time += 1.minutes
-
-            println(this)
-
-            onStateChanged {  }
-        }
+//        println(denon_avrx2200w)
+//        println(bothDateAndTime)
+//        println(onlyDate)
+//        println(onlyTime)
+//
+//        onEventFired("call_service") {
+//            println("call service called!")
+//            println(it)
+//        }
+//
+//        onlyTime {
+//            time += 1.minutes
+//
+//            println(this)
+//
+//            onStateChanged {  }
+//        }
 
     }
 }

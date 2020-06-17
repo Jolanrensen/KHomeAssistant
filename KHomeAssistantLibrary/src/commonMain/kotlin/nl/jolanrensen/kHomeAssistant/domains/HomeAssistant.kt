@@ -9,7 +9,7 @@ import nl.jolanrensen.kHomeAssistant.helper.GeoPoint
 /**
  * https://www.home-assistant.io/integrations/homeassistant
  */
-class HomeAssistant(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<DefaultEntity> {
+class HomeAssistant(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Nothing> {
     override val domainName: String = "homeassistant"
 
     override fun checkContext() = require(kHomeAssistant() != null) {
@@ -46,7 +46,7 @@ class HomeAssistant(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
     suspend fun setLocation(location: GeoPoint) = setLocation(location.latitude, location.longitude)
 
     /** The HomeAssistant domain does not have an entity. */
-    override fun Entity(name: String) = throw DomainHasNoEntityException()
+    override fun Entity(name: String): Nothing = throw DomainHasNoEntityException()
 }
 
 

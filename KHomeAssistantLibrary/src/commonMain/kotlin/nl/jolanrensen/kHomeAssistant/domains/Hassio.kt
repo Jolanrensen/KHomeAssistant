@@ -8,7 +8,7 @@ import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 /**
  *
  */
-class Hassio(override var kHomeAssistant: () -> KHomeAssistant? ) : Domain<DefaultEntity> {
+class Hassio(override var kHomeAssistant: () -> KHomeAssistant? ) : Domain<Nothing> {
     override val domainName = "hassio"
 
     override fun checkContext() = require(kHomeAssistant() != null) {
@@ -76,7 +76,7 @@ class Hassio(override var kHomeAssistant: () -> KHomeAssistant? ) : Domain<Defau
     suspend fun snapshotParial() = callService("snapshot_partial")
 
 
-    override fun Entity(name: String): DefaultEntity = throw DomainHasNoEntityException()
+    override fun Entity(name: String): Nothing = throw DomainHasNoEntityException()
 }
 
 /** Access the Hassio Domain. */
