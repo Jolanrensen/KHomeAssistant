@@ -2,13 +2,12 @@ import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.*
-import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryBatterySensor
+import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BatteryBinarySensor
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryBatterySensorState
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
 import nl.jolanrensen.kHomeAssistant.entities.turnOn
-import sun.management.Sensor
 
 
 class BedroomLights : Automation() {
@@ -42,7 +41,7 @@ class TestAutomation : Automation() {
     val onlyTime = InputDatetime.Entity("only_time")
 
     override suspend fun initialize() {
-        val test = BinaryBatterySensor["test"]
+        val test = BatteryBinarySensor["test"]
         when (test.state) {
             BinaryBatterySensorState.LOW -> TODO()
             BinaryBatterySensorState.NORMAL -> TODO()
