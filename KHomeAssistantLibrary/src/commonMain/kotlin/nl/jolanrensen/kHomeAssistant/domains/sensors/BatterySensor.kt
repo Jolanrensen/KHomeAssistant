@@ -4,7 +4,7 @@ import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 
 /** Battery sensor. The type of state will be a Float and the unit_of_measurement will be '%'. */
-class BatterySensor(override var kHomeAssistant: () -> KHomeAssistant?) : AbstractSensor<Float, BatterySensor.Entity>() {
+class BatterySensor(override var getKHomeAssistant: () -> KHomeAssistant?) : AbstractSensor<Float, BatterySensor.Entity>() {
 
     /** Making sure BatterySensor acts as a singleton. */
     override fun equals(other: Any?) = other is BatterySensor
@@ -12,7 +12,7 @@ class BatterySensor(override var kHomeAssistant: () -> KHomeAssistant?) : Abstra
 
     override fun Entity(name: String): Entity =
         Entity(
-            getKHomeAssistant = kHomeAssistant,
+            getKHomeAssistant = getKHomeAssistant,
             name = name
         )
 

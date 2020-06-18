@@ -16,10 +16,10 @@ enum class ExampleState(val stateValue: String) {
     STATE1("state1"), STATE2("state1")
 }
 
-class Example(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Example.Entity> {
+class Example(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Example.Entity> {
     override val domainName: String = "example"
 
-    override fun checkContext() = require(kHomeAssistant() != null) {
+    override fun checkContext() = require(getKHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'Example.' from a KHomeAssistantContext instead of using ExampleDomain directly.""".trimMargin()
     }
@@ -32,7 +32,7 @@ class Example(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Examp
 
 
     // Constructor for Entity with the right context
-    override fun Entity(name: String) = Entity(kHomeAssistant, name)
+    override fun Entity(name: String) = Entity(getKHomeAssistant, name)
 
 
     /** This class defines your entity, it can be instantiated via YourDomain.YourEntity(name: String)

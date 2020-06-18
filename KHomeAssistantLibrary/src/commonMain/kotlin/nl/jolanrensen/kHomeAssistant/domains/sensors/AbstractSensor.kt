@@ -4,12 +4,10 @@ import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 
-abstract class AbstractSensor<StateType : Any, E : AbstractSensorEntity<StateType>> : Domain<E> {
-
-    override var kHomeAssistant: () -> KHomeAssistant? = { null }
+abstract class AbstractSensor<StateType : Any, EntityType : AbstractSensorEntity<StateType>> : Domain<EntityType> {
     override val domainName = "sensor"
 
-    override fun checkContext() = require(kHomeAssistant() != null) {
+    override fun checkContext() = require(getKHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'XXXSensor.' from a KHomeAssistantContext instead of using XXXSensor directly.""".trimMargin()
     }

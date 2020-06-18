@@ -3,16 +3,15 @@ package nl.jolanrensen.kHomeAssistant.domains
 import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.helper.GeoPoint
 
 /**
  * https://www.home-assistant.io/integrations/homeassistant
  */
-class HomeAssistant(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Nothing> {
+class HomeAssistant(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Nothing> {
     override val domainName: String = "homeassistant"
 
-    override fun checkContext() = require(kHomeAssistant() != null) {
+    override fun checkContext() = require(getKHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'HomeAssistant.' from a KHomeAssistantContext instead of using HomeAssistant directly.""".trimMargin()
     }

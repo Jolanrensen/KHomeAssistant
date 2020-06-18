@@ -9,10 +9,10 @@ import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT_SUN
 import nl.jolanrensen.kHomeAssistant.helper.cast
 
 
-class Sun(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.Entity> {
+class Sun(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.Entity> {
     override val domainName = "sun"
 
-    override fun checkContext() = require(kHomeAssistant() != null) {
+    override fun checkContext() = require(getKHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'Sun.' from a KHomeAssistantContext instead of using Sun directly.""".trimMargin()
     }
@@ -28,7 +28,7 @@ class Sun(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.Entit
 
     /** No need to specify a name, it's just 'sun' */
 //    fun Entity(): Entity = Entity(getKHomeAssistant = kHomeAssistant)
-    override fun Entity(name: String): Entity = Entity(kHomeAssistant)
+    override fun Entity(name: String): Entity = Entity(getKHomeAssistant)
 
     class Entity(
         override val getKHomeAssistant: () -> KHomeAssistant?,

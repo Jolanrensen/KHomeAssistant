@@ -21,7 +21,7 @@ interface Domain<out E : BaseEntity<*>> {
 
     /** Function to access the [KHomeAssistant] instance. This is passed around [HasContext] inheritors,
      * usually in their constructor. */
-    var kHomeAssistant: () -> KHomeAssistant?
+    var getKHomeAssistant: () -> KHomeAssistant?
 
     /** Function to create an entity instance in a domain with correct context.
      * @param name the name of the entity (without domain) as defined in Home Assistant
@@ -56,7 +56,7 @@ interface Domain<out E : BaseEntity<*>> {
      * */
     operator fun get(name: String, vararg names: String): List<E> = Entities(name, *names)
 
-    /** Helper function that should check whether the context ([kHomeAssistant]) is not null.
+    /** Helper function that should check whether the context ([getKHomeAssistant]) is not null.
      * @throws IllegalArgumentException if `kHomeAssistant() == null`
      * */
     fun checkContext()
@@ -74,7 +74,7 @@ interface Domain<out E : BaseEntity<*>> {
      * */
     suspend fun callService(serviceName: String, data: Map<String, JsonElement> = mapOf()): ResultMessage {
         checkContext()
-        return kHomeAssistant()!!.callService(
+        return getKHomeAssistant()!!.callService(
             serviceDomain = this,
             serviceName = serviceName,
             data = data
@@ -132,9 +132,9 @@ inline fun <E : BaseEntity<*>> Domain<E>.Entity(name: String, callback: E.() -> 
 fun HasContext.Domain(domainName: String): Domain<BaseEntity<String>> =
     object : Domain<DefaultEntity> {
         override val domainName = domainName
-        override var kHomeAssistant = this@Domain.getKHomeAssistant
+        override var getKHomeAssistant = this@Domain.getKHomeAssistant
         override fun Entity(name: String): DefaultEntity =
-            object : DefaultEntity(getKHomeAssistant = kHomeAssistant, name = name, domain = this) {
+            object : DefaultEntity(getKHomeAssistant = getKHomeAssistant, name = name, domain = this) {
                 override fun parseStateValue(stateValue: String) = stateValue
                 override fun getStateValue(state: String) = state
             }

@@ -3,15 +3,14 @@ package nl.jolanrensen.kHomeAssistant.domains
 import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 
 /**
  *
  */
-class Hassio(override var kHomeAssistant: () -> KHomeAssistant? ) : Domain<Nothing> {
+class Hassio(override var getKHomeAssistant: () -> KHomeAssistant? ) : Domain<Nothing> {
     override val domainName = "hassio"
 
-    override fun checkContext() = require(kHomeAssistant() != null) {
+    override fun checkContext() = require(getKHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'Hassio.' from a KHomeAssistantContext instead of using HassioDomain directly.""".trimMargin()
     }

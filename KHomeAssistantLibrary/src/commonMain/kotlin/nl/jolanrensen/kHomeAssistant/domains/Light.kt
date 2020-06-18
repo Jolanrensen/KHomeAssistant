@@ -21,10 +21,10 @@ import kotlin.reflect.KProperty
  *
  * https://www.home-assistant.io/integrations/light/
  * */
-class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.Entity> {
+class Light(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Light.Entity> {
     override val domainName = "light"
 
-    override fun checkContext() = require(kHomeAssistant() != null) {
+    override fun checkContext() = require(getKHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'Light.' from a KHomeAssistantContext instead of using Light directly.""".trimMargin()
     }
@@ -47,7 +47,7 @@ class Light(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Light.E
         SUPPORT_WHITE_VALUE(128)
     }
 
-    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = kHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
 
     @OptIn(ExperimentalStdlibApi::class)
     class Entity(

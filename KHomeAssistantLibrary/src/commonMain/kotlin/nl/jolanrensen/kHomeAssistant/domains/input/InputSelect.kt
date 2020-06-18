@@ -20,10 +20,10 @@ import kotlin.reflect.KProperty
 /**
  * https://www.home-assistant.io/integrations/input_select/
  * */
-class InputSelect(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<InputSelect.Entity> {
+class InputSelect(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<InputSelect.Entity> {
     override val domainName = "input_select"
 
-    override fun checkContext() = require(kHomeAssistant() != null) {
+    override fun checkContext() = require(getKHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'InputSelect.' from a KHomeAssistantContext instead of using InputSelect directly.""".trimMargin()
     }
@@ -35,7 +35,7 @@ class InputSelect(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<I
     /** Reload input_select configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = kHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
 
     class Entity(
         override val getKHomeAssistant: () -> KHomeAssistant?,

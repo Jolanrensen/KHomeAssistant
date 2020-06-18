@@ -12,10 +12,10 @@ import kotlin.reflect.KProperty
 /**
  * https://www.home-assistant.io/integrations/input_boolean/
  */
-class InputBoolean(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<InputBoolean.Entity> {
+class InputBoolean(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<InputBoolean.Entity> {
     override val domainName = "input_boolean"
 
-    override fun checkContext() = require(kHomeAssistant() != null) {
+    override fun checkContext() = require(getKHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'InputBoolean.' from a KHomeAssistantContext instead of using InputBoolean directly.""".trimMargin()
     }
@@ -31,7 +31,7 @@ class InputBoolean(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<
 
     override fun Entity(name: String) =
         Entity(
-            getKHomeAssistant = kHomeAssistant,
+            getKHomeAssistant = getKHomeAssistant,
             name = name
         )
 

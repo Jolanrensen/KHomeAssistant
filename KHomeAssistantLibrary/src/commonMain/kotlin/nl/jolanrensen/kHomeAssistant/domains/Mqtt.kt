@@ -10,10 +10,10 @@ import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 /**
  * https://www.home-assistant.io/docs/mqtt/service/
  */
-class Mqtt(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Nothing> {
+class Mqtt(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Nothing> {
     override val domainName = "mqtt"
 
-    override fun checkContext() = require(kHomeAssistant() != null) {
+    override fun checkContext() = require(getKHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'Mqtt.' from a KHomeAssistantContext instead of using Mqtt directly.""".trimMargin()
     }

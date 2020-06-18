@@ -25,10 +25,10 @@ import kotlin.math.max
  *
  * TODO get attributes from here https://github.com/home-assistant/core/blob/dev/homeassistant/components/media_player/__init__.py
  * */
-class MediaPlayer(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<MediaPlayer.Entity> {
+class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<MediaPlayer.Entity> {
     override val domainName = "media_player"
 
-    override fun checkContext() = require(kHomeAssistant() != null) {
+    override fun checkContext() = require(getKHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'MediaPlayer.' from a KHomeAssistantContext instead of using MediaPlayer directly.""".trimMargin()
     }
@@ -71,7 +71,7 @@ class MediaPlayer(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<M
         SUPPORT_SELECT_SOUND_MODE(65536)
     }
 
-    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = kHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
 
     @Suppress("RemoveExplicitTypeArguments")
     @OptIn(ExperimentalStdlibApi::class)

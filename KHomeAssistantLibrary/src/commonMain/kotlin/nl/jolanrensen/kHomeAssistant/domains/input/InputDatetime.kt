@@ -20,10 +20,10 @@ import kotlin.reflect.KProperty
  * Input Datetime
  * https://www.home-assistant.io/integrations/input_datetime
  * */
-class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<InputDatetime.Entity> {
+class InputDatetime(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<InputDatetime.Entity> {
     override val domainName = "input_datetime"
 
-    override fun checkContext() = require(kHomeAssistant() != null) {
+    override fun checkContext() = require(getKHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'InputDatetime.' from a KHomeAssistantContext instead of using InputDatetime directly.""".trimMargin()
     }
@@ -35,7 +35,7 @@ class InputDatetime(override var kHomeAssistant: () -> KHomeAssistant?) : Domain
     /** Reload input_datetime configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String) = Entity(getKHomeAssistant = kHomeAssistant, name = name)
+    override fun Entity(name: String) = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
 
     class State(val value: String) {
         /** Only use if `has_time == true && has_date == false`. */

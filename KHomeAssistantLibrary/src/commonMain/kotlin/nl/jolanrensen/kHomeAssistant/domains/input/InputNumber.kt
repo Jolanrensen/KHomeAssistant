@@ -15,10 +15,10 @@ import kotlin.reflect.KProperty
 /**
  * https://www.home-assistant.io/integrations/input_number/
  */
-class InputNumber(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<InputNumber.Entity> {
+class InputNumber(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<InputNumber.Entity> {
     override val domainName = "input_number"
 
-    override fun checkContext() = require(kHomeAssistant() != null) {
+    override fun checkContext() = require(getKHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'InputNumber.' from a KHomeAssistantContext instead of using InputNumber directly.""".trimMargin()
     }
@@ -30,7 +30,7 @@ class InputNumber(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<I
     /** Reload input_number configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String) = Entity(getKHomeAssistant = kHomeAssistant, name = name)
+    override fun Entity(name: String) = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
 
     enum class InputNumberMode(val stateValue: String) {
         BOX("box"), SLIDER("slider")

@@ -2,10 +2,13 @@ import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.*
+import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryBatterySensor
+import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryBatterySensorState
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
 import nl.jolanrensen.kHomeAssistant.entities.turnOn
+import sun.management.Sensor
 
 
 class BedroomLights : Automation() {
@@ -39,6 +42,17 @@ class TestAutomation : Automation() {
     val onlyTime = InputDatetime.Entity("only_time")
 
     override suspend fun initialize() {
+        val test = BinaryBatterySensor["test"]
+        when (test.state) {
+            BinaryBatterySensorState.LOW -> TODO()
+            BinaryBatterySensorState.NORMAL -> TODO()
+        }
+
+
+        val otherTest by InputDatetime
+
+        val a: InputDatetime.State = otherTest.state
+
 //        Mqtt.publish(
 //            topic = "cmnd/sonoff1/POWER",
 //            payload = "toggle",
@@ -67,6 +81,14 @@ class TestAutomation : Automation() {
     }
 }
 
+
+//class MotionLights : Automation() {
+//
+//    override suspend fun initialize(): {
+//        Sensor
+//    }
+//}
+
 val kHomeAssistant = KHomeAssistant(
     host = "home.jolanrensen.nl",
     port = 8123,
@@ -76,10 +98,8 @@ val kHomeAssistant = KHomeAssistant(
     automations = listOf(TestAutomation())
 )
 
-fun main() {
-    runBlocking {
-        println("running!")
-        kHomeAssistant.run()
-    }
-
+fun main() = runBlocking {
+    println("running!")
+    kHomeAssistant.run()
 }
+

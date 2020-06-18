@@ -16,10 +16,10 @@ import kotlin.reflect.KProperty
  * Input Text domain
  * https://www.home-assistant.io/integrations/input_text/
  * */
-class InputText(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<InputText.Entity> {
+class InputText(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<InputText.Entity> {
     override val domainName = "input_text"
 
-    override fun checkContext() = require(kHomeAssistant() != null) {
+    override fun checkContext() = require(getKHomeAssistant() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'InputText.' from a KHomeAssistantContext instead of using InputText directly.""".trimMargin()
     }
@@ -31,7 +31,7 @@ class InputText(override var kHomeAssistant: () -> KHomeAssistant?) : Domain<Inp
     /** Reload input_text configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String) = Entity(getKHomeAssistant = kHomeAssistant, name = name)
+    override fun Entity(name: String) = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
 
     enum class InputTextMode(val stateValue: String) {
         TEXT("text"), PASSWORD("password")
