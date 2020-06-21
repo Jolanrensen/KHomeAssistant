@@ -2,9 +2,11 @@ package nl.jolanrensen.kHomeAssistant.domains.sensors
 
 import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.entities.onAttributeChangedTo
 
 /** Battery sensor. The type of state will be a Float and the unit_of_measurement will be '%'. */
-class BatterySensor(override var getKHomeAssistant: () -> KHomeAssistant?) : AbstractSensor<Float, BatterySensor.Entity>() {
+class BatterySensor(override var getKHomeAssistant: () -> KHomeAssistant?) :
+    AbstractSensor<Float, BatterySensor.Entity>() {
 
     /** Making sure BatterySensor acts as a singleton. */
     override fun equals(other: Any?) = other is BatterySensor
@@ -37,6 +39,12 @@ class BatterySensor(override var getKHomeAssistant: () -> KHomeAssistant?) : Abs
 
         /** Can be for instance 'AC', or 'N/A'. */
         val charger_type: String by attrsDelegate()
+
+        fun onStartedCharging(callback: suspend Entity.() -> Unit): Entity =
+            onAttributeChangedTo(::is_charging, true, callback)
+
+        fun onStoppedCharging(callback: suspend Entity.() -> Unit): Entity =
+            onAttributeChangedTo(::is_charging, false, callback)
     }
 }
 

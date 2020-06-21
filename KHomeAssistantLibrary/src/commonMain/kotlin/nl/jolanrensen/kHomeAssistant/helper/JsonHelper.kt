@@ -96,3 +96,6 @@ fun <T : Any?> JsonElement.cast(type: KType): T = try {
 } catch (e: Exception) {
     throw IllegalArgumentException("Couldn't cast $this to type $type", e)
 }
+
+operator fun JsonArray.plus(other: JsonArray) = JsonArray(content + other.content)
+operator fun JsonObject.plus(other: JsonObject) = JsonObject(content + other.content)

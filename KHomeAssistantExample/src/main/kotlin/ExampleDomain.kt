@@ -1,10 +1,8 @@
-
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
@@ -80,13 +78,13 @@ class Example(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ex
             val attributes = rawAttributes
 
             // Don't forget to check the data if you want more redundancy, otherwise just add it to a Map<String, JsonElement> or JsonObject
-            val data = hashMapOf<String, JsonElement>().apply {
+            val data = json {
 
                 // if someValue isn't null, check and add it to the data
                 someValue?.let {
                     if (it !in 0..100)
                         throw IllegalArgumentException("incorrect someValue $it")
-                    this["some_value"] = JsonPrimitive(it)
+                    "some_value" to it
                 }
 
                 // same story for the other value
@@ -94,9 +92,9 @@ class Example(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ex
 
                     // you can also perform checks with the attributes
                     // for instance checking whether some string is supported by the device
-                    if (it.isEmpty() || it !in some_other_attribute!!)
+                    if (it.isEmpty() || it !in some_other_attribute)
                         throw IllegalArgumentException("incorrect someOtherValue $it")
-                    this["some_other_value"] = JsonPrimitive(it)
+                    "some_other_value" to it
                 }
             }
             callService(

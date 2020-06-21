@@ -2,8 +2,6 @@ import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.*
-import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BatteryBinarySensor
-import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryBatterySensorState
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
@@ -41,16 +39,12 @@ class TestAutomation : Automation() {
     val onlyTime = InputDatetime.Entity("only_time")
 
     override suspend fun initialize() {
-        val test = BatteryBinarySensor["test"]
-        when (test.state) {
-            BinaryBatterySensorState.LOW -> TODO()
-            BinaryBatterySensorState.NORMAL -> TODO()
-        }
 
-
-        val otherTest by InputDatetime
-
-        val a: InputDatetime.State = otherTest.state
+        Notify.notify(
+            serviceName = "mobile_app_pixel_2_xl",
+            message = "Kiekeboe",
+            title = "tooo"
+        )
 
 //        Mqtt.publish(
 //            topic = "cmnd/sonoff1/POWER",

@@ -9,8 +9,8 @@ import nl.jolanrensen.kHomeAssistant.core.StateListener
 import nl.jolanrensen.kHomeAssistant.runAt
 
 fun <S : Any, E : BaseEntity<S>> E.onStateChangedToNot(
-        newState: S,
-        callback: suspend E.() -> Unit
+    newState: S,
+    callback: suspend E.() -> Unit
 ): E {
     onStateChanged {
         if (state != newState)
@@ -20,8 +20,8 @@ fun <S : Any, E : BaseEntity<S>> E.onStateChangedToNot(
 }
 
 fun <S : Any, E : BaseEntity<S>> E.onStateChangedTo(
-        newState: S,
-        callback: suspend E.() -> Unit
+    newState: S,
+    callback: suspend E.() -> Unit
 ): E {
     onStateChanged {
         if (state == newState)
@@ -31,26 +31,26 @@ fun <S : Any, E : BaseEntity<S>> E.onStateChangedTo(
 }
 
 fun <S : Any, E : BaseEntity<S>> E.onStateChanged(
-        callback: suspend E.() -> Unit
+    callback: suspend E.() -> Unit
 ): E {
     checkEntityExists()
     getKHomeAssistant()!!.stateListeners
-            .getOrPut(entityID) { hashSetOf() }
-            .add(StateListener({ oldState, newState ->
-                if (oldState.state != newState.state)
-                    callback()
-            }))
+        .getOrPut(entityID) { hashSetOf() }
+        .add(StateListener({ oldState, newState ->
+            if (oldState.state != newState.state)
+                callback()
+        }))
     return this
 }
 
 suspend fun <S : Any, E : BaseEntity<S>> E.suspendUntilStateChangedTo(
-        newState: S,
-        timeout: TimeSpan = 1.seconds
+    newState: S,
+    timeout: TimeSpan = 1.seconds
 ) = suspendUntilStateChanged({ it == newState }, timeout)
 
 suspend fun <S : Any, E : BaseEntity<S>> E.suspendUntilStateChanged(
-        condition: (S) -> Boolean,
-        timeout: TimeSpan = 1.seconds
+    condition: (S) -> Boolean,
+    timeout: TimeSpan = 1.seconds
 ) {
     checkEntityExists()
     if (condition(state)) return
@@ -74,8 +74,8 @@ suspend fun <S : Any, E : BaseEntity<S>> E.suspendUntilStateChanged(
     }
 
     getKHomeAssistant()!!.stateListeners
-            .getOrPut(entityID) { hashSetOf() }
-            .add(stateListener)
+        .getOrPut(entityID) { hashSetOf() }
+        .add(stateListener)
 
     continueChannel.receive()
 }

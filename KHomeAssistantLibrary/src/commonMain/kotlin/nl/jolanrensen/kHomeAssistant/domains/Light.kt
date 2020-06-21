@@ -4,8 +4,8 @@ import com.soywiz.klock.seconds
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
 import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
@@ -278,49 +278,45 @@ class Light(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ligh
         ): ResultMessage {
             val result = callService(
                 serviceName = "turn_on",
-                data = buildMap<String, JsonElement> {
+                data = json {
                     transition?.let {
                         checkIfSupported(SUPPORT_TRANSITION)
                         if (it < 0)
                             throw IllegalArgumentException("incorrect transition $it")
-                        this["transition"] = JsonPrimitive(it)
+                        "transition" to it
                     }
                     profile?.let {
-                        this["profile"] = JsonPrimitive(it)
+                        "profile" to it
                     }
                     hs_color?.let {
                         checkIfSupported(SUPPORT_COLOR)
                         if (it.isEmpty() || it.size > 2 || it.h !in 0f..360f || it.s !in 0f..100f)
                             throw IllegalArgumentException("incorrect hs_color $it")
-                        this["hs_color"] = JsonArray(it.map { JsonPrimitive(it) })
+                        "hs_color" to JsonArray(it.map(::JsonPrimitive))
                     }
                     xy_color?.let {
                         checkIfSupported(SUPPORT_COLOR)
                         if (it.isEmpty() || it.size > 2)
                             throw IllegalArgumentException("incorrect xy_color $it")
-                        this["xy_color"] = JsonArray(it.map { JsonPrimitive(it) })
+                        "xy_color" to JsonArray(it.map(::JsonPrimitive))
                     }
                     rgb_color?.let {
                         checkIfSupported(SUPPORT_COLOR)
                         if (it.isEmpty() || it.size > 3 || it.any { it !in 0..255 })
                             throw IllegalArgumentException("incorrect rgb_color $it")
-                        this["rgb_color"] = JsonArray(it.map { JsonPrimitive(it) })
+                        "rgb_color" to JsonArray(it.map(::JsonPrimitive))
                     }
                     color?.let {
                         checkIfSupported(SUPPORT_COLOR)
-                        this["rgb_color"] = JsonArray(
-                            listOf(
-                                JsonPrimitive(it.r),
-                                JsonPrimitive(it.g),
-                                JsonPrimitive(it.b)
-                            )
+                        "rgb_color" to JsonArray(
+                            listOf(it.r, it.g, it.b).map(::JsonPrimitive)
                         )
                     }
                     white_value?.let {
                         checkIfSupported(SUPPORT_WHITE_VALUE)
                         if (it !in 0..255)
                             throw IllegalArgumentException("incorrect white_value $it")
-                        this["white_value"] = JsonPrimitive(it)
+                        "white_value" to it
                     }
                     color_temp?.let {
                         checkIfSupported(SUPPORT_COLOR_TEMP)
@@ -332,53 +328,53 @@ class Light(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ligh
                         }
                         if (it !in min_mireds..max_mireds)
                             throw IllegalArgumentException("incorrect color_temp $it")
-                        this["color_temp"] = JsonPrimitive(it)
+                        "color_temp" to it
                     }
                     kelvin?.let {
                         checkIfSupported(SUPPORT_COLOR_TEMP)
                         if (it < 0)
                             throw IllegalArgumentException("incorrect kelvin $it")
-                        this["kelvin"] = JsonPrimitive(it)
+                        "kelvin" to it
                     }
                     color_name?.let {
                         checkIfSupported(SUPPORT_COLOR)
                         if (it !in Colors.colorsByName)
                             throw IllegalArgumentException("incorrect color_name $it")
-                        this["color_name"] = JsonPrimitive(it)
+                        "color_name" to it
                     }
                     brightness?.let {
                         checkIfSupported(SUPPORT_BRIGHTNESS)
                         if (it !in 0..255)
                             throw IllegalArgumentException("incorrect brightness $it")
-                        this["brightness"] = JsonPrimitive(it)
+                        "brightness" to it
                     }
                     brightness_pct?.let {
                         checkIfSupported(SUPPORT_BRIGHTNESS)
                         if (it !in 0f..100f)
                             throw IllegalArgumentException("incorrect brightness_pct $it")
-                        this["brightness_pct"] = JsonPrimitive(it)
+                        "brightness_pct" to it
                     }
                     brightness_step?.let {
                         checkIfSupported(SUPPORT_BRIGHTNESS)
                         if (it !in -255f..255f)
                             throw IllegalArgumentException("incorrect brightness_step $it")
-                        this["brightness_step"] = JsonPrimitive(it)
+                        "brightness_step" to it
                     }
                     brightness_step_pct?.let {
                         checkIfSupported(SUPPORT_BRIGHTNESS)
                         if (it !in -100f..100f)
                             throw IllegalArgumentException("incorrect brightness_step_pct $it")
-                        this["brightness_step_pct"] = JsonPrimitive(it)
+                        "brightness_step_pct" to it
                     }
                     flash?.let {
                         checkIfSupported(SUPPORT_FLASH)
-                        this["flash"] = JsonPrimitive(it.value)
+                        "flash" to it.value
                     }
                     effect?.let {
                         checkIfSupported(SUPPORT_EFFECT)
                         if (it !in effect_list)
                             throw IllegalArgumentException("incorrect effect $it")
-                        this["effect"] = JsonPrimitive(it)
+                        "effect" to it
                     }
                 }
             )
@@ -396,11 +392,11 @@ class Light(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ligh
         suspend fun turnOff(transition: Int, async: Boolean = false): ResultMessage {
             val result = callService(
                 serviceName = "turn_off",
-                data = buildMap<String, JsonElement> {
+                data = json {
                     transition.let {
                         if (it < 0)
                             throw IllegalArgumentException("incorrect transition $it")
-                        this["transition"] = JsonPrimitive(it)
+                        "transition" to it
                     }
                 }
             )

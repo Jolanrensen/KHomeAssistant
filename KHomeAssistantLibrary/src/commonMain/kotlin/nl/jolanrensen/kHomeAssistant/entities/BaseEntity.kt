@@ -3,6 +3,7 @@ package nl.jolanrensen.kHomeAssistant.entities
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
@@ -28,6 +29,7 @@ open class BaseEntity<StateType : Any>(
     open val name: String,
     open val domain: Domain<*>
 ) : HasContext {
+
 
     override val coroutineContext: CoroutineContext
         get() = getKHomeAssistant()!!.coroutineContext
@@ -169,7 +171,7 @@ open class BaseEntity<StateType : Any>(
     suspend fun callService(
         serviceDomain: Domain<*>,
         serviceName: String,
-        data: Map<String, JsonElement> = mapOf(),
+        data: JsonObject = json { },
         doEntityCheck: Boolean = true
     ): ResultMessage {
         if (doEntityCheck) checkEntityExists()
@@ -183,7 +185,7 @@ open class BaseEntity<StateType : Any>(
 
     suspend fun callService(
         serviceName: String,
-        data: Map<String, JsonElement> = mapOf(),
+        data: JsonObject = json { },
         doEntityCheck: Boolean = true
     ): ResultMessage {
         if (doEntityCheck) checkEntityExists()
@@ -194,6 +196,8 @@ open class BaseEntity<StateType : Any>(
         )
     }
 
+    /** Entity ID as defined in Home Assistant.
+     * Like "light.light_name". */
     val entityID: String
         get() = "${domain.domainName}.$name"
 
@@ -210,6 +214,26 @@ open class BaseEntity<StateType : Any>(
         .toString()
         .run { subSequence(1, length - 1) }
     }\n}"
+
+    /** An entity is defined by its domain and name. */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as BaseEntity<*>
+
+        if (name != other.name) return false
+        if (domain != other.domain) return false
+
+        return true
+    }
+
+    /** An entity is defined by its domain and name. */
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + domain.hashCode()
+        return result
+    }
 
 }
 
@@ -244,3 +268,20 @@ inline operator fun <S : Any, E : BaseEntity<S>> E.invoke(callback: E.() -> Unit
  * */
 inline operator fun <S : Any, E : BaseEntity<S>> Iterable<E>.invoke(callback: E.() -> Unit): Iterable<E> =
     apply { forEach(callback) }
+
+//suspend fun <S : Any, E : BaseEntity<S>> Iterable<E>.callService(
+//    serviceDomain: Domain<*>,
+//    serviceName: String,
+//    data: JsonObject = mapOf(),
+//    doEntityCheck: Boolean = true
+//): ResultMessage {
+//    if (doEntityCheck) forEach { it.checkEntityExists() }
+//
+//    return serviceDomain.getKHomeAssistant()!!.callService(
+//        serviceDomain = serviceDomain,
+//        serviceName = serviceName,
+//        data = data + json {
+//
+//        }
+//    )
+//}

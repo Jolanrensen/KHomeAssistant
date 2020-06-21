@@ -3,6 +3,9 @@ package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryBatterySensorState.LOW
+import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryBatterySensorState.NORMAL
+import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
 class BatteryBinarySensor(override var getKHomeAssistant: () -> KHomeAssistant?) :
     AbstractBinarySensor<BinaryBatterySensorState, BatteryBinarySensor.Entity>() {
@@ -26,6 +29,13 @@ class BatteryBinarySensor(override var getKHomeAssistant: () -> KHomeAssistant?)
             OnOff.values()
                 .find { it.stateValue == stateValue }
                 ?.let { BinaryBatterySensorState.parseState(it) }
+
+
+        fun onLowLevel(callback: suspend Entity.() -> Unit): Entity =
+            onStateChangedTo(LOW, callback)
+
+        fun onNormalLevel(callback: suspend Entity.() -> Unit): Entity =
+            onStateChangedTo(NORMAL, callback)
     }
 }
 

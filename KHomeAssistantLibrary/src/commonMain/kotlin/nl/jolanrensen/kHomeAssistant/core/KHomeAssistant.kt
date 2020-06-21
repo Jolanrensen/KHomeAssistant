@@ -17,6 +17,7 @@ import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
@@ -41,23 +42,23 @@ import kotlin.time.minutes
  */
 @OptIn(ExperimentalTime::class)
 class KHomeAssistant(
-        /** The address on which to reach your Home Assistant server. Like "https://myHomeAssistant.com". */
-        val host: String,
+    /** The address on which to reach your Home Assistant server. Like "https://myHomeAssistant.com". */
+    val host: String,
 
-        /** The port for your Home Assistant (API), usually 8123. */
-        val port: Int = 8123,
+    /** The port for your Home Assistant (API), usually 8123. */
+    val port: Int = 8123,
 
-        /** The Long-lived Access Token that can be generated from your Home Assistant profile settings. */
-        val accessToken: String,
+    /** The Long-lived Access Token that can be generated from your Home Assistant profile settings. */
+    val accessToken: String,
 
-        /** Whether to connect over SSL or not (https or http). */
-        val secure: Boolean = false,
+    /** Whether to connect over SSL or not (https or http). */
+    val secure: Boolean = false,
 
-        /** If enabled, debug messages will be printed. */
-        val debug: Boolean = false,
+    /** If enabled, debug messages will be printed. */
+    val debug: Boolean = false,
 
-        /** A collection of [Automation] instances that should be run by [KHomeAssistant]. */
-        val automations: Collection<Automation>
+    /** A collection of [Automation] instances that should be run by [KHomeAssistant]. */
+    val automations: Collection<Automation>
 ) : HasContext {
 
     /**
@@ -81,20 +82,20 @@ class KHomeAssistant(
      * @param automation the automation [Automation.initialize] function defining the automation
      */
     constructor(
-            host: String,
-            port: Int = 8123,
-            accessToken: String,
-            secure: Boolean = false,
-            debug: Boolean = false,
-            automationName: String = "Single Automation",
-            automation: suspend Automation.() -> Unit
+        host: String,
+        port: Int = 8123,
+        accessToken: String,
+        secure: Boolean = false,
+        debug: Boolean = false,
+        automationName: String = "Single Automation",
+        automation: suspend Automation.() -> Unit
     ) : this(
-            host = host,
-            port = port,
-            accessToken = accessToken,
-            secure = secure,
-            debug = debug,
-            automations = listOf(automation(automationName, automation))
+        host = host,
+        port = port,
+        accessToken = accessToken,
+        secure = secure,
+        debug = debug,
+        automations = listOf(automation(automationName, automation))
     )
 
     /** The function providing the kHomeAssistant instace as context to other objects. */
@@ -169,15 +170,15 @@ class KHomeAssistant(
     suspend fun run() {
         println("KHomeAssistant started running at ${DateTime.nowLocal().utc}")
         if (secure) WebsocketsHttpClient.httpClient.wss(
-                host = host,
-                port = port,
-                path = "/api/websocket",
-                block = runOnWebsocket
+            host = host,
+            port = port,
+            path = "/api/websocket",
+            block = runOnWebsocket
         ) else WebsocketsHttpClient.httpClient.ws(
-                host = host,
-                port = port,
-                path = "/api/websocket",
-                block = runOnWebsocket
+            host = host,
+            port = port,
+            path = "/api/websocket",
+            block = runOnWebsocket
         )
     }
 
@@ -222,8 +223,8 @@ class KHomeAssistant(
     /** Authenticate with Home Assistant using the provided data. */
     private suspend fun DefaultClientWebSocketSession.authenticate() {
         var response: AuthResponse = fromJson(
-                (incoming.receive() as Frame.Text).readText()
-                        .also { debugPrintln(it) }
+            (incoming.receive() as Frame.Text).readText()
+                .also { debugPrintln(it) }
         )
 
         haVersion = response.ha_version
@@ -231,8 +232,8 @@ class KHomeAssistant(
         if (response.isAuthRequired) {
             send(AuthMessage(access_token = accessToken).toJson())
             response = fromJson(
-                    (incoming.receive() as Frame.Text).readText()
-                            .also { debugPrintln(it) }
+                (incoming.receive() as Frame.Text).readText()
+                    .also { debugPrintln(it) }
             )
         }
         if (!response.isAuthOk) {
@@ -349,11 +350,11 @@ class KHomeAssistant(
     /** Register to Home Assistant's event bus. */
     private suspend fun registerToEventBus() {
         val res: ResultMessageBase = sendMessage(
-                SubscribeToEventMessage().also { debugPrintln(it) }
+            SubscribeToEventMessage().also { debugPrintln(it) }
         )
         debugPrintln(
-                if (res.success) "Successfully registered to event bus!"
-                else "Error registering to event bus: ${res.result}"
+            if (res.success) "Successfully registered to event bus!"
+            else "Error registering to event bus: ${res.result}"
         )
     }
 
@@ -420,17 +421,17 @@ class KHomeAssistant(
      * @return the result in form of a [ResultMessage]
      * */
     suspend fun callService(
-            entity: BaseEntity<*>,
-            serviceDomain: Domain<*>,
-            serviceName: String,
-            data: Map<String, JsonElement> = mapOf()
+        entity: BaseEntity<*>,
+        serviceDomain: Domain<*>,
+        serviceName: String,
+        data: JsonObject = json { }
     ) =
-            callService(
-                    serviceDomain = serviceDomain.domainName,
-                    serviceName = serviceName,
-                    entityID = entity.entityID,
-                    data = data
-            )
+        callService(
+            serviceDomain = serviceDomain.domainName,
+            serviceName = serviceName,
+            entityID = entity.entityID,
+            data = data
+        )
 
 
     /**
@@ -440,12 +441,12 @@ class KHomeAssistant(
      * @param data the optional [JsonObject] or [Map]<[String], [JsonElement]> containing the extra data for the service
      * @return the result in form of a [ResultMessage]
      * */
-    suspend fun callService(serviceDomain: Domain<*>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
-            callService(
-                    serviceDomain = serviceDomain.domainName,
-                    serviceName = serviceName,
-                    data = data
-            )
+    suspend fun callService(serviceDomain: Domain<*>, serviceName: String, data: JsonObject = json { }) =
+        callService(
+            serviceDomain = serviceDomain.domainName,
+            serviceName = serviceName,
+            data = data
+        )
 
     /**
      * Calls the given service on Home Assistant.
@@ -454,13 +455,13 @@ class KHomeAssistant(
      * @param data the optional [JsonObject] or [Map]<[String], [JsonElement]> containing the extra data for the service
      * @return the result in form of a [ResultMessage]
      * */
-    suspend fun callService(entity: BaseEntity<*>, serviceName: String, data: Map<String, JsonElement> = mapOf()) =
-            callService(
-                    serviceDomain = entity.domain.domainName,
-                    entityID = entity.entityID,
-                    serviceName = serviceName,
-                    data = data
-            )
+    suspend fun callService(entity: BaseEntity<*>, serviceName: String, data: JsonObject = json { }) =
+        callService(
+            serviceDomain = entity.domain.domainName,
+            entityID = entity.entityID,
+            serviceName = serviceName,
+            data = data
+        )
 
     /**
      * Calls the given service on Home Assistant.
@@ -471,22 +472,22 @@ class KHomeAssistant(
      * @return the result in form of a [ResultMessage]
      * */
     suspend fun callService(
-            serviceDomain: String,
-            serviceName: String,
-            entityID: String? = null,
-            data: Map<String, JsonElement> = mapOf()
+        serviceDomain: String,
+        serviceName: String,
+        entityID: String? = null,
+        data: JsonObject = json { }
     ): ResultMessage =
-            sendMessage<CallServiceMessage, ResultMessageBase>(
-                    CallServiceMessage(
-                            domain = serviceDomain,
-                            service = serviceName,
-                            service_data = JsonObject(
-                                    entityID?.let {
-                                        data + ("entity_id" to JsonPrimitive(it))
-                                    } ?: data
-                            )
-                    ).also { debugPrintln(it) }
+        sendMessage<CallServiceMessage, ResultMessageBase>(
+            CallServiceMessage(
+                domain = serviceDomain,
+                service = serviceName,
+                service_data = JsonObject(
+                    entityID?.let {
+                        data + ("entity_id" to JsonPrimitive(it))
+                    } ?: data
+                )
             ).also { debugPrintln(it) }
+        ).also { debugPrintln(it) }
 
     /**
      * Return the raw attributes of the given entity from Home Assistant.
@@ -496,12 +497,12 @@ class KHomeAssistant(
      * @throws EntityNotInHassException if the entity provided cannot be found in Home Assistant
      */
     fun <EntityType : BaseEntity<*>> getAttributes(entity: EntityType): JsonObject =
-            try {
-                if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
-                cache[entity.entityID]!!.attributes
-            } catch (e: Exception) {
-                throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
-            }
+        try {
+            if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
+            cache[entity.entityID]!!.attributes
+        } catch (e: Exception) {
+            throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
+        }
 
     /**
      * Return the state of the given entity from Home Assistant.
@@ -525,8 +526,8 @@ class KHomeAssistant(
             entity.parseStateValue(stateValue)!!
         } catch (e: Exception) {
             throw Exception(
-                    "Could not parse state value \"$stateValue\" to entity with domain ${entity.domain::class.simpleName}, have you overridden the parseStateValue() function or are you perhaps querying the wrong entity?",
-                    e
+                "Could not parse state value \"$stateValue\" to entity with domain ${entity.domain::class.simpleName}, have you overridden the parseStateValue() function or are you perhaps querying the wrong entity?",
+                e
             )
         }
     }

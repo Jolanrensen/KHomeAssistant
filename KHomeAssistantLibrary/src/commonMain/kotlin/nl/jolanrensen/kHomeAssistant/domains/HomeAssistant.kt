@@ -1,6 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.helper.GeoPoint
@@ -35,10 +36,10 @@ class HomeAssistant(override var getKHomeAssistant: () -> KHomeAssistant?) : Dom
     /** Update the location of the Home Assistant default zone (usually “Home”). */
     suspend fun setLocation(latitude: Float, longitude: Float) = callService(
         serviceName = "set_location",
-        data = mapOf(
-            "latitude" to JsonPrimitive(latitude),
-            "longitude" to JsonPrimitive(longitude)
-        )
+        data = json {
+            "latitude" to latitude
+            "longitude" to longitude
+        }
     )
 
     /** Update the location of the Home Assistant default zone (usually “Home”). */

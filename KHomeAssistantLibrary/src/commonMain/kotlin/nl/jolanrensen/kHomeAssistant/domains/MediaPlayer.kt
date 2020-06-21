@@ -4,8 +4,7 @@ import com.soywiz.klock.DateTime
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.parseUtc
 import com.soywiz.klock.seconds
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
@@ -302,11 +301,11 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
             checkIfSupported(SUPPORT_VOLUME_SET)
             val result = callService(
                 serviceName = "volume_set",
-                data = buildMap<String, JsonElement> {
+                data = json {
                     volumeLevel.let {
                         if (it !in 0f..1f)
                             throw IllegalArgumentException("incorrect volumeLevel $it")
-                        this["volume_level"] = JsonPrimitive(it)
+                        "volume_level" to it
                     }
                 }
             )
@@ -320,8 +319,8 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
             checkIfSupported(SUPPORT_VOLUME_MUTE)
             val result = callService(
                 serviceName = "volume_mute",
-                data = buildMap<String, JsonPrimitive> {
-                    this["is_volume_muted"] = JsonPrimitive(mute)
+                data = json {
+                    "is_volume_muted" to mute
                 }
             )
 
@@ -388,8 +387,8 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
             checkIfSupported(SUPPORT_SEEK)
             val result = callService(
                 serviceName = "media_seek",
-                data = buildMap<String, JsonElement> {
-                    this["seek_position"] = JsonPrimitive(seekPosition.seconds)
+                data = json {
+                    "seek_position" to seekPosition.seconds
                 }
             )
 
@@ -402,9 +401,9 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
             checkIfSupported(SUPPORT_PLAY_MEDIA)
             return callService(
                 serviceName = "play_media",
-                data = buildMap<String, JsonElement> {
-                    this["media_content_id"] = JsonPrimitive(mediaContentId)
-                    this["media_content_type"] = JsonPrimitive(mediaContentType)
+                data = json {
+                    "media_content_id" to mediaContentId
+                    "media_content_type" to mediaContentType
                 }
             )
         }
@@ -427,11 +426,11 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
             checkIfSupported(SUPPORT_SELECT_SOURCE)
             val result = callService(
                 serviceName = "select_source",
-                data = buildMap<String, JsonElement> {
+                data = json {
                     source.let {
                         if (it !in source_list)
                             throw IllegalArgumentException("incorrect source $it")
-                        this["source"] = JsonPrimitive(it)
+                        "source" to it
                     }
                 }
             )
@@ -443,11 +442,11 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
             checkIfSupported(SUPPORT_SELECT_SOUND_MODE)
             val result = callService(
                 serviceName = "select_sound_mode",
-                data = buildMap<String, JsonElement> {
+                data = json {
                     soundMode.let {
                         if (it !in sound_mode_list)
                             throw IllegalArgumentException("incorrect sound mode $it")
-                        this["sound_mode"] = JsonPrimitive(it)
+                        "sound_mode" to it
                     }
                 }
             )
@@ -459,9 +458,9 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
             checkIfSupported(SUPPORT_SHUFFLE_SET)
             val result = callService(
                 serviceName = "shuffle_set",
-                data = buildMap<String, JsonElement> {
+                data = json {
                     shuffle.let {
-                        this["shuffle"] = JsonPrimitive(it)
+                        "shuffle" to it
                     }
                 }
             )

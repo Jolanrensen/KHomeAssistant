@@ -3,6 +3,8 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
@@ -72,7 +74,7 @@ interface Domain<out E : BaseEntity<*>> {
      * @return a [ResultMessage] containing the results of the call
      * @throws IllegalArgumentException if `kHomeAssistant() == null`
      * */
-    suspend fun callService(serviceName: String, data: Map<String, JsonElement> = mapOf()): ResultMessage {
+    suspend fun callService(serviceName: String, data: JsonObject = json { }): ResultMessage {
         checkContext()
         return getKHomeAssistant()!!.callService(
             serviceDomain = this,
@@ -94,7 +96,8 @@ interface Domain<out E : BaseEntity<*>> {
  * @param callback the block of code that is executed on each of the entities with the entity as this
  * @return a list of the instances of the entities
  * */
-inline fun <E : BaseEntity<*>> Domain<E>.Entities(vararg names: String, callback: E.() -> Unit): List<E> = Entities(*names).apply { forEach(callback) }
+inline fun <E : BaseEntity<*>> Domain<E>.Entities(vararg names: String, callback: E.() -> Unit): List<E> =
+    Entities(*names).apply { forEach(callback) }
 
 /** Shorthand for [apply], allows for DSL-like behavior on a newly instanced entity.
  * For example:
@@ -140,6 +143,20 @@ fun HasContext.Domain(domainName: String): Domain<BaseEntity<String>> =
             }
 
         override fun checkContext() = Unit // context is always present
+
+        /** Making sure Domain acts as a singleton. */
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other == null || this::class != other::class) return false
+
+            other as Domain<*>
+
+            if (domainName != other.domainName) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int = domainName.hashCode()
     }
 
 /**

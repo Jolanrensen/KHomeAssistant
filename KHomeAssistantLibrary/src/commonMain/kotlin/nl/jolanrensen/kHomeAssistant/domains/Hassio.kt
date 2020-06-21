@@ -1,13 +1,13 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 
 /**
  *
  */
-class Hassio(override var getKHomeAssistant: () -> KHomeAssistant? ) : Domain<Nothing> {
+class Hassio(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Nothing> {
     override val domainName = "hassio"
 
     override fun checkContext() = require(getKHomeAssistant() != null) {
@@ -25,7 +25,7 @@ class Hassio(override var getKHomeAssistant: () -> KHomeAssistant? ) : Domain<No
      */
     suspend fun addOnRestart(addOn: String) = callService(
         serviceName = "addon_restart",
-        data = mapOf("addon" to JsonPrimitive(addOn))
+        data = json { "addon" to addOn }
     )
 
     /**
@@ -34,7 +34,7 @@ class Hassio(override var getKHomeAssistant: () -> KHomeAssistant? ) : Domain<No
      */
     suspend fun addOnStart(addOn: String) = callService(
         serviceName = "addon_start",
-        data = mapOf("addon" to JsonPrimitive(addOn))
+        data = json { "addon" to addOn }
     )
 
     /**
@@ -43,7 +43,7 @@ class Hassio(override var getKHomeAssistant: () -> KHomeAssistant? ) : Domain<No
      */
     suspend fun addOnStdin(addOn: String) = callService(
         serviceName = "addon_stdin",
-        data = mapOf("addon" to JsonPrimitive(addOn))
+        data = json { "addon" to addOn }
     )
 
     /**
@@ -52,7 +52,7 @@ class Hassio(override var getKHomeAssistant: () -> KHomeAssistant? ) : Domain<No
      */
     suspend fun addOnStop(addOn: String) = callService(
         serviceName = "addon_stop",
-        data = mapOf("addon" to JsonPrimitive(addOn))
+        data = json { "addon" to addOn }
     )
 
     /** Reboot the host system. */

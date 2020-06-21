@@ -1,7 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains.input
 
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.json
 import kotlinx.serialization.json.jsonArray
 import nl.jolanrensen.kHomeAssistant.HasContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
@@ -118,11 +117,11 @@ class InputSelect(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
         suspend fun setOptions(options: List<String>, async: Boolean = false): ResultMessage {
             val result = callService(
                 serviceName = "set_options",
-                data = buildMap<String, JsonElement> {
+                data = json {
                     options.let {
                         val entityOptions = this@Entity.options
                         if (!options.contentEquals(entityOptions)) {
-                            this["options"] = jsonArray {
+                            "options" to jsonArray {
                                 options.forEach { +it }
                             }
                         }
@@ -142,11 +141,11 @@ class InputSelect(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
         suspend fun selectOption(option: String, async: Boolean = false): ResultMessage {
             val result = callService(
                 serviceName = "select_option",
-                data = buildMap<String, JsonElement> {
+                data = json {
                     option.let {
-                        if (it !in options!!)
+                        if (it !in options)
                             throw IllegalArgumentException("incorrect value $it")
-                        this["option"] = JsonPrimitive(option)
+                        "option" to option
                     }
                 }
             )
