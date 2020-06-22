@@ -34,7 +34,7 @@ class MotionBinarySensor(override var getKHomeAssistant: () -> KHomeAssistant?) 
         fun onMotionDetected(callback: suspend Entity.() -> Unit): Entity =
             onStateChangedTo(MOTION, callback)
 
-        fun onClear(callback: suspend Entity.() -> Unit): Entity =
+        fun onTurnedClear(callback: suspend Entity.() -> Unit): Entity =
             onStateChangedTo(CLEAR, callback)
     }
 }

@@ -31,10 +31,10 @@ class MovingBinarySensor(override var getKHomeAssistant: () -> KHomeAssistant?) 
                 ?.let { BinaryMovingSensorState.parseState(it) }
 
 
-        fun onMoving(callback: suspend Entity.() -> Unit): Entity =
+        fun onStartedMoving(callback: suspend Entity.() -> Unit): Entity =
             onStateChangedTo(MOVING, callback)
 
-        fun onStopped(callback: suspend Entity.() -> Unit): Entity =
+        fun onStoppedMoving(callback: suspend Entity.() -> Unit): Entity =
             onStateChangedTo(STOPPED, callback)
     }
 }

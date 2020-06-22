@@ -1,18 +1,16 @@
 import com.soywiz.klock.minutes
 import com.soywiz.klock.seconds
 import com.soywiz.korio.async.delay
+import examples.Battery
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
-import nl.jolanrensen.kHomeAssistant.Automation
+import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.*
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.MotionBinarySensor
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
 import nl.jolanrensen.kHomeAssistant.entities.*
-import nl.jolanrensen.kHomeAssistant.runAt
-import nl.jolanrensen.kHomeAssistant.runEveryDayAtSunrise
-import nl.jolanrensen.kHomeAssistant.runIn
 import java.util.*
 
 
@@ -38,115 +36,6 @@ class BedroomLights : Automation() {
         }
     }
 }
-
-class OutsideLights : Automation() {
-
-    // TODO add scenes
-    val offScene = Domain("scene")["off_scene"]
-    val onScene = Domain("scene")["on_scene"]
-
-    override suspend fun initialize() {
-        runEveryDayAtSunrise {
-            // TODO
-            offScene.callService("turn_on")
-        }
-
-        // TODO maybe add an "offset" option to sunrise/-set etc
-        runAt(
-            getNextLocalExecutionTime = { sun.next_setting.local - 15.minutes },
-            whenToUpdate = { update -> sun.onAttributeChanged(sun::next_setting) { update() } }
-        ) {
-            onScene.callService("turn_on")
-        }
-
-    }
-}
-
-class MotionLights : Automation() {
-
-    private val driveLight = Light["drive"]
-    private val driveSensor = MotionBinarySensor["drive"]
-
-    override suspend fun initialize() {
-        driveSensor.onMotionDetected {
-            if (sun.isDown) {
-                driveLight.turnOn()
-                runIn(60.seconds) { driveLight.turnOff() }
-            }
-        }
-    }
-}
-
-class FlashyMotionLights : Automation() {
-
-    private val livingRoomLight = Light["living_room"]
-    private val driveLight = Light["drive"]
-    private val driveSensor = MotionBinarySensor["drive"]
-
-    override suspend fun initialize() {
-        driveSensor.onMotionDetected {
-            if (sun.isDown) {
-                driveLight.turnOn()
-                runIn(60.seconds) { driveLight.turnOff() }
-
-                flashWarning()
-            }
-        }
-    }
-
-    private suspend fun flashWarning() {
-        repeat(9) { // uneven number so the original state stays the same
-            livingRoomLight.toggle()
-            delay(1.seconds)
-        }
-    }
-}
-
-class Battery(private val threshold: Int, private val alwaysSend: Boolean = false) : Automation() {
-
-    override suspend fun initialize() {
-//        runEveryDayAt(hour = 6) {
-        val batteryDevices: HashSet<Pair<DefaultEntity, Int>> = hashSetOf()
-
-        for (device in kHomeAssistantInstance!!.entities) {
-            val battery = device["battery"]?.intOrNull
-                ?: device["battery_level"]?.intOrNull
-                ?: if (device["device_class"]?.contentOrNull == "battery")
-                    device.state.toIntOrNull()
-                else null
-
-            if (battery != null) {
-                batteryDevices += device to battery
-            }
-
-        }
-
-        val lowDevices: List<Pair<DefaultEntity, Int>> = batteryDevices.filter { it.second < threshold }
-
-        var message = "Battery Level Report\n\n"
-
-        if (lowDevices.isNotEmpty()) {
-            message += """The following devices are low:
-                    |${lowDevices.joinToString("\n") { it.first.entityID }}
-                    |""".trimMargin()
-        }
-
-        message += """Battery Levels:
-                |${batteryDevices.joinToString("\n") { "${it.first.entityID}: ${it.second}%" }}
-                |""".trimMargin()
-
-        if (lowDevices.isNotEmpty() || alwaysSend) {
-            Notify.notify(
-                serviceName = "mobile_app_pixel_2_xl",
-                title = "Home Assistant Battery Report",
-                message = message
-            )
-//                Notify.notify(title = "Home Assistant Battery Report", message = message)
-        }
-//        }
-    }
-}
-
 
 class TestAutomation : Automation() {
 
