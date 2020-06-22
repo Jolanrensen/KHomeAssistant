@@ -24,21 +24,29 @@ class Notify(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Not
     override fun equals(other: Any?) = other is Notify
     override fun hashCode(): Int = domainName.hashCode()
 
-    /** Send a notification.
-     * @TODO */
+    /** Send a notification. This is dependent on which service you use.
+     *
+     * @param serviceName the serviceName you use to notify, for instance "mobile_app_your_phone"
+     * @param message Body of the notification. Not optional; needs to be specified either here or in data.
+     * @param title Title of the notification. Optional.
+     * @param target Some platforms allow specifying a recipient that will receive the notification. See your platform page if it is supported. Optional.
+     * @param data On platforms that have extended functionality. See your platform page if it is supported. Optional.
+     * @return result
+     * @throws IllegalArgumentException if [message] is not present as argument or in [data].
+     * */
     suspend fun notify(
         serviceName: String,
-        message: String,
+        message: String? = null,
         title: String? = null,
         target: Array<String>? = null,
         data: JsonObject = json { }
     ): ResultMessage = callService(
         serviceName = serviceName,
         data = data + json {
-            message.let { "message" to it }
+            message?.let { "message" to it }
             title?.let { "title" to it }
             target?.let { "target" to JsonArray(target.map(::JsonPrimitive)) }
-        }
+        }.also { if ("message" !in it) throw IllegalArgumentException("'message' is a required attribute") }
     )
 
     override fun Entity(name: String): Nothing = throw DomainHasNoEntityException()

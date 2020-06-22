@@ -99,7 +99,7 @@ suspend fun HasContext.runEvery(
 suspend fun HasContext.runEveryDayAtSunrise(callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_rising.local },
-        whenToUpdate = { sun::next_rising.onChanged(sun) { it() } },
+        whenToUpdate = { update -> sun::next_rising.onChanged(sun) { update() } },
         callback = callback
     )
 
@@ -107,7 +107,7 @@ suspend fun HasContext.runEveryDayAtSunrise(callback: suspend () -> Unit) =
 suspend fun HasContext.runEveryDayAtSunset(callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_setting.local },
-        whenToUpdate = { sun::next_setting.onChanged(sun) { it() } },
+        whenToUpdate = { update -> sun::next_setting.onChanged(sun) { update() } },
         callback = callback
     )
 
@@ -115,7 +115,7 @@ suspend fun HasContext.runEveryDayAtSunset(callback: suspend () -> Unit) =
 suspend fun HasContext.runEveryDayAtDawn(callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_dawn.local },
-        whenToUpdate = { sun::next_dawn.onChanged(sun) { it() } },
+        whenToUpdate = { update -> sun::next_dawn.onChanged(sun) { update() } },
         callback = callback
     )
 
@@ -123,7 +123,7 @@ suspend fun HasContext.runEveryDayAtDawn(callback: suspend () -> Unit) =
 suspend fun HasContext.runEveryDayAtDusk(callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_dusk.local },
-        whenToUpdate = { sun::next_dusk.onChanged(sun) { it() } },
+        whenToUpdate = { update -> sun::next_dusk.onChanged(sun) { update() } },
         callback = callback
     )
 
@@ -131,7 +131,7 @@ suspend fun HasContext.runEveryDayAtDusk(callback: suspend () -> Unit) =
 suspend fun HasContext.runEveryDayAtNoon(callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_noon.local },
-        whenToUpdate = { sun::next_noon.onChanged(sun) { it() } },
+        whenToUpdate = { update -> sun::next_noon.onChanged(sun) { update() } },
         callback = callback
     )
 
@@ -139,9 +139,12 @@ suspend fun HasContext.runEveryDayAtNoon(callback: suspend () -> Unit) =
 suspend fun HasContext.runEveryDayAtMidnight(callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_midnight.local },
-        whenToUpdate = { sun::next_midnight.onChanged(sun) { it() } },
+        whenToUpdate = { update -> sun::next_midnight.onChanged(sun) { update() } },
         callback = callback
     )
+
+/** Schedule something to execute after [timeSpan] amount of time from now. */
+suspend fun HasContext.runIn(timeSpan: TimeSpan, callback: suspend () -> Unit): Task = runAt(DateTimeTz.nowLocal() + timeSpan, callback)
 
 /** Schedule something to execute at a given point in (local) time. The task will automatically be canceled after execution. */
 suspend fun HasContext.runAt(
@@ -179,7 +182,7 @@ suspend fun HasContext.runAt(
  * */
 suspend fun HasContext.runAt(
     getNextLocalExecutionTime: () -> DateTimeTz,
-    whenToUpdate: (doUpdate: suspend () -> Unit) -> Unit,
+    whenToUpdate: (update: suspend () -> Unit) -> Unit,
     callback: suspend () -> Unit
 ): Task {
     val task = RepeatedIrregularTask(
@@ -240,7 +243,7 @@ class RepeatedRegularTask(
 class RepeatedIrregularTask(
     override val kHomeAssistant: KHomeAssistant,
     val getNextUTCExecutionTime: () -> DateTime,
-    whenToUpdate: (doUpdate: suspend () -> Unit) -> Unit,
+    whenToUpdate: (update: suspend () -> Unit) -> Unit,
     override val callback: suspend () -> Unit
 ) : RepeatedTask() {
     override var scheduledNextExecution: DateTime = getNextUTCExecutionTime()

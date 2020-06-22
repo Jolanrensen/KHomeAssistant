@@ -109,6 +109,22 @@ class Sun(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.En
         /** True if the Sun is currently rising, after solar midnight and before solar noon. */
         val rising: Boolean by attrsDelegate()
 
+        /** True of the Sun is above the horizon. */
+        val isUp: Boolean
+            get() = state == SunState.ABOVE_HORIZON
+
+        /** True of the Sun is above the horizon. */
+        val isAboveHorizon: Boolean
+            get() = state == SunState.ABOVE_HORIZON
+
+        /** True of the Sun is below the horizon. */
+        val isDown: Boolean
+            get() = state == SunState.BELOW_HORIZON
+
+        /** True of the Sun is below the horizon. */
+        val isBelowHorizon: Boolean
+            get() = state == SunState.BELOW_HORIZON
+
         /** Schedule something to execute each day at sunrise.
          * @see runEveryDayAtSunrise */
         suspend fun onSunrise(callback: suspend Entity.() -> Unit): Entity {

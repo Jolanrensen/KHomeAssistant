@@ -1,11 +1,18 @@
+import com.soywiz.klock.minutes
+import com.soywiz.klock.seconds
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.*
+import nl.jolanrensen.kHomeAssistant.domains.binarySensor.MotionBinarySensor
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
+import nl.jolanrensen.kHomeAssistant.entities.onAttributeChanged
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
 import nl.jolanrensen.kHomeAssistant.entities.turnOn
+import nl.jolanrensen.kHomeAssistant.runAt
+import nl.jolanrensen.kHomeAssistant.runEveryDayAtSunrise
+import nl.jolanrensen.kHomeAssistant.runIn
 
 
 class BedroomLights : Automation() {
@@ -31,6 +38,45 @@ class BedroomLights : Automation() {
     }
 }
 
+class OutsideLights : Automation() {
+
+    // TODO add scenes
+    val offScene = Domain("scene")["off_scene"]
+    val onScene = Domain("scene")["on_scene"]
+
+    override suspend fun initialize() {
+        runEveryDayAtSunrise {
+            // TODO
+            offScene.callService("turn_on")
+        }
+
+        // TODO maybe add an "offset" option to sunrise/-set etc
+        runAt(
+            getNextLocalExecutionTime = { sun.next_setting.local - 15.minutes },
+            whenToUpdate = { update -> sun.onAttributeChanged(sun::next_setting) { update() } }
+        ) {
+            onScene.callService("turn_on")
+        }
+
+    }
+}
+
+class MotionLights : Automation() {
+
+    private val driveLight = Light["drive"]
+    private val driveSensor = MotionBinarySensor["drive"]
+
+    override suspend fun initialize() {
+        driveSensor.onMotionDetected {
+            if (sun.isDown) {
+                driveLight.turnOn()
+                runIn(60.seconds) { driveLight.turnOff() }
+            }
+        }
+    }
+
+}
+
 class TestAutomation : Automation() {
 
     val denon_avrx2200w by MediaPlayer
@@ -39,6 +85,7 @@ class TestAutomation : Automation() {
     val onlyTime = InputDatetime.Entity("only_time")
 
     override suspend fun initialize() {
+
 
         Notify.notify(
             serviceName = "mobile_app_pixel_2_xl",
