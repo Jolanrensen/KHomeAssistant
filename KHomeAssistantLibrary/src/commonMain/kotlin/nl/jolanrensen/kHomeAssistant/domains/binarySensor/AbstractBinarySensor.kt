@@ -59,7 +59,7 @@ abstract class AbstractBinarySensorEntity<StateType : DeviceClassState>(
 
 
     /** The class of the device as set by configuration, changing the device state and icon that is displayed on the UI (see below). It does not set the unit_of_measurement.*/
-    val device_class: String by attrsDelegate()
+//    val device_class: String by attrsDelegate()
 }
 
 abstract class DeviceClassState {

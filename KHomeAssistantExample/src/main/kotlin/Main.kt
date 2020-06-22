@@ -1,14 +1,18 @@
 import com.soywiz.klock.minutes
 import com.soywiz.klock.seconds
 import com.soywiz.korio.async.delay
-import kotlinx.serialization.json.floatOrNull
-import nl.jolanrensen.kHomeAssistant.*
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
+import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.*
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.MotionBinarySensor
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
 import nl.jolanrensen.kHomeAssistant.entities.*
+import nl.jolanrensen.kHomeAssistant.runAt
+import nl.jolanrensen.kHomeAssistant.runEveryDayAtSunrise
+import nl.jolanrensen.kHomeAssistant.runIn
 import java.util.*
 
 
@@ -98,38 +102,48 @@ class FlashyMotionLights : Automation() {
     }
 }
 
-class Battery(private val threshold: Float, private val alwaysSend: Boolean = false) : Automation() {
+class Battery(private val threshold: Int, private val alwaysSend: Boolean = false) : Automation() {
 
     override suspend fun initialize() {
-        runEveryDayAt(hour = 6) {
-            val batteryDevices: HashSet<Pair<DefaultEntity, Float>> = hashSetOf()
+//        runEveryDayAt(hour = 6) {
+        val batteryDevices: HashSet<Pair<DefaultEntity, Int>> = hashSetOf()
 
-            for (device in kHomeAssistantInstance!!.entities) {
-                (device["battery"] ?: device["battery_level"])
-                    ?.floatOrNull
-                    ?.let { battery ->
-                        batteryDevices += device to battery
-                    }
+        for (device in kHomeAssistantInstance!!.entities) {
+            val battery = device["battery"]?.intOrNull
+                ?: device["battery_level"]?.intOrNull
+                ?: if (device["device_class"]?.contentOrNull == "battery")
+                    device.state.toIntOrNull()
+                else null
+
+            if (battery != null) {
+                batteryDevices += device to battery
             }
 
-            val lowDevices: List<Pair<DefaultEntity, Float>> = batteryDevices.filter { it.second < threshold }
+        }
 
-            var message = "Battery Level Report\n\n"
+        val lowDevices: List<Pair<DefaultEntity, Int>> = batteryDevices.filter { it.second < threshold }
 
-            if (lowDevices.isNotEmpty()) {
-                message += """The following devices are low:
+        var message = "Battery Level Report\n\n"
+
+        if (lowDevices.isNotEmpty()) {
+            message += """The following devices are low:
                     |${lowDevices.joinToString("\n") { it.first.entityID }}
                     |""".trimMargin()
-            }
+        }
 
-            message += """Battery Levels:
-                |${batteryDevices.joinToString("\n") { "${it.first.entityID}: ${it.second}" }}
+        message += """Battery Levels:
+                |${batteryDevices.joinToString("\n") { "${it.first.entityID}: ${it.second}%" }}
                 |""".trimMargin()
 
-            if (lowDevices.isNotEmpty() || alwaysSend) {
-                Notify.notify(title = "Home Assistant Battery Report", message = message)
-            }
+        if (lowDevices.isNotEmpty() || alwaysSend) {
+            Notify.notify(
+                serviceName = "mobile_app_pixel_2_xl",
+                title = "Home Assistant Battery Report",
+                message = message
+            )
+//                Notify.notify(title = "Home Assistant Battery Report", message = message)
         }
+//        }
     }
 }
 
@@ -142,7 +156,7 @@ class TestAutomation : Automation() {
     val onlyTime = InputDatetime.Entity("only_time")
 
     override suspend fun initialize() {
-
+        println(Domain("sensor")["pixel_2_xl_battery_level"])
 
         Notify.notify(
             serviceName = "mobile_app_pixel_2_xl",
@@ -192,7 +206,7 @@ val kHomeAssistant = KHomeAssistant(
     secure = true,
     debug = false,
     accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
-    automations = listOf(TestAutomation())
+    automations = listOf(TestAutomation(), Battery(20, true))
 )
 
 fun main() = runBlocking {

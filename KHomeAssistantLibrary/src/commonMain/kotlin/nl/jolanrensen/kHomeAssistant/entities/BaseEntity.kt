@@ -59,7 +59,7 @@ open class BaseEntity<StateType : Any>(
             ::entity_picture,
             ::icon,
             ::assumed_state,
-//            ::device_class,
+            ::device_class,
             ::unit_of_measurement,
             ::initial_state,
             ::entityID,
@@ -153,7 +153,7 @@ open class BaseEntity<StateType : Any>(
     val assumed_state: Boolean by attrsDelegate(true)
 
 //    /** The class of the device as set by configuration, changing the device state and icon that is displayed on the UI (see below). It does not set the unit_of_measurement.*/
-//    val device_class: String? by attrsDelegate // TODO maybe move to binary sensor, sensor, cover and media player only
+    val device_class: String by attrsDelegate() // TODO maybe move to binary sensor, sensor, cover and media player only
 
     /** Defines the units of measurement, if any. This will also influence the graphical presentation in the history visualisation as continuous value. Sensors with missing unit_of_measurement are showing as discrete values. */
     val unit_of_measurement: String? by attrsDelegate(null)
