@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryMovingSensorState.MOVING
@@ -55,5 +55,5 @@ sealed class BinaryMovingSensorState(override val onOffValue: OnOff) : DeviceCla
     object STOPPED : BinaryMovingSensorState(OnOff.OFF)
 }
 
-val HasContext.MovingBinarySensor: MovingBinarySensor
+val HasKHassContext.MovingBinarySensor: MovingBinarySensor
     get() = MovingBinarySensor(getKHomeAssistant)

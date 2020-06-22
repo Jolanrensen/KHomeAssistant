@@ -2,9 +2,8 @@ package nl.jolanrensen.kHomeAssistant
 
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.ExperimentalTime
 
-open class Automation : HasContext {
+abstract class Automation : HasKHassContext {
 
     open val automationName: String
         get() = this::class.simpleName.toString()
@@ -20,8 +19,7 @@ open class Automation : HasContext {
      * This method is called to start the automation
      * and it should thus contain the setup of all listeners.
      */
-    @OptIn(ExperimentalTime::class)
-    open suspend fun initialize() = Unit
+    abstract suspend fun initialize()
 
 }
 

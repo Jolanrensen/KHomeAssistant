@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryBatterySensorState.LOW
@@ -55,5 +55,5 @@ sealed class BinaryBatterySensorState(override val onOffValue: OnOff) : DeviceCl
     object NORMAL : BinaryBatterySensorState(OnOff.OFF)
 }
 
-val HasContext.BatteryBinarySensor: BatteryBinarySensor
+val HasKHassContext.BatteryBinarySensor: BatteryBinarySensor
     get() = BatteryBinarySensor(getKHomeAssistant)

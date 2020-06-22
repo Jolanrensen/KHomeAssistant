@@ -5,7 +5,7 @@ import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.parseUtc
 import com.soywiz.klock.seconds
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaContentType.*
@@ -472,5 +472,5 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
 
 
 /** Access the MediaPlayer Domain */
-val HasContext.MediaPlayer: MediaPlayer
+val HasKHassContext.MediaPlayer: MediaPlayer
     get() = MediaPlayer(getKHomeAssistant)

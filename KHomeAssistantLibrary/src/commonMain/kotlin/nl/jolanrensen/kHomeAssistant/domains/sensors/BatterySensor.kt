@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains.sensors
 
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.onAttributeChangedTo
 
@@ -48,5 +48,5 @@ class BatterySensor(override var getKHomeAssistant: () -> KHomeAssistant?) :
     }
 }
 
-val HasContext.BatterySensor: BatterySensor
+val HasKHassContext.BatterySensor: BatterySensor
     get() = BatterySensor(getKHomeAssistant)

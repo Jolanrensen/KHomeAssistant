@@ -3,7 +3,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
@@ -139,5 +139,5 @@ class Example(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ex
 }
 
 /** Access your domain, and set the context correctly */
-val HasContext.Example: Example
+val HasKHassContext.Example: Example
     get() = Example(getKHomeAssistant)

@@ -4,7 +4,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.helper.plus
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
@@ -26,7 +26,7 @@ class Notify(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Not
 
     /** Send a notification. This is dependent on which service you use.
      *
-     * @param serviceName the serviceName you use to notify, for instance "mobile_app_your_phone"
+     * @param serviceName the serviceName you use to notify, for instance "mobile_app_your_phone", by default use "notify".
      * @param message Body of the notification. Not optional; needs to be specified either here or in data.
      * @param title Title of the notification. Optional.
      * @param target Some platforms allow specifying a recipient that will receive the notification. See your platform page if it is supported. Optional.
@@ -35,8 +35,8 @@ class Notify(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Not
      * @throws IllegalArgumentException if [message] is not present as argument or in [data].
      * */
     suspend fun notify(
-        serviceName: String,
         message: String? = null,
+        serviceName: String = "notify",
         title: String? = null,
         target: Array<String>? = null,
         data: JsonObject = json { }
@@ -54,5 +54,5 @@ class Notify(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Not
 }
 
 /** Access the Notify Domain */
-val HasContext.Notify: Notify
+val HasKHassContext.Notify: Notify
     get() = Notify(getKHomeAssistant)

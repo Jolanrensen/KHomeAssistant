@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains.input
 
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
@@ -63,5 +63,5 @@ class InputBoolean(override var getKHomeAssistant: () -> KHomeAssistant?) : Doma
 }
 
 /** Access the InputBoolean Domain */
-val HasContext.InputBoolean: InputBoolean
+val HasKHassContext.InputBoolean: InputBoolean
     get() = InputBoolean(getKHomeAssistant)

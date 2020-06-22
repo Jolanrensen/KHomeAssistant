@@ -21,6 +21,7 @@ import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
 import nl.jolanrensen.kHomeAssistant.messages.*
 import kotlin.jvm.Volatile
@@ -59,7 +60,7 @@ class KHomeAssistant(
 
     /** A collection of [Automation] instances that should be run by [KHomeAssistant]. */
     val automations: Collection<Automation>
-) : HasContext {
+) : HasKHassContext {
 
     /**
      * KHomeAssistant instance.
@@ -112,12 +113,22 @@ class KHomeAssistant(
     /** The context of the current coroutinescope */
     override val coroutineContext = Dispatchers.Default + supervisor + exceptionHandler
 
-
     /** The cache for the state and attributes of all entities in Home Assistant. */
     @Volatile
-    private var cache: HashMap<String, StateResult> = hashMapOf()
+    private var rawEntityData: HashMap<String, StateResult> = hashMapOf()
 
-    /** The age of the [cache]. */
+    /** Returns all the raw entity IDs known in Home Assistant. */
+    val entityIds: Set<String>
+        get() = rawEntityData.keys
+
+    /** Returns all entities in Home Assistant as [BaseEntity] (since we cannot know all possible types of entities) */
+    val entities: List<DefaultEntity>
+        get() = entityIds.map {
+            val (domain, name) = it.split(".")
+            Domain(domain)[name]
+        }
+
+    /** The age of the [rawEntityData]. */
     private var cacheAge = TimeSource.Monotonic.markNow()
 
     /** The time after which to do a full refresh of the state/attributes of all entities.
@@ -276,7 +287,7 @@ class KHomeAssistant(
                                     val oldState = eventDataStateChanged.old_state
                                     val newState = eventDataStateChanged.new_state
 
-                                    cache[entityID]!!.apply {
+                                    rawEntityData[entityID]!!.apply {
                                         state = newState.state
                                         attributes = newState.attributes
                                     }
@@ -335,14 +346,14 @@ class KHomeAssistant(
         }
     }
 
-    /** Update [cache] from Home Assistant. */
+    /** Update [rawEntityData] from Home Assistant. */
     private suspend fun updateCache() {
         val response: FetchStateResponse = sendMessage(FetchStateMessage())
         val newCache = hashMapOf<String, StateResult>()
         response.result!!.forEach {
             newCache[it.entity_id] = it
         }
-        cache = newCache
+        rawEntityData = newCache
         cacheAge = TimeSource.Monotonic.markNow()
         debugPrintln("Updated cache!")
     }
@@ -499,7 +510,7 @@ class KHomeAssistant(
     fun <EntityType : BaseEntity<*>> getAttributes(entity: EntityType): JsonObject =
         try {
             if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
-            cache[entity.entityID]!!.attributes
+            rawEntityData[entity.entityID]!!.attributes
         } catch (e: Exception) {
             throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
         }
@@ -517,7 +528,7 @@ class KHomeAssistant(
         if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
 
         val stateValue = try {
-            cache[entity.entityID]!!.state
+            rawEntityData[entity.entityID]!!.state
         } catch (e: Exception) {
             throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
         }

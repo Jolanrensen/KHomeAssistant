@@ -6,7 +6,7 @@ import com.soywiz.korim.color.RGBA
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
@@ -407,7 +407,7 @@ class Light(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ligh
 }
 
 /** Access the Light Domain */
-val HasContext.Light: Light
+val HasKHassContext.Light: Light
     get() = Light(getKHomeAssistant)
 
 

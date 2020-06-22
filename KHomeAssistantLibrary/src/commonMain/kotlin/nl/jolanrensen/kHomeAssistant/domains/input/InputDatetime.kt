@@ -3,10 +3,8 @@ package nl.jolanrensen.kHomeAssistant.domains.input
 import com.soywiz.klock.*
 import com.soywiz.klock.DateFormat.Companion.FORMAT_DATE
 import com.soywiz.klock.TimeFormat.Companion.FORMAT_TIME
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
@@ -285,5 +283,5 @@ class InputDatetime(override var getKHomeAssistant: () -> KHomeAssistant?) : Dom
 
 
 /** Access the InputDateTime Domain */
-val HasContext.InputDatetime: InputDatetime
+val HasKHassContext.InputDatetime: InputDatetime
     get() = InputDatetime(getKHomeAssistant)

@@ -1,9 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.domains.input
 
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
@@ -125,5 +123,5 @@ class InputNumber(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
 }
 
 /** Access the InputNumber Domain. */
-val HasContext.InputNumber: InputNumber
+val HasKHassContext.InputNumber: InputNumber
     get() = InputNumber(getKHomeAssistant)

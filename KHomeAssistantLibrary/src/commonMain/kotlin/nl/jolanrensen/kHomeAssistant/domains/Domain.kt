@@ -5,7 +5,7 @@ package nl.jolanrensen.kHomeAssistant.domains
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
@@ -21,7 +21,7 @@ interface Domain<out E : BaseEntity<*>> {
     /** The Home Assistant name for this domain, like "light". */
     val domainName: String
 
-    /** Function to access the [KHomeAssistant] instance. This is passed around [HasContext] inheritors,
+    /** Function to access the [KHomeAssistant] instance. This is passed around [HasKHassContext] inheritors,
      * usually in their constructor. */
     var getKHomeAssistant: () -> KHomeAssistant?
 
@@ -128,36 +128,36 @@ inline fun <E : BaseEntity<*>> Domain<E>.Entity(name: String, callback: E.() -> 
  * Domain("some_domain").Entity("some_entity").callService("some_service")
  * Domain("some_domain").callService("some_service")
  * ```
- * @receiver any [HasContext] inheriting class like [nl.jolanrensen.kHomeAssistant.Automation]
+ * @receiver any [HasKHassContext] inheriting class like [nl.jolanrensen.kHomeAssistant.Automation]
  * @param domainName the Home Assistant name for this domain, like "light"
  * @return a [Domain] inheriting object with [DefaultEntity] as its entity
  **/
-fun HasContext.Domain(domainName: String): Domain<BaseEntity<String>> =
-    object : Domain<DefaultEntity> {
-        override val domainName = domainName
-        override var getKHomeAssistant = this@Domain.getKHomeAssistant
-        override fun Entity(name: String): DefaultEntity =
-            object : DefaultEntity(getKHomeAssistant = getKHomeAssistant, name = name, domain = this) {
-                override fun parseStateValue(stateValue: String) = stateValue
-                override fun getStateValue(state: String) = state
-            }
+fun HasKHassContext.Domain(domainName: String): Domain<BaseEntity<String>> = object : Domain<DefaultEntity> {
+    override val domainName = domainName
+    override var getKHomeAssistant = this@Domain.getKHomeAssistant
 
-        override fun checkContext() = Unit // context is always present
-
-        /** Making sure Domain acts as a singleton. */
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other == null || this::class != other::class) return false
-
-            other as Domain<*>
-
-            if (domainName != other.domainName) return false
-
-            return true
+    override fun Entity(name: String): DefaultEntity =
+        object : DefaultEntity(getKHomeAssistant = getKHomeAssistant, name = name, domain = this) {
+            override fun parseStateValue(stateValue: String) = stateValue
+            override fun getStateValue(state: String) = state
         }
 
-        override fun hashCode(): Int = domainName.hashCode()
+    override fun checkContext() = Unit // context is always present
+
+    /** Making sure Domain acts as a singleton. */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as Domain<*>
+
+        if (domainName != other.domainName) return false
+
+        return true
     }
+
+    override fun hashCode(): Int = domainName.hashCode()
+}
 
 /**
  * Alternative to creating defining an entity.

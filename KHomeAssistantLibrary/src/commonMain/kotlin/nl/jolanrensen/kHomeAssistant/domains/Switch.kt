@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 
@@ -35,5 +35,5 @@ class Switch(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Swi
 }
 
 /** Access the Switch Domain. */
-val HasContext.Switch: Switch
+val HasKHassContext.Switch: Switch
     get() = Switch(getKHomeAssistant)

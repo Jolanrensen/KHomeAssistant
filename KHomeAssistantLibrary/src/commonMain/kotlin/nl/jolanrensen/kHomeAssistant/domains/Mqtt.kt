@@ -3,7 +3,7 @@ package nl.jolanrensen.kHomeAssistant.domains
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.seconds
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
@@ -71,5 +71,5 @@ class Mqtt(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Nothi
 }
 
 /** Access the Mqtt Domain. */
-val HasContext.Mqtt: Mqtt
+val HasKHassContext.Mqtt: Mqtt
     get() = Mqtt(getKHomeAssistant)

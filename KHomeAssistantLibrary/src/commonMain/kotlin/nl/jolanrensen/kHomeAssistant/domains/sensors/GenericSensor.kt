@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains.sensors
 
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 
 /** Generic sensor. The type of state will be a String and the unit_of_measurement will be absent. */
@@ -32,5 +32,5 @@ class GenericSensor(override var getKHomeAssistant: () -> KHomeAssistant?) : Abs
 
 
 /** Access the GenericSensor Domain */
-val HasContext.GenericSensor: GenericSensor
+val HasKHassContext.GenericSensor: GenericSensor
     get() = GenericSensor(getKHomeAssistant)

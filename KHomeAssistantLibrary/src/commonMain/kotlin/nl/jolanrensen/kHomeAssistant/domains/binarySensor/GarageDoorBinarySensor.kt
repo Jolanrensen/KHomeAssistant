@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGarageDoorSensorState.OPEN
@@ -55,5 +55,5 @@ sealed class BinaryGarageDoorSensorState(override val onOffValue: OnOff) : Devic
     object CLOSED : BinaryGarageDoorSensorState(OnOff.OFF)
 }
 
-val HasContext.GarageDoorBinarySensor: GarageDoorBinarySensor
+val HasKHassContext.GarageDoorBinarySensor: GarageDoorBinarySensor
     get() = GarageDoorBinarySensor(getKHomeAssistant)

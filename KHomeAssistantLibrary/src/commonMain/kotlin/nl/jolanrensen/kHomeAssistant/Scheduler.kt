@@ -26,7 +26,7 @@ import nl.jolanrensen.kHomeAssistant.entities.onChanged
 //}
 
 /** Schedule something to execute at a certain (local) time each day. */
-suspend fun HasContext.runEveryDayAt(
+suspend fun HasKHassContext.runEveryDayAt(
     hour: Int,
     minute: Int = 0,
     second: Int = 0,
@@ -35,43 +35,43 @@ suspend fun HasContext.runEveryDayAt(
 ) = runEveryDayAt(Time(hour, minute, second, millisecond), callback)
 
 /** Schedule something to execute at a certain (local) time each day. */
-suspend fun HasContext.runEveryDayAt(localTime: Time, callback: suspend () -> Unit): Task {
+suspend fun HasKHassContext.runEveryDayAt(localTime: Time, callback: suspend () -> Unit): Task {
     val offsetAtEpoch = DateTime.EPOCH.localUnadjusted.offset.time
     return runEvery(1.days, DateTime(DateTime.EPOCH.date, localTime).localUnadjusted - offsetAtEpoch, callback)
 }
 
 /** Schedule something to execute each week, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the week will be picked. */
-suspend fun HasContext.runEveryWeek(
+suspend fun HasKHassContext.runEveryWeek(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ) = runEvery(1.weeks, alignWith, callback)
 
 /** Schedule something to execute each day, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the day will be picked. */
-suspend fun HasContext.runEveryDay(
+suspend fun HasKHassContext.runEveryDay(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ) = runEvery(1.days, alignWith, callback)
 
 /** Schedule something to execute each hour, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the hour will be picked. */
-suspend fun HasContext.runEveryHour(
+suspend fun HasKHassContext.runEveryHour(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ) = runEvery(1.hours, alignWith, callback)
 
 /** Schedule something to execute each minute, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the minute will be picked. */
-suspend fun HasContext.runEveryMinute(
+suspend fun HasKHassContext.runEveryMinute(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ) = runEvery(1.minutes, alignWith, callback)
 
 /** Schedule something to execute each second, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the second will be picked. */
-suspend fun HasContext.runEverySecond(
+suspend fun HasKHassContext.runEverySecond(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ) = runEvery(1.seconds, alignWith, callback)
 
 /** Schedule something to repeatedly execute each given timespan, optionally aligned with a certain point in (local) time. If not aligned, the local epoch (00:00:00 jan 1 1970, local time) will be picked. */
-suspend fun HasContext.runEvery(
+suspend fun HasKHassContext.runEvery(
     timeSpan: TimeSpan,
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
@@ -96,7 +96,7 @@ suspend fun HasContext.runEvery(
 }
 
 /** Schedule something to execute each day at sunrise. */
-suspend fun HasContext.runEveryDayAtSunrise(callback: suspend () -> Unit) =
+suspend fun HasKHassContext.runEveryDayAtSunrise(callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_rising.local },
         whenToUpdate = { update -> sun::next_rising.onChanged(sun) { update() } },
@@ -104,7 +104,7 @@ suspend fun HasContext.runEveryDayAtSunrise(callback: suspend () -> Unit) =
     )
 
 /** Schedule something to execute each day at sunset. */
-suspend fun HasContext.runEveryDayAtSunset(callback: suspend () -> Unit) =
+suspend fun HasKHassContext.runEveryDayAtSunset(callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_setting.local },
         whenToUpdate = { update -> sun::next_setting.onChanged(sun) { update() } },
@@ -112,7 +112,7 @@ suspend fun HasContext.runEveryDayAtSunset(callback: suspend () -> Unit) =
     )
 
 /** Schedule something to execute each day at dawn. */
-suspend fun HasContext.runEveryDayAtDawn(callback: suspend () -> Unit) =
+suspend fun HasKHassContext.runEveryDayAtDawn(callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_dawn.local },
         whenToUpdate = { update -> sun::next_dawn.onChanged(sun) { update() } },
@@ -120,7 +120,7 @@ suspend fun HasContext.runEveryDayAtDawn(callback: suspend () -> Unit) =
     )
 
 /** Schedule something to execute each day at dusk. */
-suspend fun HasContext.runEveryDayAtDusk(callback: suspend () -> Unit) =
+suspend fun HasKHassContext.runEveryDayAtDusk(callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_dusk.local },
         whenToUpdate = { update -> sun::next_dusk.onChanged(sun) { update() } },
@@ -128,7 +128,7 @@ suspend fun HasContext.runEveryDayAtDusk(callback: suspend () -> Unit) =
     )
 
 /** Schedule something to execute each day at noon. */
-suspend fun HasContext.runEveryDayAtNoon(callback: suspend () -> Unit) =
+suspend fun HasKHassContext.runEveryDayAtNoon(callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_noon.local },
         whenToUpdate = { update -> sun::next_noon.onChanged(sun) { update() } },
@@ -136,7 +136,7 @@ suspend fun HasContext.runEveryDayAtNoon(callback: suspend () -> Unit) =
     )
 
 /** Schedule something to execute each day at midnight. */
-suspend fun HasContext.runEveryDayAtMidnight(callback: suspend () -> Unit) =
+suspend fun HasKHassContext.runEveryDayAtMidnight(callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_midnight.local },
         whenToUpdate = { update -> sun::next_midnight.onChanged(sun) { update() } },
@@ -144,10 +144,10 @@ suspend fun HasContext.runEveryDayAtMidnight(callback: suspend () -> Unit) =
     )
 
 /** Schedule something to execute after [timeSpan] amount of time from now. */
-suspend fun HasContext.runIn(timeSpan: TimeSpan, callback: suspend () -> Unit): Task = runAt(DateTimeTz.nowLocal() + timeSpan, callback)
+suspend fun HasKHassContext.runIn(timeSpan: TimeSpan, callback: suspend () -> Unit): Task = runAt(DateTimeTz.nowLocal() + timeSpan, callback)
 
 /** Schedule something to execute at a given point in (local) time. The task will automatically be canceled after execution. */
-suspend fun HasContext.runAt(
+suspend fun HasKHassContext.runAt(
     dateTimeTz: DateTimeTz,
     callback: suspend () -> Unit
 ): Task {
@@ -180,7 +180,7 @@ suspend fun HasContext.runAt(
  * @param callback the code block to execute at the next execution time provided by [getNextExecutionTime]
  * @return a cancelable [Task]
  * */
-suspend fun HasContext.runAt(
+suspend fun HasKHassContext.runAt(
     getNextLocalExecutionTime: () -> DateTimeTz,
     whenToUpdate: (update: suspend () -> Unit) -> Unit,
     callback: suspend () -> Unit

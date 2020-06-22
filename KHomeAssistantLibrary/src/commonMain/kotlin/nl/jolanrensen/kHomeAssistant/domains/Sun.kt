@@ -184,9 +184,9 @@ class Sun(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Sun.En
 
 
 /** Access the Sun Domain. */
-val HasContext.Sun: Sun
+val HasKHassContext.Sun: Sun
     get() = Sun(getKHomeAssistant)
 
 /** As there is only one sun (duh), let's make the sun entity quickly reachable */
-val HasContext.sun: Sun.Entity
+val HasKHassContext.sun: Sun.Entity
     get() = Sun.Entity("")

@@ -4,7 +4,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.HomeAssistant
@@ -28,8 +28,7 @@ open class BaseEntity<StateType : Any>(
     override val getKHomeAssistant: () -> KHomeAssistant? = { null },
     open val name: String,
     open val domain: Domain<*>
-) : HasContext {
-
+) : HasKHassContext {
 
     override val coroutineContext: CoroutineContext
         get() = getKHomeAssistant()!!.coroutineContext
@@ -39,9 +38,12 @@ open class BaseEntity<StateType : Any>(
     @Suppress("UNNECESSARY_SAFE_CALL")
     open fun checkEntityExists() {
         if (entityExists) return
-        getKHomeAssistant?.invoke()?.launch {
-            state // throws error if entity does not exist
-            entityExists = true
+        getKHomeAssistant?.invoke()?.apply {
+            launch {
+                if (entityID !in entityIds)
+                    throw EntityNotInHassException("The entity_id \"$entityID\" does not exist in your Home Assistant instance.")
+                entityExists = true
+            }
         }
     }
 
@@ -201,7 +203,7 @@ open class BaseEntity<StateType : Any>(
     val entityID: String
         get() = "${domain.domainName}.$name"
 
-    override fun toString() = "${domain::class.simpleName}.Entity($name) {${
+    override fun toString() = "${domain::class.simpleName} (${domain.domainName}) Entity($name) {${
     attributes
         .filter {
             try {

@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasContext
+import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryOpeningSensorState.OPEN
@@ -55,5 +55,5 @@ sealed class BinaryOpeningSensorState(override val onOffValue: OnOff) : DeviceCl
     object CLOSED : BinaryOpeningSensorState(OnOff.OFF)
 }
 
-val HasContext.OpeningBinarySensor: OpeningBinarySensor
+val HasKHassContext.OpeningBinarySensor: OpeningBinarySensor
     get() = OpeningBinarySensor(getKHomeAssistant)

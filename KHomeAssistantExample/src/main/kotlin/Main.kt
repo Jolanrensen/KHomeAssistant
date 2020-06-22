@@ -1,18 +1,15 @@
 import com.soywiz.klock.minutes
 import com.soywiz.klock.seconds
-import nl.jolanrensen.kHomeAssistant.Automation
+import com.soywiz.korio.async.delay
+import kotlinx.serialization.json.floatOrNull
+import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.*
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.MotionBinarySensor
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
-import nl.jolanrensen.kHomeAssistant.entities.onAttributeChanged
-import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
-import nl.jolanrensen.kHomeAssistant.entities.turnOff
-import nl.jolanrensen.kHomeAssistant.entities.turnOn
-import nl.jolanrensen.kHomeAssistant.runAt
-import nl.jolanrensen.kHomeAssistant.runEveryDayAtSunrise
-import nl.jolanrensen.kHomeAssistant.runIn
+import nl.jolanrensen.kHomeAssistant.entities.*
+import java.util.*
 
 
 class BedroomLights : Automation() {
@@ -74,8 +71,68 @@ class MotionLights : Automation() {
             }
         }
     }
-
 }
+
+class FlashyMotionLights : Automation() {
+
+    private val livingRoomLight = Light["living_room"]
+    private val driveLight = Light["drive"]
+    private val driveSensor = MotionBinarySensor["drive"]
+
+    override suspend fun initialize() {
+        driveSensor.onMotionDetected {
+            if (sun.isDown) {
+                driveLight.turnOn()
+                runIn(60.seconds) { driveLight.turnOff() }
+
+                flashWarning()
+            }
+        }
+    }
+
+    private suspend fun flashWarning() {
+        repeat(9) { // uneven number so the original state stays the same
+            livingRoomLight.toggle()
+            delay(1.seconds)
+        }
+    }
+}
+
+class Battery(private val threshold: Float, private val alwaysSend: Boolean = false) : Automation() {
+
+    override suspend fun initialize() {
+        runEveryDayAt(hour = 6) {
+            val batteryDevices: HashSet<Pair<DefaultEntity, Float>> = hashSetOf()
+
+            for (device in kHomeAssistantInstance!!.entities) {
+                (device["battery"] ?: device["battery_level"])
+                    ?.floatOrNull
+                    ?.let { battery ->
+                        batteryDevices += device to battery
+                    }
+            }
+
+            val lowDevices: List<Pair<DefaultEntity, Float>> = batteryDevices.filter { it.second < threshold }
+
+            var message = "Battery Level Report\n\n"
+
+            if (lowDevices.isNotEmpty()) {
+                message += """The following devices are low:
+                    |${lowDevices.joinToString("\n") { it.first.entityID }}
+                    |""".trimMargin()
+            }
+
+            message += """Battery Levels:
+                |${batteryDevices.joinToString("\n") { "${it.first.entityID}: ${it.second}" }}
+                |""".trimMargin()
+
+            if (lowDevices.isNotEmpty() || alwaysSend) {
+                Notify.notify(title = "Home Assistant Battery Report", message = message)
+            }
+        }
+    }
+}
+
 
 class TestAutomation : Automation() {
 
