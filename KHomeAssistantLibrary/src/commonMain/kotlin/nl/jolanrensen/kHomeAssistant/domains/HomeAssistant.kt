@@ -8,10 +8,10 @@ import nl.jolanrensen.kHomeAssistant.helper.GeoPoint
 /**
  * https://www.home-assistant.io/integrations/homeassistant
  */
-class HomeAssistant(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Nothing> {
+class HomeAssistant(override var getKHass: () -> KHomeAssistant?) : Domain<Nothing> {
     override val domainName: String = "homeassistant"
 
-    override fun checkContext() = require(getKHomeAssistant() != null) {
+    override fun checkContext() = require(getKHass() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'HomeAssistant.' from a KHomeAssistantContext instead of using HomeAssistant directly.""".trimMargin()
     }
@@ -51,4 +51,4 @@ class HomeAssistant(override var getKHomeAssistant: () -> KHomeAssistant?) : Dom
 
 /** Access the HomeAssistant Domain. */
 val HasKHassContext.HomeAssistant: HomeAssistant
-    get() = HomeAssistant(getKHomeAssistant)
+    get() = HomeAssistant(getKHass)

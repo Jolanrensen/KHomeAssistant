@@ -4,6 +4,6 @@ import kotlinx.coroutines.CoroutineScope
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 
 interface HasKHassContext : CoroutineScope {
-    val getKHomeAssistant: () -> KHomeAssistant?
+    val getKHass: () -> KHomeAssistant?
 }
 

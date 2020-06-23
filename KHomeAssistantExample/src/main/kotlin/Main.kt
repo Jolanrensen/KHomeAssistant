@@ -1,17 +1,10 @@
-import com.soywiz.klock.minutes
-import com.soywiz.klock.seconds
-import com.soywiz.korio.async.delay
-import examples.Battery
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.intOrNull
-import nl.jolanrensen.kHomeAssistant.*
+import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
+import nl.jolanrensen.kHomeAssistant.SceneEntityState
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.*
-import nl.jolanrensen.kHomeAssistant.domains.binarySensor.MotionBinarySensor
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
 import nl.jolanrensen.kHomeAssistant.entities.*
-import java.util.*
 
 
 class BedroomLights : Automation() {
@@ -44,14 +37,60 @@ class TestAutomation : Automation() {
     val onlyDate = InputDatetime["only_date"]
     val onlyTime = InputDatetime.Entity("only_time")
 
-    override suspend fun initialize() {
-        println(Domain("sensor")["pixel_2_xl_battery_level"])
+    val shield_cast by MediaPlayer
 
-        Notify.notify(
-            serviceName = "mobile_app_pixel_2_xl",
-            message = "Kiekeboe",
-            title = "tooo"
+    val test by Domain("scene")
+    val test2 by Domain("scene")
+
+    override suspend fun initialize() {
+
+        shield_cast {
+            mediaPlayPause()
+        }
+
+
+
+
+        println(
+            Scene.apply(
+                SceneEntityState(
+                    entity = Domain("light")["wall_lamp"],
+                    state = "off"
+                )
+            )
         )
+
+//        println(test)
+//        println(test2)
+
+//        val data = listOf(
+//            SceneEntityState(
+//                entity = denon_avrx2200w,
+//                state = OnOff.ON,
+//                attributes = json {
+//                    "volume" to .25f
+//                    "sound_mode" to "STEREO"
+//                }
+//            ),
+//            SceneEntityState(
+//                entity = Light["batik"],
+//                state = OnOff.ON,
+//                attributes = json {
+//                    "brightness" to 1f
+//                }
+//            )
+//        )
+//
+//        println(Scene.apply(data = data))
+
+
+//        println(Domain("sensor")["pixel_2_xl_battery_level"])
+//
+//        Notify.notify(
+//            serviceName = "mobile_app_pixel_2_xl",
+//            message = "Kiekeboe",
+//            title = "tooo"
+//        )
 
 //        Mqtt.publish(
 //            topic = "cmnd/sonoff1/POWER",
@@ -77,8 +116,8 @@ class TestAutomation : Automation() {
 //
 //            onStateChanged {  }
 //        }
-
     }
+
 }
 
 
@@ -93,9 +132,9 @@ val kHomeAssistant = KHomeAssistant(
     host = "home.jolanrensen.nl",
     port = 8123,
     secure = true,
-    debug = false,
+    debug = true,
     accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
-    automations = listOf(TestAutomation(), Battery(20, true))
+    automations = listOf(TestAutomation())
 )
 
 fun main() = runBlocking {

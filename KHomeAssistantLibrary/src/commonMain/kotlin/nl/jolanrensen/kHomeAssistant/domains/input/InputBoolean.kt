@@ -12,10 +12,10 @@ import kotlin.reflect.KProperty
 /**
  * https://www.home-assistant.io/integrations/input_boolean/
  */
-class InputBoolean(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<InputBoolean.Entity> {
+class InputBoolean(override var getKHass: () -> KHomeAssistant?) : Domain<InputBoolean.Entity> {
     override val domainName = "input_boolean"
 
-    override fun checkContext() = require(getKHomeAssistant() != null) {
+    override fun checkContext() = require(getKHass() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'InputBoolean.' from a KHomeAssistantContext instead of using InputBoolean directly.""".trimMargin()
     }
@@ -31,17 +31,17 @@ class InputBoolean(override var getKHomeAssistant: () -> KHomeAssistant?) : Doma
 
     override fun Entity(name: String) =
         Entity(
-            getKHomeAssistant = getKHomeAssistant,
+            getKHass = getKHass,
             name = name
         )
 
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant?,
+        override val getKHass: () -> KHomeAssistant?,
         override val name: String
     ) : ToggleEntity(
-        getKHomeAssistant = getKHomeAssistant,
+        getKHass = getKHass,
         name = name,
-        domain = InputBoolean(getKHomeAssistant)
+        domain = InputBoolean(getKHass)
     ) {
         /** Delegate so you can control an InputBoolean like a local variable
          * Simply type "var yourBoolean by InputBoolean.Entity("your_boolean")
@@ -64,4 +64,4 @@ class InputBoolean(override var getKHomeAssistant: () -> KHomeAssistant?) : Doma
 
 /** Access the InputBoolean Domain */
 val HasKHassContext.InputBoolean: InputBoolean
-    get() = InputBoolean(getKHomeAssistant)
+    get() = InputBoolean(getKHass)

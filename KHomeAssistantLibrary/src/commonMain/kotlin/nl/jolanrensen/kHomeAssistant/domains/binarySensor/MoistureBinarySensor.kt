@@ -7,25 +7,25 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryMoistureSensorSt
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryMoistureSensorState.DRY
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class MoistureBinarySensor(override var getKHomeAssistant: () -> KHomeAssistant?) :
+class MoistureBinarySensor(override var getKHass: () -> KHomeAssistant?) :
     AbstractBinarySensor<BinaryMoistureSensorState, MoistureBinarySensor.Entity>() {
 
     /** Making sure MoistureSensor acts as a singleton. */
     override fun equals(other: Any?) = other is MoistureBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "moisture".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
 
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant?,
+        override val getKHass: () -> KHomeAssistant?,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryMoistureSensorState>(
-        getKHomeAssistant = getKHomeAssistant,
+        getKHass = getKHass,
         name = name,
-        domain = MoistureBinarySensor(getKHomeAssistant),
+        domain = MoistureBinarySensor(getKHass),
         deviceClass = "moisture"
     ) {
-        override fun parseStateValue(stateValue: String) =
+        override fun stringToState(stateValue: String) =
             OnOff.values()
                 .find { it.stateValue == stateValue }
                 ?.let { BinaryMoistureSensorState.parseState(it) }
@@ -56,4 +56,4 @@ sealed class BinaryMoistureSensorState(override val onOffValue: OnOff) : DeviceC
 }
 
 val HasKHassContext.MoistureBinarySensor: MoistureBinarySensor
-    get() = MoistureBinarySensor(getKHomeAssistant)
+    get() = MoistureBinarySensor(getKHass)

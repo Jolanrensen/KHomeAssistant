@@ -7,25 +7,25 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGenericSensorSta
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGenericSensorState.OFF
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class GenericBinarySensor(override var getKHomeAssistant: () -> KHomeAssistant?) :
+class GenericBinarySensor(override var getKHass: () -> KHomeAssistant?) :
     AbstractBinarySensor<BinaryGenericSensorState, GenericBinarySensor.Entity>() {
 
     /** Making sure GenericSensor acts as a singleton. */
     override fun equals(other: Any?) = other is GenericBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "generic".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
 
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant?,
+        override val getKHass: () -> KHomeAssistant?,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryGenericSensorState>(
-        getKHomeAssistant = getKHomeAssistant,
+        getKHass = getKHass,
         name = name,
-        domain = GenericBinarySensor(getKHomeAssistant),
+        domain = GenericBinarySensor(getKHass),
         deviceClass = null
     ) {
-        override fun parseStateValue(stateValue: String) =
+        override fun stringToState(stateValue: String) =
             OnOff.values()
                 .find { it.stateValue == stateValue }
                 ?.let { BinaryGenericSensorState.parseState(it) }
@@ -56,4 +56,4 @@ sealed class BinaryGenericSensorState(override val onOffValue: OnOff) : DeviceCl
 }
 
 val HasKHassContext.GenericBinarySensor: GenericBinarySensor
-    get() = GenericBinarySensor(getKHomeAssistant)
+    get() = GenericBinarySensor(getKHass)

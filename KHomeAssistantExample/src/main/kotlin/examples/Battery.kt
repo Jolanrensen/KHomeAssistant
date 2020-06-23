@@ -14,7 +14,7 @@ class Battery(private val threshold: Int, private val alwaysSend: Boolean = fals
         runEveryDayAt(hour = 6) {
             val batteryDevices: HashSet<Pair<DefaultEntity, Int>> = hashSetOf()
 
-            for (device in kHomeAssistantInstance!!.entities) {
+            for (device in kHassInstance!!.entities) {
                 val battery = device["battery"]?.intOrNull
                     ?: device["battery_level"]?.intOrNull
                     ?: if (device["device_class"]?.contentOrNull == "battery")

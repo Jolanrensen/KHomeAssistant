@@ -23,7 +23,7 @@ interface Domain<out E : BaseEntity<*>> {
 
     /** Function to access the [KHomeAssistant] instance. This is passed around [HasKHassContext] inheritors,
      * usually in their constructor. */
-    var getKHomeAssistant: () -> KHomeAssistant?
+    var getKHass: () -> KHomeAssistant?
 
     /** Function to create an entity instance in a domain with correct context.
      * @param name the name of the entity (without domain) as defined in Home Assistant
@@ -58,7 +58,7 @@ interface Domain<out E : BaseEntity<*>> {
      * */
     operator fun get(name: String, vararg names: String): List<E> = Entities(name, *names)
 
-    /** Helper function that should check whether the context ([getKHomeAssistant]) is not null.
+    /** Helper function that should check whether the context ([getKHass]) is not null.
      * @throws IllegalArgumentException if `kHomeAssistant() == null`
      * */
     fun checkContext()
@@ -76,7 +76,7 @@ interface Domain<out E : BaseEntity<*>> {
      * */
     suspend fun callService(serviceName: String, data: JsonObject = json { }): ResultMessage {
         checkContext()
-        return getKHomeAssistant()!!.callService(
+        return getKHass()!!.callService(
             serviceDomain = this,
             serviceName = serviceName,
             data = data
@@ -134,12 +134,12 @@ inline fun <E : BaseEntity<*>> Domain<E>.Entity(name: String, callback: E.() -> 
  **/
 fun HasKHassContext.Domain(domainName: String): Domain<BaseEntity<String>> = object : Domain<DefaultEntity> {
     override val domainName = domainName
-    override var getKHomeAssistant = this@Domain.getKHomeAssistant
+    override var getKHass = this@Domain.getKHass
 
     override fun Entity(name: String): DefaultEntity =
-        object : DefaultEntity(getKHomeAssistant = getKHomeAssistant, name = name, domain = this) {
-            override fun parseStateValue(stateValue: String) = stateValue
-            override fun getStateValue(state: String) = state
+        object : DefaultEntity(getKHass = getKHass, name = name, domain = this) {
+            override fun stringToState(stateValue: String) = stateValue
+            override fun stateToString(state: String) = state
         }
 
     override fun checkContext() = Unit // context is always present

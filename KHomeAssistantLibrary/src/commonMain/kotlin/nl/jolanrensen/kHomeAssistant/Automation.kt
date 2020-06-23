@@ -8,12 +8,12 @@ abstract class Automation : HasKHassContext {
     open val automationName: String
         get() = this::class.simpleName.toString()
 
-    var kHomeAssistantInstance: KHomeAssistant? = null
+    var kHassInstance: KHomeAssistant? = null
 
-    override var getKHomeAssistant: () -> KHomeAssistant? = { kHomeAssistantInstance }
+    override var getKHass: () -> KHomeAssistant? = { kHassInstance }
 
     override val coroutineContext: CoroutineContext
-        get() = getKHomeAssistant()!!.coroutineContext
+        get() = getKHass()!!.coroutineContext
 
     /**
      * This method is called to start the automation

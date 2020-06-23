@@ -7,25 +7,25 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryPlugSensorState.
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryPlugSensorState.UNPLUGGED
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class PlugBinarySensor(override var getKHomeAssistant: () -> KHomeAssistant?) :
+class PlugBinarySensor(override var getKHass: () -> KHomeAssistant?) :
     AbstractBinarySensor<BinaryPlugSensorState, PlugBinarySensor.Entity>() {
 
     /** Making sure PlugSensor acts as a singleton. */
     override fun equals(other: Any?) = other is PlugBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "plug".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
 
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant?,
+        override val getKHass: () -> KHomeAssistant?,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryPlugSensorState>(
-        getKHomeAssistant = getKHomeAssistant,
+        getKHass = getKHass,
         name = name,
-        domain = PlugBinarySensor(getKHomeAssistant),
+        domain = PlugBinarySensor(getKHass),
         deviceClass = "plug"
     ) {
-        override fun parseStateValue(stateValue: String) =
+        override fun stringToState(stateValue: String) =
             OnOff.values()
                 .find { it.stateValue == stateValue }
                 ?.let { BinaryPlugSensorState.parseState(it) }
@@ -56,4 +56,4 @@ sealed class BinaryPlugSensorState(override val onOffValue: OnOff) : DeviceClass
 }
 
 val HasKHassContext.PlugBinarySensor: PlugBinarySensor
-    get() = PlugBinarySensor(getKHomeAssistant)
+    get() = PlugBinarySensor(getKHass)

@@ -3,10 +3,8 @@ package examples
 import com.soywiz.klock.minutes
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.domains.sun
-import nl.jolanrensen.kHomeAssistant.entities.onAttributeChanged
-import nl.jolanrensen.kHomeAssistant.runAt
 import nl.jolanrensen.kHomeAssistant.runEveryDayAtSunrise
+import nl.jolanrensen.kHomeAssistant.runEveryDayAtSunset
 
 class OutsideLights : Automation() {
 
@@ -20,12 +18,9 @@ class OutsideLights : Automation() {
             offScene.callService("turn_on")
         }
 
-        // TODO maybe add an "offset" option to sunrise/-set etc
-        runAt(
-            getNextLocalExecutionTime = { sun.next_setting.local - 15.minutes },
-            whenToUpdate = { update -> sun.onAttributeChanged(sun::next_setting) { update() } }
-        ) {
+        runEveryDayAtSunset(-15.minutes) {
             onScene.callService("turn_on")
         }
+
     }
 }

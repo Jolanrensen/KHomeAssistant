@@ -5,7 +5,7 @@ import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.onAttributeChangedTo
 
 /** Battery sensor. The type of state will be a Float and the unit_of_measurement will be '%'. */
-class BatterySensor(override var getKHomeAssistant: () -> KHomeAssistant?) :
+class BatterySensor(override var getKHass: () -> KHomeAssistant?) :
     AbstractSensor<Float, BatterySensor.Entity>() {
 
     /** Making sure BatterySensor acts as a singleton. */
@@ -14,21 +14,21 @@ class BatterySensor(override var getKHomeAssistant: () -> KHomeAssistant?) :
 
     override fun Entity(name: String): Entity =
         Entity(
-            getKHomeAssistant = getKHomeAssistant,
+            getKHass = getKHass,
             name = name
         )
 
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant?,
+        override val getKHass: () -> KHomeAssistant?,
         override val name: String
     ) : AbstractSensorEntity<Float>(
-        getKHomeAssistant = getKHomeAssistant,
+        getKHass = getKHass,
         name = name,
-        domain = BatterySensor(getKHomeAssistant),
+        domain = BatterySensor(getKHass),
         deviceClass = "battery"
     ) {
-        override fun parseStateValue(stateValue: String) = stateValue.toFloatOrNull()
-        override fun getStateValue(state: Float) = state.toString()
+        override fun stringToState(stateValue: String) = stateValue.toFloatOrNull()
+        override fun stateToString(state: Float) = state.toString()
 
         init {
             attributes += arrayOf(::is_charging, ::charger_type)
@@ -49,4 +49,4 @@ class BatterySensor(override var getKHomeAssistant: () -> KHomeAssistant?) :
 }
 
 val HasKHassContext.BatterySensor: BatterySensor
-    get() = BatterySensor(getKHomeAssistant)
+    get() = BatterySensor(getKHass)

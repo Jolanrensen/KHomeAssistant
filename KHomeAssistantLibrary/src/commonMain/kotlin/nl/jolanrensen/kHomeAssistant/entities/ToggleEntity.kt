@@ -9,17 +9,17 @@ import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
 
 open class ToggleEntity(
-    override val getKHomeAssistant: () -> KHomeAssistant?,
+    override val getKHass: () -> KHomeAssistant?,
     override val name: String,
     override val domain: Domain<BaseEntity<OnOff>>
 ) : BaseEntity<OnOff>(
-    getKHomeAssistant = getKHomeAssistant,
+    getKHass = getKHass,
     name = name,
     domain = domain
 ) {
-    override fun getStateValue(state: OnOff): String = state.stateValue
+    override fun stateToString(state: OnOff): String = state.stateValue
 
-    override fun parseStateValue(stateValue: String): OnOff? = try {
+    override fun stringToState(stateValue: String): OnOff? = try {
         values().find { it.stateValue == stateValue }
     } catch (e: Exception) {
         null
@@ -60,16 +60,16 @@ open class ToggleEntity(
             runBlocking { switchTo(value) }
         }
 
-    suspend inline fun switchTo(state: OnOff) {
+    suspend inline fun switchTo(state: OnOff, async: Boolean = false) {
         when (state) {
-            ON -> turnOn()
-            OFF -> turnOff()
+            ON -> turnOn(async)
+            OFF -> turnOff(async)
             else -> Unit
         }
     }
 
-    suspend inline fun switchTo(on: Boolean) {
-        if (on) turnOn() else turnOff()
+    suspend inline fun switchTo(on: Boolean, async: Boolean = false) {
+        if (on) turnOn(async) else turnOff(async)
     }
 
     /** HelperFunctions */
@@ -86,7 +86,7 @@ open class ToggleEntity(
         }
 
     val isUnavailable: Boolean
-        get() = state == OnOff.UNAVAILABLE
+        get() = state == UNAVAILABLE
 }
 
 fun <E : ToggleEntity> E.onTurnOn(callback: suspend E.() -> Unit) =
@@ -96,10 +96,10 @@ fun <E : ToggleEntity> E.onTurnOff(callback: suspend E.() -> Unit) =
     onStateChangedTo(OFF, callback)
 
 fun <E : ToggleEntity> E.onUnavailable(callback: suspend E.() -> Unit) =
-    onStateChangedTo(OnOff.UNAVAILABLE, callback)
+    onStateChangedTo(UNAVAILABLE, callback)
 
-suspend inline fun <E : ToggleEntity> Iterable<E>.turnOn() = this { turnOn() }
-suspend inline fun <E : ToggleEntity> Iterable<E>.turnOff() = this { turnOff() }
-suspend inline fun <E : ToggleEntity> Iterable<E>.toggle() = this { toggle() }
-suspend inline fun <E : ToggleEntity> Iterable<E>.switchTo(state: OnOff) = this { switchTo(state) }
-suspend inline fun <E : ToggleEntity> Iterable<E>.switchTo(state: Boolean) = this { switchTo(state) }
+suspend inline fun <E : ToggleEntity> Iterable<E>.turnOn(async: Boolean = false) = this { turnOn(async) }
+suspend inline fun <E : ToggleEntity> Iterable<E>.turnOff(async: Boolean = false) = this { turnOff(async) }
+suspend inline fun <E : ToggleEntity> Iterable<E>.toggle(async: Boolean = false) = this { toggle(async) }
+suspend inline fun <E : ToggleEntity> Iterable<E>.switchTo(state: OnOff, async: Boolean = false) = this { switchTo(state, async) }
+suspend inline fun <E : ToggleEntity> Iterable<E>.switchTo(state: Boolean, async: Boolean = false) = this { switchTo(state, async) }

@@ -10,7 +10,7 @@ import nl.jolanrensen.kHomeAssistant.entities.AttributesDelegate
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.suspendUntilAttributeChanged
 import nl.jolanrensen.kHomeAssistant.entities.suspendUntilStateChangedTo
-import nl.jolanrensen.kHomeAssistant.helper.contentEquals
+import nl.jolanrensen.kHomeAssistant.contentEquals
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 
@@ -19,10 +19,10 @@ import kotlin.reflect.KProperty
 /**
  * https://www.home-assistant.io/integrations/input_select/
  * */
-class InputSelect(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<InputSelect.Entity> {
+class InputSelect(override var getKHass: () -> KHomeAssistant?) : Domain<InputSelect.Entity> {
     override val domainName = "input_select"
 
-    override fun checkContext() = require(getKHomeAssistant() != null) {
+    override fun checkContext() = require(getKHass() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'InputSelect.' from a KHomeAssistantContext instead of using InputSelect directly.""".trimMargin()
     }
@@ -34,15 +34,15 @@ class InputSelect(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
     /** Reload input_select configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
 
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant?,
+        override val getKHass: () -> KHomeAssistant?,
         override val name: String
     ) : BaseEntity<String>(
-        getKHomeAssistant = getKHomeAssistant,
+        getKHass = getKHass,
         name = name,
-        domain = InputSelect(getKHomeAssistant)
+        domain = InputSelect(getKHass)
     ) {
         init {
             attributes += arrayOf(
@@ -77,9 +77,9 @@ class InputSelect(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
         /** List of options to choose from. */
         var options: List<String> by attrsDelegate()
 
-        override fun parseStateValue(stateValue: String) = stateValue
+        override fun stringToState(stateValue: String) = stateValue
 
-        override fun getStateValue(state: String) = state
+        override fun stateToString(state: String) = state
 
         /** [state] can also be writable. */
         override var state: String
@@ -157,4 +157,4 @@ class InputSelect(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
 
 /** Access the InputSelect Domain. */
 val HasKHassContext.InputSelect: InputSelect
-    get() = InputSelect(getKHomeAssistant)
+    get() = InputSelect(getKHass)

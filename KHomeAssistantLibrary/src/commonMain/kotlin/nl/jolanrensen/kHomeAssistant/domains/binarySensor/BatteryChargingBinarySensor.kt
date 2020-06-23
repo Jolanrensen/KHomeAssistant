@@ -7,25 +7,25 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryBatteryChargingS
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryBatteryChargingSensorState.NOT_CHARGING
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class BatteryChargingBinarySensor(override var getKHomeAssistant: () -> KHomeAssistant?) :
+class BatteryChargingBinarySensor(override var getKHass: () -> KHomeAssistant?) :
     AbstractBinarySensor<BinaryBatteryChargingSensorState, BatteryChargingBinarySensor.Entity>() {
 
     /** Making sure BatteryChargingSensor acts as a singleton. */
     override fun equals(other: Any?) = other is BatteryChargingBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "battery_charging".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
 
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant?,
+        override val getKHass: () -> KHomeAssistant?,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryBatteryChargingSensorState>(
-        getKHomeAssistant = getKHomeAssistant,
+        getKHass = getKHass,
         name = name,
-        domain = BatteryChargingBinarySensor(getKHomeAssistant),
+        domain = BatteryChargingBinarySensor(getKHass),
         deviceClass = "battery_charging"
     ) {
-        override fun parseStateValue(stateValue: String) =
+        override fun stringToState(stateValue: String) =
             OnOff.values()
                 .find { it.stateValue == stateValue }
                 ?.let { BinaryBatteryChargingSensorState.parseState(it) }
@@ -56,4 +56,4 @@ sealed class BinaryBatteryChargingSensorState(override val onOffValue: OnOff) : 
 }
 
 val HasKHassContext.BatteryChargingBinarySensor: BatteryChargingBinarySensor
-    get() = BatteryChargingBinarySensor(getKHomeAssistant)
+    get() = BatteryChargingBinarySensor(getKHass)

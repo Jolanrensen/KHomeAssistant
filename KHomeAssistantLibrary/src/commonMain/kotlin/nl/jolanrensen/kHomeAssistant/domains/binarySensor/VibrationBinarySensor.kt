@@ -7,25 +7,25 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryVibrationSensorS
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryVibrationSensorState.CLEAR
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class VibrationBinarySensor(override var getKHomeAssistant: () -> KHomeAssistant?) :
+class VibrationBinarySensor(override var getKHass: () -> KHomeAssistant?) :
     AbstractBinarySensor<BinaryVibrationSensorState, VibrationBinarySensor.Entity>() {
 
     /** Making sure VibrationSensor acts as a singleton. */
     override fun equals(other: Any?) = other is VibrationBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "vibration".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
 
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant?,
+        override val getKHass: () -> KHomeAssistant?,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryVibrationSensorState>(
-        getKHomeAssistant = getKHomeAssistant,
+        getKHass = getKHass,
         name = name,
-        domain = VibrationBinarySensor(getKHomeAssistant),
+        domain = VibrationBinarySensor(getKHass),
         deviceClass = "vibration"
     ) {
-        override fun parseStateValue(stateValue: String) =
+        override fun stringToState(stateValue: String) =
             OnOff.values()
                 .find { it.stateValue == stateValue }
                 ?.let { BinaryVibrationSensorState.parseState(it) }
@@ -56,4 +56,4 @@ sealed class BinaryVibrationSensorState(override val onOffValue: OnOff) : Device
 }
 
 val HasKHassContext.VibrationBinarySensor: VibrationBinarySensor
-    get() = VibrationBinarySensor(getKHomeAssistant)
+    get() = VibrationBinarySensor(getKHass)

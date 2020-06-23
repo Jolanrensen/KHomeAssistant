@@ -7,15 +7,14 @@ import com.soywiz.klock.seconds
 import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
+import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaContentType.*
+import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaPlayerState.*
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.SupportedFeatures.*
-import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
-import nl.jolanrensen.kHomeAssistant.entities.suspendUntilAttributeChanged
-import nl.jolanrensen.kHomeAssistant.entities.suspendUntilAttributeChangedTo
+import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT
 import nl.jolanrensen.kHomeAssistant.helper.UnsupportedFeatureException
-import nl.jolanrensen.kHomeAssistant.helper.cast
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.math.max
 
@@ -24,10 +23,10 @@ import kotlin.math.max
  *
  * TODO get attributes from here https://github.com/home-assistant/core/blob/dev/homeassistant/components/media_player/__init__.py
  * */
-class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<MediaPlayer.Entity> {
+class MediaPlayer(override var getKHass: () -> KHomeAssistant?) : Domain<MediaPlayer.Entity> {
     override val domainName = "media_player"
 
-    override fun checkContext() = require(getKHomeAssistant() != null) {
+    override fun checkContext() = require(getKHass() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'MediaPlayer.' from a KHomeAssistantContext instead of using MediaPlayer directly.""".trimMargin()
     }
@@ -37,6 +36,15 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
     override fun hashCode(): Int = domainName.hashCode()
 
     // TODO maybe. All services also work with "all" as entity_id to control all media players
+
+    enum class MediaPlayerState(val value: String) {
+        OFF("off"),
+        ON("on"),
+        PLAYING("playing"),
+        PAUSED("paused"),
+        IDLE("idle")
+
+    }
 
     enum class MediaContentType(val value: String) {
         MUSIC("music"),
@@ -70,17 +78,17 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
         SUPPORT_SELECT_SOUND_MODE(65536)
     }
 
-    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
 
     @Suppress("RemoveExplicitTypeArguments")
     @OptIn(ExperimentalStdlibApi::class)
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant?,
+        override val getKHass: () -> KHomeAssistant?,
         override val name: String
-    ) : ToggleEntity(
-        getKHomeAssistant = getKHomeAssistant,
+    ) : BaseEntity<MediaPlayerState>(
+        getKHass = getKHass,
         name = name,
-        domain = MediaPlayer(getKHomeAssistant)
+        domain = MediaPlayer(getKHass)
     ) {
 
         init {
@@ -116,6 +124,14 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
                 ::shuffle
             )
         }
+
+        /** state can also be writable. */
+        override var state: MediaPlayerState
+            get() = super.state
+            set(value) {
+                runBlocking { switchTo(value) }
+            }
+
 
         // ----- Attributes -----
         // read only
@@ -263,6 +279,48 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
             }
 
 
+        // some helper attributes
+
+        var isOn: Boolean
+            get() = state != OFF
+            set(value) {
+                runBlocking {
+                    if (value) turnOn() else turnOff()
+                }
+            }
+
+        var isOff: Boolean
+            get() = state == OFF
+            set(value) {
+                runBlocking {
+                    if (value) turnOff() else turnOn()
+                }
+            }
+
+        var isPlaying: Boolean
+            get() = state == PLAYING
+            set(value) {
+                runBlocking {
+                    if (value) mediaPlay() else mediaPause()
+                }
+            }
+
+        var isPaused: Boolean
+            get() = state == PAUSED
+            set(value) {
+                runBlocking {
+                    if (value) mediaPause() else mediaPlay()
+                }
+            }
+
+        var isIdle: Boolean
+            get() = state == IDLE || state == ON
+            set(value) {
+                runBlocking {
+                    if (value) mediaStop() else mediaPlay()
+                }
+            }
+
         private fun checkIfSupported(vararg supportedFeatures: SupportedFeatures) {
             supportedFeatures.forEach {
                 if (it !in supported_features)
@@ -270,6 +328,43 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
             }
         }
 
+
+        /** Turns on media player */
+        suspend inline fun turnOn(async: Boolean = false): ResultMessage {
+            val result = callService("turn_on")
+            if (!async) suspendUntilStateChanged({ it != OFF })
+            return result
+        }
+
+        /** Turns off media player */
+        suspend inline fun turnOff(async: Boolean = false): ResultMessage {
+            val result = callService("turn_off")
+            if (!async) suspendUntilStateChangedTo(OFF)
+            return result
+        }
+
+        /** Toggles media player */
+        suspend inline fun toggle(async: Boolean = false): ResultMessage {
+            val oldState = state
+            val result = callService("toggle")
+            if (!async) suspendUntilStateChanged({
+                when (oldState) {
+                    ON, PLAYING, PAUSED, IDLE -> it == OFF
+                    OFF -> it == ON || it == PLAYING || it == PAUSED || it == IDLE
+                }
+            })
+            return result
+        }
+
+        suspend inline fun switchTo(state: MediaPlayerState, async: Boolean = false) {
+            when (state) {
+                ON -> turnOn(async)
+                OFF -> turnOff(async)
+                PLAYING -> mediaPlay(async)
+                PAUSED -> mediaPause(async)
+                IDLE -> mediaStop(async)
+            }
+        }
 
         suspend fun volumeUp(async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_VOLUME_STEP, SUPPORT_VOLUME_SET)
@@ -329,26 +424,40 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
             return result
         }
 
-        suspend fun volumeUnmute() = volumeMute(false)
+        suspend fun volumeUnmute(async: Boolean = false) = volumeMute(false, async)
 
-        suspend fun mediaPlayPause(): ResultMessage {
+        suspend fun mediaPlayPause(async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_PAUSE, SUPPORT_PLAY)
-            return callService("media_play_pause")
+            val oldState = state
+            val result = callService("media_play_pause")
+            if (!async) suspendUntilStateChanged({
+                when (oldState) {
+                    OFF, PAUSED, IDLE, ON -> it == PLAYING
+                    PLAYING -> it == PAUSED
+                }
+            })
+            return result
         }
 
-        suspend fun mediaPlay(): ResultMessage {
+        suspend fun mediaPlay(async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_PLAY)
-            return callService("media_play")
+            val result = callService("media_play")
+            if (!async) suspendUntilStateChangedTo(PLAYING)
+            return result
         }
 
-        suspend fun mediaPause(): ResultMessage {
+        suspend fun mediaPause(async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_PAUSE)
-            return callService("media_pause")
+            val result = callService("media_pause")
+            if (!async) suspendUntilStateChangedTo(PAUSED)
+            return result
         }
 
-        suspend fun mediaStop(): ResultMessage {
+        suspend fun mediaStop(async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_STOP)
-            return callService("media_stop")
+            val result = callService("media_stop")
+            if (!async) suspendUntilStateChanged({ it == IDLE || it == ON })
+            return result
         }
 
         suspend fun mediaNextTrack(async: Boolean = false): ResultMessage {
@@ -473,4 +582,4 @@ class MediaPlayer(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
 
 /** Access the MediaPlayer Domain */
 val HasKHassContext.MediaPlayer: MediaPlayer
-    get() = MediaPlayer(getKHomeAssistant)
+    get() = MediaPlayer(getKHass)

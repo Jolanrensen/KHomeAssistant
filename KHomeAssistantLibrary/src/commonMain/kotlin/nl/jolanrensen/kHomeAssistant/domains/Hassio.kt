@@ -7,10 +7,10 @@ import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 /**
  *
  */
-class Hassio(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Nothing> {
+class Hassio(override var getKHass: () -> KHomeAssistant?) : Domain<Nothing> {
     override val domainName = "hassio"
 
-    override fun checkContext() = require(getKHomeAssistant() != null) {
+    override fun checkContext() = require(getKHass() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'Hassio.' from a KHomeAssistantContext instead of using HassioDomain directly.""".trimMargin()
     }
@@ -80,4 +80,4 @@ class Hassio(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Not
 
 /** Access the Hassio Domain. */
 val HasKHassContext.Hassio: Hassio
-    get() = Hassio(getKHomeAssistant)
+    get() = Hassio(getKHass)

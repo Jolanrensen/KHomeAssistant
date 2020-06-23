@@ -1,4 +1,4 @@
-package nl.jolanrensen.kHomeAssistant.helper
+package nl.jolanrensen.kHomeAssistant
 
 import kotlinx.serialization.json.*
 import kotlin.reflect.KType

@@ -14,10 +14,10 @@ enum class ExampleState(val stateValue: String) {
     STATE1("state1"), STATE2("state1")
 }
 
-class Example(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Example.Entity> {
+class Example(override var getKHass: () -> KHomeAssistant?) : Domain<Example.Entity> {
     override val domainName: String = "example"
 
-    override fun checkContext() = require(getKHomeAssistant() != null) {
+    override fun checkContext() = require(getKHass() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'Example.' from a KHomeAssistantContext instead of using ExampleDomain directly.""".trimMargin()
     }
@@ -30,7 +30,7 @@ class Example(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ex
 
 
     // Constructor for Entity with the right context
-    override fun Entity(name: String) = Entity(getKHomeAssistant, name)
+    override fun Entity(name: String) = Entity(getKHass, name)
 
 
     /** This class defines your entity, it can be instantiated via YourDomain.YourEntity(name: String)
@@ -38,12 +38,12 @@ class Example(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ex
      * This also includes listeners for state changes
      */
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant? = { null },
+        override val getKHass: () -> KHomeAssistant? = { null },
         override val name: String
     ) : BaseEntity<ExampleState>(
-        getKHomeAssistant = getKHomeAssistant,
+        getKHass = getKHass,
         name = name,
-        domain = Example(getKHomeAssistant)
+        domain = Example(getKHass)
     ) {
         /** These are the attributes that get parsed from Home Assistant for your entity when calling getAttributes()
          * The names must thus exactly match those of Home Assistant. */
@@ -55,10 +55,10 @@ class Example(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ex
         // TODO add examples for read/write and write only attributes
 
         /** Define how to convert your state type into a Home Assistant string state */
-        override fun getStateValue(state: ExampleState): String = state.stateValue
+        override fun stateToString(state: ExampleState): String = state.stateValue
 
         /** Define how to convert a Home Assistant string state into your state type */
-        override fun parseStateValue(stateValue: String): ExampleState? = try {
+        override fun stringToState(stateValue: String): ExampleState? = try {
             ExampleState.values().find { it.stateValue == stateValue }
         } catch (e: Exception) {
             null
@@ -140,4 +140,4 @@ class Example(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ex
 
 /** Access your domain, and set the context correctly */
 val HasKHassContext.Example: Example
-    get() = Example(getKHomeAssistant)
+    get() = Example(getKHass)

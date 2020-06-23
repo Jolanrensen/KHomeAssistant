@@ -7,17 +7,17 @@ import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.suspendUntilStateChangedTo
-import nl.jolanrensen.kHomeAssistant.helper.cast
+import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 
 /**
  * https://www.home-assistant.io/integrations/input_number/
  */
-class InputNumber(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<InputNumber.Entity> {
+class InputNumber(override var getKHass: () -> KHomeAssistant?) : Domain<InputNumber.Entity> {
     override val domainName = "input_number"
 
-    override fun checkContext() = require(getKHomeAssistant() != null) {
+    override fun checkContext() = require(getKHass() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'InputNumber.' from a KHomeAssistantContext instead of using InputNumber directly.""".trimMargin()
     }
@@ -29,19 +29,19 @@ class InputNumber(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
     /** Reload input_number configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String) = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
+    override fun Entity(name: String) = Entity(getKHass = getKHass, name = name)
 
     enum class InputNumberMode(val stateValue: String) {
         BOX("box"), SLIDER("slider")
     }
 
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant?,
+        override val getKHass: () -> KHomeAssistant?,
         override val name: String
     ) : BaseEntity<Float>(
-        getKHomeAssistant = getKHomeAssistant,
+        getKHass = getKHass,
         name = name,
-        domain = InputNumber(getKHomeAssistant)
+        domain = InputNumber(getKHass)
     ) {
         /** Delegate so you can control an InputNumber like a local variable
          * Simply type "var yourFloat by InputNumber.Entity("your_float")
@@ -62,9 +62,9 @@ class InputNumber(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
             )
         }
 
-        override fun parseStateValue(stateValue: String) = stateValue.toFloatOrNull()
+        override fun stringToState(stateValue: String) = stateValue.toFloatOrNull()
 
-        override fun getStateValue(state: Float) = state.toString()
+        override fun stateToString(state: Float) = state.toString()
 
         /** [state] can also be writable. */
         override var state: Float
@@ -124,4 +124,4 @@ class InputNumber(override var getKHomeAssistant: () -> KHomeAssistant?) : Domai
 
 /** Access the InputNumber Domain. */
 val HasKHassContext.InputNumber: InputNumber
-    get() = InputNumber(getKHomeAssistant)
+    get() = InputNumber(getKHass)

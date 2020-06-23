@@ -7,25 +7,25 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinarySoundSensorState
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinarySoundSensorState.CLEAR
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class SoundBinarySensor(override var getKHomeAssistant: () -> KHomeAssistant?) :
+class SoundBinarySensor(override var getKHass: () -> KHomeAssistant?) :
     AbstractBinarySensor<BinarySoundSensorState, SoundBinarySensor.Entity>() {
 
     /** Making sure SoundSensor acts as a singleton. */
     override fun equals(other: Any?) = other is SoundBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "sound".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
 
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant?,
+        override val getKHass: () -> KHomeAssistant?,
         override val name: String
     ) : AbstractBinarySensorEntity<BinarySoundSensorState>(
-        getKHomeAssistant = getKHomeAssistant,
+        getKHass = getKHass,
         name = name,
-        domain = SoundBinarySensor(getKHomeAssistant),
+        domain = SoundBinarySensor(getKHass),
         deviceClass = "sound"
     ) {
-        override fun parseStateValue(stateValue: String) =
+        override fun stringToState(stateValue: String) =
             OnOff.values()
                 .find { it.stateValue == stateValue }
                 ?.let { BinarySoundSensorState.parseState(it) }
@@ -56,4 +56,4 @@ sealed class BinarySoundSensorState(override val onOffValue: OnOff) : DeviceClas
 }
 
 val HasKHassContext.SoundBinarySensor: SoundBinarySensor
-    get() = SoundBinarySensor(getKHomeAssistant)
+    get() = SoundBinarySensor(getKHass)

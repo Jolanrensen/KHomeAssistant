@@ -9,10 +9,10 @@ import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
  *
  * https://www.home-assistant.io/integrations/switch/
  * */
-class Switch(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Switch.Entity> {
+class Switch(override var getKHass: () -> KHomeAssistant?) : Domain<Switch.Entity> {
     override val domainName = "switch"
 
-    override fun checkContext() = require(getKHomeAssistant() != null) {
+    override fun checkContext() = require(getKHass() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'Switch.' from a KHomeAssistantContext instead of using SwitchDomain directly.""".trimMargin()
     }
@@ -22,18 +22,18 @@ class Switch(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Swi
     override fun hashCode(): Int = domainName.hashCode()
 
     /** Constructor of Switch.Entity with right context */
-    override fun Entity(name: String) = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
+    override fun Entity(name: String) = Entity(getKHass = getKHass, name = name)
 
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant?,
+        override val getKHass: () -> KHomeAssistant?,
         override val name: String
     ) : ToggleEntity(
-        getKHomeAssistant = getKHomeAssistant,
-        domain = Switch(getKHomeAssistant),
+        getKHass = getKHass,
+        domain = Switch(getKHass),
         name = name
     )
 }
 
 /** Access the Switch Domain. */
 val HasKHassContext.Switch: Switch
-    get() = Switch(getKHomeAssistant)
+    get() = Switch(getKHass)

@@ -100,7 +100,7 @@ class KHomeAssistant(
     )
 
     /** The function providing the kHomeAssistant instace as context to other objects. */
-    override val getKHomeAssistant = { this }
+    override val getKHass = { this }
 
     /** All exceptions from couroutines in this scope will be handled here. */
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
@@ -374,7 +374,7 @@ class KHomeAssistant(
         val automationInitialisations = hashSetOf<Job>()
         for (it in automations) this@KHomeAssistant.launch {
             val inner = launch {
-                it.kHomeAssistantInstance = this@KHomeAssistant
+                it.kHassInstance = this@KHomeAssistant
                 it.initialize()
             }
             try {
@@ -534,7 +534,7 @@ class KHomeAssistant(
         }
 
         return try {
-            entity.parseStateValue(stateValue)!!
+            entity.stringToState(stateValue)!!
         } catch (e: Exception) {
             throw Exception(
                 "Could not parse state value \"$stateValue\" to entity with domain ${entity.domain::class.simpleName}, have you overridden the parseStateValue() function or are you perhaps querying the wrong entity?",

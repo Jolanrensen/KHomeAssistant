@@ -1,5 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
+import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.seconds
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
@@ -9,6 +10,7 @@ import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
+import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Light.SupportedFeatures.*
 import nl.jolanrensen.kHomeAssistant.entities.*
@@ -21,10 +23,10 @@ import kotlin.reflect.KProperty
  *
  * https://www.home-assistant.io/integrations/light/
  * */
-class Light(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Light.Entity> {
+class Light(override var getKHass: () -> KHomeAssistant?) : Domain<Light.Entity> {
     override val domainName = "light"
 
-    override fun checkContext() = require(getKHomeAssistant() != null) {
+    override fun checkContext() = require(getKHass() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'Light.' from a KHomeAssistantContext instead of using Light directly.""".trimMargin()
     }
@@ -47,16 +49,16 @@ class Light(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ligh
         SUPPORT_WHITE_VALUE(128)
     }
 
-    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
 
     @OptIn(ExperimentalStdlibApi::class)
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant?,
+        override val getKHass: () -> KHomeAssistant?,
         override val name: String
     ) : ToggleEntity(
-        getKHomeAssistant = getKHomeAssistant,
+        getKHass = getKHass,
         name = name,
-        domain = Light(getKHomeAssistant)
+        domain = Light(getKHass)
     ) {
 
         init {
@@ -258,7 +260,7 @@ class Light(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ligh
 
 
         suspend fun turnOn(
-            transition: Int? = null,
+            transition: TimeSpan? = null,
             profile: String? = null,
             hs_color: HSColor? = null,
             xy_color: XYColor? = null,
@@ -281,9 +283,9 @@ class Light(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ligh
                 data = json {
                     transition?.let {
                         checkIfSupported(SUPPORT_TRANSITION)
-                        if (it < 0)
+                        if (it < TimeSpan.ZERO)
                             throw IllegalArgumentException("incorrect transition $it")
-                        "transition" to it
+                        "transition" to it.seconds
                     }
                     profile?.let {
                         "profile" to it
@@ -379,7 +381,7 @@ class Light(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ligh
                 }
             )
 
-            if (!async) suspendUntilStateChangedTo(OnOff.ON, (transition ?: 0 + 1).seconds)
+            if (!async) suspendUntilStateChangedTo(OnOff.ON, transition ?: 1.seconds)
 
             return result
         }
@@ -389,18 +391,18 @@ class Light(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ligh
          * @param transition time in seconds in which to turn off
          */
         @OptIn(ExperimentalStdlibApi::class)
-        suspend fun turnOff(transition: Int, async: Boolean = false): ResultMessage {
+        suspend fun turnOff(transition: TimeSpan, async: Boolean = false): ResultMessage {
             val result = callService(
                 serviceName = "turn_off",
                 data = json {
                     transition.let {
-                        if (it < 0)
+                        if (it < TimeSpan.ZERO)
                             throw IllegalArgumentException("incorrect transition $it")
                         "transition" to it
                     }
                 }
             )
-            if (!async) suspendUntilStateChangedTo(OnOff.OFF, (transition + 1).seconds)
+            if (!async) suspendUntilStateChangedTo(OnOff.OFF, transition + 1.seconds)
             return result
         }
     }
@@ -408,6 +410,6 @@ class Light(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Ligh
 
 /** Access the Light Domain */
 val HasKHassContext.Light: Light
-    get() = Light(getKHomeAssistant)
+    get() = Light(getKHass)
 
 

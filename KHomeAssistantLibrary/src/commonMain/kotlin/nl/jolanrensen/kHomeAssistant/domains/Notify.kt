@@ -6,16 +6,16 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.HasKHassContext
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.helper.plus
+import nl.jolanrensen.kHomeAssistant.plus
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
 /**
  * https://www.home-assistant.io/integrations/notify/
  */
-class Notify(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Nothing> {
+class Notify(override var getKHass: () -> KHomeAssistant?) : Domain<Nothing> {
     override val domainName = "notify"
 
-    override fun checkContext() = require(getKHomeAssistant() != null) {
+    override fun checkContext() = require(getKHass() != null) {
         """ Please initialize kHomeAssistant before calling this.
             Make sure to use the helper function 'Notify.' from a KHomeAssistantContext instead of using Notify directly.""".trimMargin()
     }
@@ -55,4 +55,4 @@ class Notify(override var getKHomeAssistant: () -> KHomeAssistant?) : Domain<Not
 
 /** Access the Notify Domain */
 val HasKHassContext.Notify: Notify
-    get() = Notify(getKHomeAssistant)
+    get() = Notify(getKHass)

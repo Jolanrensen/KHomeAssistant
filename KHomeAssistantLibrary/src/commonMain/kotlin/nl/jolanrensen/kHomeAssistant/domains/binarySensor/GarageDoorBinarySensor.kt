@@ -7,25 +7,25 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGarageDoorSensor
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGarageDoorSensorState.CLOSED
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class GarageDoorBinarySensor(override var getKHomeAssistant: () -> KHomeAssistant?) :
+class GarageDoorBinarySensor(override var getKHass: () -> KHomeAssistant?) :
     AbstractBinarySensor<BinaryGarageDoorSensorState, GarageDoorBinarySensor.Entity>() {
 
     /** Making sure GarageDoorSensor acts as a singleton. */
     override fun equals(other: Any?) = other is GarageDoorBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "garage_door".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHomeAssistant = getKHomeAssistant, name = name)
+    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
 
     class Entity(
-        override val getKHomeAssistant: () -> KHomeAssistant?,
+        override val getKHass: () -> KHomeAssistant?,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryGarageDoorSensorState>(
-        getKHomeAssistant = getKHomeAssistant,
+        getKHass = getKHass,
         name = name,
-        domain = GarageDoorBinarySensor(getKHomeAssistant),
+        domain = GarageDoorBinarySensor(getKHass),
         deviceClass = "garage_door"
     ) {
-        override fun parseStateValue(stateValue: String) =
+        override fun stringToState(stateValue: String) =
             OnOff.values()
                 .find { it.stateValue == stateValue }
                 ?.let { BinaryGarageDoorSensorState.parseState(it) }
@@ -56,4 +56,4 @@ sealed class BinaryGarageDoorSensorState(override val onOffValue: OnOff) : Devic
 }
 
 val HasKHassContext.GarageDoorBinarySensor: GarageDoorBinarySensor
-    get() = GarageDoorBinarySensor(getKHomeAssistant)
+    get() = GarageDoorBinarySensor(getKHass)
