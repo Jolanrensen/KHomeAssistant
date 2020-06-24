@@ -17,7 +17,7 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
 import kotlin.reflect.KProperty1
 
-typealias DefaultEntity = Entity<String>
+typealias DefaultEntity = Entity<String, HassAttributes>
 
 /** Type returned when using myEntity::myAttribute */
 typealias Attribute<A> = KProperty0<A>
@@ -26,9 +26,9 @@ typealias Attribute<A> = KProperty0<A>
 typealias NonSpecificAttribute<E, A> = KProperty1<E, A>
 
 /** Alias for [Entity]. */
-typealias BaseEntity<StateType> = Entity<StateType>
+typealias BaseEntity<StateType, AttrsType> = Entity<StateType, AttrsType>
 
-open class Entity<StateType : Any>(
+open class Entity<StateType : Any, AttrsType: HassAttributes>(
     open val kHassInstance: KHomeAssistant,
     open val name: String,
     open val domain: Domain<*>
@@ -218,7 +218,7 @@ open class Entity<StateType : Any>(
         if (this === other) return true
         if (other == null || this::class != other::class) return false
 
-        other as Entity<*>
+        other as Entity<*, *>
 
         if (name != other.name) return false
         if (domain != other.domain) return false
@@ -272,7 +272,7 @@ interface AttributesDelegate<V : Any?> {
  * }
  * ```
  * */
-inline operator fun <S : Any, E : Entity<S>> E.invoke(callback: E.() -> Unit): E = apply(callback)
+inline operator fun <A : HassAttributes, S : Any, E : Entity<S, A>> E.invoke(callback: E.() -> Unit): E = apply(callback)
 
 /**
  * Shorthand for apply for each, allows for DSL-like behavior on collections of entities.
@@ -285,7 +285,7 @@ inline operator fun <S : Any, E : Entity<S>> E.invoke(callback: E.() -> Unit): E
  * }
  * ```
  * */
-inline operator fun <S : Any, E : Entity<S>> Iterable<E>.invoke(callback: E.() -> Unit): Iterable<E> =
+inline operator fun <A : HassAttributes, S : Any, E : Entity<S, A>> Iterable<E>.invoke(callback: E.() -> Unit): Iterable<E> =
     apply { forEach(callback) }
 
 inline fun <reified A : HassAttributes> getHassAttributes(): Array<Attribute<*>> =
