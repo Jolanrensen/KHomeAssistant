@@ -1,7 +1,7 @@
 package nl.jolanrensen.kHomeAssistant
 
 import com.soywiz.klock.*
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.domains.sun
 import nl.jolanrensen.kHomeAssistant.entities.onChanged
 
@@ -26,7 +26,7 @@ import nl.jolanrensen.kHomeAssistant.entities.onChanged
 //}
 
 /** Schedule something to execute at a certain (local) time each day. */
-suspend fun HasKHassContext.runEveryDayAt(
+suspend fun KHomeAssistant.runEveryDayAt(
     hour: Int,
     minute: Int = 0,
     second: Int = 0,
@@ -35,60 +35,60 @@ suspend fun HasKHassContext.runEveryDayAt(
 ) = runEveryDayAt(Time(hour, minute, second, millisecond), callback)
 
 /** Schedule something to execute at a certain (local) time each day. */
-suspend fun HasKHassContext.runEveryDayAt(localTime: Time, callback: suspend () -> Unit): Task {
+suspend fun KHomeAssistant.runEveryDayAt(localTime: Time, callback: suspend () -> Unit): Task {
     val offsetAtEpoch = DateTime.EPOCH.localUnadjusted.offset.time
     return runEvery(1.days, DateTime(DateTime.EPOCH.date, localTime).localUnadjusted - offsetAtEpoch, callback)
 }
 
 /** Schedule something to execute each week, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the week will be picked. */
-suspend fun HasKHassContext.runEveryWeek(
+suspend fun KHomeAssistant.runEveryWeek(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ) = runEvery(1.weeks, alignWith, callback)
 
 /** Schedule something to execute each day, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the day will be picked. */
-suspend fun HasKHassContext.runEveryDay(
+suspend fun KHomeAssistant.runEveryDay(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ) = runEvery(1.days, alignWith, callback)
 
 /** Schedule something to execute each hour, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the hour will be picked. */
-suspend fun HasKHassContext.runEveryHour(
+suspend fun KHomeAssistant.runEveryHour(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ) = runEvery(1.hours, alignWith, callback)
 
 /** Schedule something to execute each minute, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the minute will be picked. */
-suspend fun HasKHassContext.runEveryMinute(
+suspend fun KHomeAssistant.runEveryMinute(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ) = runEvery(1.minutes, alignWith, callback)
 
 /** Schedule something to execute each second, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the second will be picked. */
-suspend fun HasKHassContext.runEverySecond(
+suspend fun KHomeAssistant.runEverySecond(
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ) = runEvery(1.seconds, alignWith, callback)
 
 /** Schedule something to repeatedly execute each given timespan, optionally aligned with a certain point in (local) time. If not aligned, the local epoch (00:00:00 jan 1 1970, local time) will be picked. */
-suspend fun HasKHassContext.runEvery(
+suspend fun KHomeAssistant.runEvery(
     timeSpan: TimeSpan,
     alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
     callback: suspend () -> Unit
 ): Task {
     val task = RepeatedRegularTask(
-        kHomeAssistant = getKHass()!!,
+        kHomeAssistant = instance,
         alignWith = alignWith.utc,
         runEvery = timeSpan,
         callback = callback
     )
 
-    getKHass()!!.schedule(task)
+    instance.schedule(task)
 
     return object : Task {
         override suspend fun cancel() {
             try { // TODO not sure if try catch necessary
-                getKHass()!!.cancel(task)
+                instance.cancel(task)
             } catch (e: Exception) {
             }
         }
@@ -96,7 +96,7 @@ suspend fun HasKHassContext.runEvery(
 }
 
 /** Schedule something to execute each day at sunrise. */
-suspend fun HasKHassContext.runEveryDayAtSunrise(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
+suspend fun KHomeAssistant.runEveryDayAtSunrise(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_rising.local + offset },
         whenToUpdate = { update -> sun::next_rising.onChanged(sun) { update() } },
@@ -104,7 +104,7 @@ suspend fun HasKHassContext.runEveryDayAtSunrise(offset: TimeSpan = TimeSpan.ZER
     )
 
 /** Schedule something to execute each day at sunset. */
-suspend fun HasKHassContext.runEveryDayAtSunset(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
+suspend fun KHomeAssistant.runEveryDayAtSunset(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_setting.local + offset },
         whenToUpdate = { update -> sun::next_setting.onChanged(sun) { update() } },
@@ -112,7 +112,7 @@ suspend fun HasKHassContext.runEveryDayAtSunset(offset: TimeSpan = TimeSpan.ZERO
     )
 
 /** Schedule something to execute each day at dawn. */
-suspend fun HasKHassContext.runEveryDayAtDawn(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
+suspend fun KHomeAssistant.runEveryDayAtDawn(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_dawn.local + offset },
         whenToUpdate = { update -> sun::next_dawn.onChanged(sun) { update() } },
@@ -120,7 +120,7 @@ suspend fun HasKHassContext.runEveryDayAtDawn(offset: TimeSpan = TimeSpan.ZERO, 
     )
 
 /** Schedule something to execute each day at dusk. */
-suspend fun HasKHassContext.runEveryDayAtDusk(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
+suspend fun KHomeAssistant.runEveryDayAtDusk(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_dusk.local + offset },
         whenToUpdate = { update -> sun::next_dusk.onChanged(sun) { update() } },
@@ -128,7 +128,7 @@ suspend fun HasKHassContext.runEveryDayAtDusk(offset: TimeSpan = TimeSpan.ZERO, 
     )
 
 /** Schedule something to execute each day at noon. */
-suspend fun HasKHassContext.runEveryDayAtNoon(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
+suspend fun KHomeAssistant.runEveryDayAtNoon(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_noon.local + offset },
         whenToUpdate = { update -> sun::next_noon.onChanged(sun) { update() } },
@@ -136,7 +136,7 @@ suspend fun HasKHassContext.runEveryDayAtNoon(offset: TimeSpan = TimeSpan.ZERO, 
     )
 
 /** Schedule something to execute each day at midnight. */
-suspend fun HasKHassContext.runEveryDayAtMidnight(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
+suspend fun KHomeAssistant.runEveryDayAtMidnight(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.next_midnight.local + offset },
         whenToUpdate = { update -> sun::next_midnight.onChanged(sun) { update() } },
@@ -144,11 +144,11 @@ suspend fun HasKHassContext.runEveryDayAtMidnight(offset: TimeSpan = TimeSpan.ZE
     )
 
 /** Schedule something to execute after [timeSpan] amount of time from now. */
-suspend fun HasKHassContext.runIn(timeSpan: TimeSpan, callback: suspend () -> Unit): Task =
+suspend fun KHomeAssistant.runIn(timeSpan: TimeSpan, callback: suspend () -> Unit): Task =
     runAt(DateTimeTz.nowLocal() + timeSpan, callback)
 
 /** Schedule something to execute at a given point in (local) time. The task will automatically be canceled after execution. */
-suspend fun HasKHassContext.runAt(
+suspend fun KHomeAssistant.runAt(
     dateTimeTz: DateTimeTz,
     callback: suspend () -> Unit
 ): Task {
@@ -181,24 +181,24 @@ suspend fun HasKHassContext.runAt(
  * @param callback the code block to execute at the next execution time provided by [getNextExecutionTime]
  * @return a cancelable [Task]
  * */
-suspend fun HasKHassContext.runAt(
+suspend fun KHomeAssistant.runAt(
     getNextLocalExecutionTime: () -> DateTimeTz,
     whenToUpdate: (update: suspend () -> Unit) -> Unit,
     callback: suspend () -> Unit
 ): Task {
     val task = RepeatedIrregularTask(
-        kHomeAssistant = getKHass()!!,
+        kHomeAssistant = instance,
         getNextUTCExecutionTime = { getNextLocalExecutionTime().utc },
         whenToUpdate = whenToUpdate,
         callback = callback
     )
 
-    getKHass()!!.schedule(task)
+    instance.schedule(task)
 
     return object : Task {
         override suspend fun cancel() {
             try {
-                getKHass()!!.cancel(task)
+                instance.cancel(task)
             } catch (e: Exception) {
             }
         }
@@ -211,7 +211,7 @@ interface Task {
 }
 
 sealed class RepeatedTask : Comparable<RepeatedTask> {
-    abstract val kHomeAssistant: KHomeAssistant
+    abstract val kHomeAssistant: KHomeAssistantInstance
     abstract val scheduledNextExecution: DateTime
     abstract val callback: suspend () -> Unit
     abstract suspend fun update()
@@ -221,7 +221,7 @@ sealed class RepeatedTask : Comparable<RepeatedTask> {
 }
 
 class RepeatedRegularTask(
-    override val kHomeAssistant: KHomeAssistant,
+    override val kHomeAssistant: KHomeAssistantInstance,
     alignWith: DateTime,
     val runEvery: TimeSpan,
     override val callback: suspend () -> Unit
@@ -242,7 +242,7 @@ class RepeatedRegularTask(
 }
 
 class RepeatedIrregularTask(
-    override val kHomeAssistant: KHomeAssistant,
+    override val kHomeAssistant: KHomeAssistantInstance,
     val getNextUTCExecutionTime: () -> DateTime,
     whenToUpdate: (update: suspend () -> Unit) -> Unit,
     override val callback: suspend () -> Unit

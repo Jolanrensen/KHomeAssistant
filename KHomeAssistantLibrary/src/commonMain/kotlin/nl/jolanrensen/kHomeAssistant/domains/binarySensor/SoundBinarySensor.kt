@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinarySoundSensorState.SOUND
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinarySoundSensorState.CLEAR
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class SoundBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinarySoundSensorState, SoundBinarySensor.Entity>() {
+class SoundBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinarySoundSensorState, SoundBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure SoundSensor acts as a singleton. */
     override fun equals(other: Any?) = other is SoundBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "sound".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinarySoundSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = SoundBinarySensor(getKHass),
+        domain = SoundBinarySensor(kHassInstance),
         deviceClass = "sound"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinarySoundSensorState(override val onOffValue: OnOff) : DeviceClas
     object CLEAR : BinarySoundSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.SoundBinarySensor: SoundBinarySensor
-    get() = SoundBinarySensor(getKHass)
+val KHomeAssistant.SoundBinarySensor: SoundBinarySensor
+    get() = SoundBinarySensor(this)

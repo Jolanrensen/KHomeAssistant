@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryMoistureSensorState.WET
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryMoistureSensorState.DRY
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class MoistureBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryMoistureSensorState, MoistureBinarySensor.Entity>() {
+class MoistureBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryMoistureSensorState, MoistureBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure MoistureSensor acts as a singleton. */
     override fun equals(other: Any?) = other is MoistureBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "moisture".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryMoistureSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = MoistureBinarySensor(getKHass),
+        domain = MoistureBinarySensor(kHassInstance),
         deviceClass = "moisture"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryMoistureSensorState(override val onOffValue: OnOff) : DeviceC
     object DRY : BinaryMoistureSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.MoistureBinarySensor: MoistureBinarySensor
-    get() = MoistureBinarySensor(getKHass)
+val KHomeAssistant.MoistureBinarySensor: MoistureBinarySensor
+    get() = MoistureBinarySensor(this)

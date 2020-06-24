@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGenericSensorState.ON
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGenericSensorState.OFF
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class GenericBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryGenericSensorState, GenericBinarySensor.Entity>() {
+class GenericBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryGenericSensorState, GenericBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure GenericSensor acts as a singleton. */
     override fun equals(other: Any?) = other is GenericBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "generic".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryGenericSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = GenericBinarySensor(getKHass),
+        domain = GenericBinarySensor(kHassInstance),
         deviceClass = null
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryGenericSensorState(override val onOffValue: OnOff) : DeviceCl
     object OFF : BinaryGenericSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.GenericBinarySensor: GenericBinarySensor
-    get() = GenericBinarySensor(getKHass)
+val KHomeAssistant.GenericBinarySensor: GenericBinarySensor
+    get() = GenericBinarySensor(this)

@@ -2,11 +2,12 @@ package examples
 
 import com.soywiz.klock.minutes
 import nl.jolanrensen.kHomeAssistant.Automation
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.runEveryDayAtSunrise
 import nl.jolanrensen.kHomeAssistant.runEveryDayAtSunset
 
-class OutsideLights : Automation() {
+class OutsideLights(kHass: KHomeAssistant) : Automation(kHass) {
 
     // TODO add scenes
     val offScene = Domain("scene")["off_scene"]

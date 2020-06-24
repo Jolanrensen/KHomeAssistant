@@ -1,9 +1,8 @@
 package nl.jolanrensen.kHomeAssistant.domains.input
 
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.suspendUntilStateChangedTo
@@ -15,13 +14,8 @@ import kotlin.reflect.KProperty
  * Input Text domain
  * https://www.home-assistant.io/integrations/input_text/
  * */
-class InputText(override var getKHass: () -> KHomeAssistant?) : Domain<InputText.Entity> {
+class InputText(kHassInstance: KHomeAssistant) : Domain<InputText.Entity>, KHomeAssistant by kHassInstance {
     override val domainName = "input_text"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'InputText.' from a KHomeAssistantContext instead of using InputText directly.""".trimMargin()
-    }
 
     /** Making sure InputText acts as a singleton. */
     override fun equals(other: Any?) = other is InputText
@@ -30,19 +24,19 @@ class InputText(override var getKHass: () -> KHomeAssistant?) : Domain<InputText
     /** Reload input_text configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String) = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String) = Entity(kHassInstance = this, name = name)
 
     enum class InputTextMode(val stateValue: String) {
         TEXT("text"), PASSWORD("password")
     }
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : BaseEntity<String>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = InputText(getKHass)
+        domain = InputText(kHassInstance)
     ) {
         /** Delegate so you can control an [InputText] like a local variable
          * Simply type "var yourString by [InputText].Entity("your_string")
@@ -127,5 +121,5 @@ class InputText(override var getKHass: () -> KHomeAssistant?) : Domain<InputText
 }
 
 /** Access the InputText Domain. */
-val HasKHassContext.InputText: InputText
-    get() = InputText(getKHass)
+val KHomeAssistant.InputText: InputText
+    get() = InputText(this)

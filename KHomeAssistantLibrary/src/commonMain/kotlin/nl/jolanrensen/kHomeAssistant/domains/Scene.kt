@@ -2,9 +2,8 @@ package nl.jolanrensen.kHomeAssistant.domains
 
 import com.soywiz.klock.TimeSpan
 import kotlinx.serialization.json.*
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.SceneEntityState
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
@@ -13,13 +12,8 @@ import nl.jolanrensen.kHomeAssistant.plus
 /**
  * https://www.home-assistant.io/integrations/scene/
  */
-class Scene(override var getKHass: () -> KHomeAssistant?) : Domain<Scene.Entity> {
+class Scene(kHassInstance: KHomeAssistant) : Domain<Scene.Entity>, KHomeAssistant by kHassInstance {
     override val domainName = "scene"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'Scene.' from a KHomeAssistantContext instead of using Scene directly.""".trimMargin()
-    }
 
     /** Making sure Scene acts as a singleton. */
     override fun equals(other: Any?) = other is Scene
@@ -83,15 +77,15 @@ class Scene(override var getKHass: () -> KHomeAssistant?) : Domain<Scene.Entity>
         }
     }
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : DefaultEntity(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = Scene(getKHass)
+        domain = Scene(kHassInstance)
     ) {
 
         init {
@@ -109,7 +103,7 @@ class Scene(override var getKHass: () -> KHomeAssistant?) : Domain<Scene.Entity>
             }
 
         /** All entities that are affected by this scene (as [DefaultEntity]s) */
-        val entities: List<DefaultEntity>
+        val entity_id: List<DefaultEntity>
             get() = rawAttributes["entity_id"]!!
                 .jsonArray
                 .content
@@ -134,5 +128,5 @@ class Scene(override var getKHass: () -> KHomeAssistant?) : Domain<Scene.Entity>
     }
 }
 
-val HasKHassContext.Scene: Scene
-    get() = Scene(getKHass)
+val KHomeAssistant.Scene: Scene
+    get() = Scene(this)

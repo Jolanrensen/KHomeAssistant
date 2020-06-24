@@ -3,18 +3,16 @@ package nl.jolanrensen.kHomeAssistant
 import com.soywiz.klock.minutes
 import com.soywiz.klock.plus
 import kotlinx.coroutines.runBlocking
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.core.onEventFired
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.domains.getValue
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
 import nl.jolanrensen.kHomeAssistant.entities.invoke
-import nl.jolanrensen.kHomeAssistant.entities.onStateChanged
 import kotlin.test.Test
 
 class Test {
 
-    class TestAutomation : Automation() {
+    class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
 
         val denon_avrx2200w by MediaPlayer
         val bothDateAndTime = InputDatetime["both_date_and_time"]
@@ -42,18 +40,19 @@ class Test {
         }
     }
 
-    val kHomeAssistant = KHomeAssistant(
+    val kHomeAssistant = KHomeAssistantInstance(
         host = "home.jolanrensen.nl",
         port = 8123,
         secure = true,
         debug = false,
-        accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
-        automations = listOf(TestAutomation())
+        accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI"
     )
 
     @Test
     fun `Basic kHomeAssistant run`() = runBlocking {
-        kHomeAssistant.run()
+        kHomeAssistant.run(
+            TestAutomation(kHomeAssistant)
+        )
         assert(true)
     }
 

@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryVibrationSensorState.VIBRATION
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryVibrationSensorState.CLEAR
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class VibrationBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryVibrationSensorState, VibrationBinarySensor.Entity>() {
+class VibrationBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryVibrationSensorState, VibrationBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure VibrationSensor acts as a singleton. */
     override fun equals(other: Any?) = other is VibrationBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "vibration".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryVibrationSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = VibrationBinarySensor(getKHass),
+        domain = VibrationBinarySensor(kHassInstance),
         deviceClass = "vibration"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryVibrationSensorState(override val onOffValue: OnOff) : Device
     object CLEAR : BinaryVibrationSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.VibrationBinarySensor: VibrationBinarySensor
-    get() = VibrationBinarySensor(getKHass)
+val KHomeAssistant.VibrationBinarySensor: VibrationBinarySensor
+    get() = VibrationBinarySensor(this)

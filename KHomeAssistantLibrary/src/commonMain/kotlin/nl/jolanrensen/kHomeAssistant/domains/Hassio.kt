@@ -1,19 +1,13 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 
 /**
  *
  */
-class Hassio(override var getKHass: () -> KHomeAssistant?) : Domain<Nothing> {
+class Hassio(kHassInstance: KHomeAssistant) : Domain<Nothing>, KHomeAssistant by kHassInstance {
     override val domainName = "hassio"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'Hassio.' from a KHomeAssistantContext instead of using HassioDomain directly.""".trimMargin()
-    }
 
     /** Making sure Hassio acts as a singleton. */
     override fun equals(other: Any?) = other is Hassio
@@ -79,5 +73,5 @@ class Hassio(override var getKHass: () -> KHomeAssistant?) : Domain<Nothing> {
 }
 
 /** Access the Hassio Domain. */
-val HasKHassContext.Hassio: Hassio
-    get() = Hassio(getKHass)
+val KHomeAssistant.Hassio: Hassio
+    get() = Hassio(this)

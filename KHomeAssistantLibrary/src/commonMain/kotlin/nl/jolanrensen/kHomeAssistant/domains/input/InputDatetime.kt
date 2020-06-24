@@ -4,9 +4,8 @@ import com.soywiz.klock.*
 import com.soywiz.klock.DateFormat.Companion.FORMAT_DATE
 import com.soywiz.klock.TimeFormat.Companion.FORMAT_TIME
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.AttributesDelegate
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
@@ -19,13 +18,8 @@ import kotlin.reflect.KProperty
  * Input Datetime
  * https://www.home-assistant.io/integrations/input_datetime
  * */
-class InputDatetime(override var getKHass: () -> KHomeAssistant?) : Domain<InputDatetime.Entity> {
+class InputDatetime(kHassInstance: KHomeAssistant) : Domain<InputDatetime.Entity>, KHomeAssistant by kHassInstance {
     override val domainName = "input_datetime"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'InputDatetime.' from a KHomeAssistantContext instead of using InputDatetime directly.""".trimMargin()
-    }
 
     /** Making sure InputDatetime acts as a singleton. */
     override fun equals(other: Any?) = other is InputDatetime
@@ -34,7 +28,7 @@ class InputDatetime(override var getKHass: () -> KHomeAssistant?) : Domain<Input
     /** Reload input_datetime configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String) = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String) = Entity(kHassInstance = this, name = name)
 
     class State(val value: String) {
         /** Only use if `has_time == true && has_date == false`. */
@@ -57,12 +51,12 @@ class InputDatetime(override var getKHass: () -> KHomeAssistant?) : Domain<Input
 
     @OptIn(ExperimentalStdlibApi::class)
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : BaseEntity<State>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = InputDatetime(getKHass)
+        domain = InputDatetime(kHassInstance)
     ) {
 
         init {
@@ -283,5 +277,5 @@ class InputDatetime(override var getKHass: () -> KHomeAssistant?) : Domain<Input
 
 
 /** Access the InputDateTime Domain */
-val HasKHassContext.InputDatetime: InputDatetime
-    get() = InputDatetime(getKHass)
+val KHomeAssistant.InputDatetime: InputDatetime
+    get() = InputDatetime(this)

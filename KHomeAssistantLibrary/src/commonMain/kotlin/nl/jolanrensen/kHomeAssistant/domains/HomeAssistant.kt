@@ -1,20 +1,14 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.helper.GeoPoint
 
 /**
  * https://www.home-assistant.io/integrations/homeassistant
  */
-class HomeAssistant(override var getKHass: () -> KHomeAssistant?) : Domain<Nothing> {
+class HomeAssistant(kHassInstance: KHomeAssistant) : Domain<Nothing>, KHomeAssistant by kHassInstance {
     override val domainName: String = "homeassistant"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'HomeAssistant.' from a KHomeAssistantContext instead of using HomeAssistant directly.""".trimMargin()
-    }
 
     /** Making sure HomeAssistant acts as a singleton. */
     override fun equals(other: Any?) = other is HomeAssistant
@@ -50,5 +44,5 @@ class HomeAssistant(override var getKHass: () -> KHomeAssistant?) : Domain<Nothi
 
 
 /** Access the HomeAssistant Domain. */
-val HasKHassContext.HomeAssistant: HomeAssistant
-    get() = HomeAssistant(getKHass)
+val KHomeAssistant.HomeAssistant: HomeAssistant
+    get() = HomeAssistant(this)

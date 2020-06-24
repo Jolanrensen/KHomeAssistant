@@ -1,9 +1,8 @@
 package nl.jolanrensen.kHomeAssistant.domains.input
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 import kotlin.reflect.KProperty
@@ -12,13 +11,8 @@ import kotlin.reflect.KProperty
 /**
  * https://www.home-assistant.io/integrations/input_boolean/
  */
-class InputBoolean(override var getKHass: () -> KHomeAssistant?) : Domain<InputBoolean.Entity> {
+class InputBoolean(kHassInstance: KHomeAssistant) : Domain<InputBoolean.Entity>, KHomeAssistant by kHassInstance {
     override val domainName = "input_boolean"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'InputBoolean.' from a KHomeAssistantContext instead of using InputBoolean directly.""".trimMargin()
-    }
 
     /** Making sure InputBoolean acts as a singleton. */
     override fun equals(other: Any?) = other is InputBoolean
@@ -31,17 +25,17 @@ class InputBoolean(override var getKHass: () -> KHomeAssistant?) : Domain<InputB
 
     override fun Entity(name: String) =
         Entity(
-            getKHass = getKHass,
+            kHassInstance = this,
             name = name
         )
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : ToggleEntity(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = InputBoolean(getKHass)
+        domain = InputBoolean(kHassInstance)
     ) {
         /** Delegate so you can control an InputBoolean like a local variable
          * Simply type "var yourBoolean by InputBoolean.Entity("your_boolean")
@@ -63,5 +57,5 @@ class InputBoolean(override var getKHass: () -> KHomeAssistant?) : Domain<InputB
 }
 
 /** Access the InputBoolean Domain */
-val HasKHassContext.InputBoolean: InputBoolean
-    get() = InputBoolean(getKHass)
+val KHomeAssistant.InputBoolean: InputBoolean
+    get() = InputBoolean(this)

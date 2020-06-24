@@ -1,13 +1,18 @@
 import nl.jolanrensen.kHomeAssistant.Automation
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.SceneEntityState
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.automation
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.domains.*
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
-import nl.jolanrensen.kHomeAssistant.entities.*
+import nl.jolanrensen.kHomeAssistant.entities.invoke
+import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
+import nl.jolanrensen.kHomeAssistant.entities.turnOff
+import nl.jolanrensen.kHomeAssistant.entities.turnOn
 
 
-class BedroomLights : Automation() {
+class BedroomLights(kHass: KHomeAssistant) : Automation(kHass) {
 
 
 //    val bed = Light.Entity("bed")
@@ -30,7 +35,7 @@ class BedroomLights : Automation() {
     }
 }
 
-class TestAutomation : Automation() {
+class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
 
     val denon_avrx2200w by MediaPlayer
     val bothDateAndTime = InputDatetime["both_date_and_time"]
@@ -44,21 +49,18 @@ class TestAutomation : Automation() {
 
     override suspend fun initialize() {
 
-        shield_cast {
-            mediaPlayPause()
-        }
+
+        println(denon_avrx2200w)
 
 
-
-
-        println(
-            Scene.apply(
-                SceneEntityState(
-                    entity = Domain("light")["wall_lamp"],
-                    state = "off"
-                )
-            )
-        )
+//        println(
+//            Scene.apply(
+//                SceneEntityState(
+//                    entity = Domain("light")["wall_lamp"],
+//                    state = "off"
+//                )
+//            )
+//        )
 
 //        println(test)
 //        println(test2)
@@ -128,17 +130,19 @@ class TestAutomation : Automation() {
 //    }
 //}
 
-val kHomeAssistant = KHomeAssistant(
+val kHomeAssistant = KHomeAssistantInstance(
     host = "home.jolanrensen.nl",
     port = 8123,
     secure = true,
     debug = true,
-    accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI",
-    automations = listOf(TestAutomation())
+    accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI"
 )
+
 
 fun main() = runBlocking {
     println("running!")
-    kHomeAssistant.run()
+    kHomeAssistant.run(
+        TestAutomation(kHomeAssistant)
+    )
 }
 

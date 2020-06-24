@@ -1,26 +1,20 @@
 package nl.jolanrensen.kHomeAssistant.domains.input
 
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.suspendUntilStateChangedTo
-import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 
 /**
  * https://www.home-assistant.io/integrations/input_number/
  */
-class InputNumber(override var getKHass: () -> KHomeAssistant?) : Domain<InputNumber.Entity> {
+class InputNumber(kHassInstance: KHomeAssistant) : Domain<InputNumber.Entity>, KHomeAssistant by kHassInstance {
     override val domainName = "input_number"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'InputNumber.' from a KHomeAssistantContext instead of using InputNumber directly.""".trimMargin()
-    }
 
     /** Making sure InputNumber acts as a singleton. */
     override fun equals(other: Any?) = other is InputNumber
@@ -29,19 +23,19 @@ class InputNumber(override var getKHass: () -> KHomeAssistant?) : Domain<InputNu
     /** Reload input_number configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String) = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String) = Entity(kHassInstance = this, name = name)
 
     enum class InputNumberMode(val stateValue: String) {
         BOX("box"), SLIDER("slider")
     }
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : BaseEntity<Float>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = InputNumber(getKHass)
+        domain = InputNumber(kHassInstance)
     ) {
         /** Delegate so you can control an InputNumber like a local variable
          * Simply type "var yourFloat by InputNumber.Entity("your_float")
@@ -123,5 +117,5 @@ class InputNumber(override var getKHass: () -> KHomeAssistant?) : Domain<InputNu
 }
 
 /** Access the InputNumber Domain. */
-val HasKHassContext.InputNumber: InputNumber
-    get() = InputNumber(getKHass)
+val KHomeAssistant.InputNumber: InputNumber
+    get() = InputNumber(this)

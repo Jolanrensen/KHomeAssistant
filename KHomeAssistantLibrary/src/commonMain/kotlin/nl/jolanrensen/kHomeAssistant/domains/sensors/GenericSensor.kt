@@ -1,10 +1,9 @@
 package nl.jolanrensen.kHomeAssistant.domains.sensors
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 
 /** Generic sensor. The type of state will be a String and the unit_of_measurement will be absent. */
-class GenericSensor(override var getKHass: () -> KHomeAssistant?) : AbstractSensor<String, GenericSensor.Entity>() {
+class GenericSensor(kHassInstance: KHomeAssistant) : AbstractSensor<String, GenericSensor.Entity>(kHassInstance) {
 
     /** Making sure GenericSensor acts as a singleton. */
     override fun equals(other: Any?) = other is GenericSensor
@@ -12,17 +11,17 @@ class GenericSensor(override var getKHass: () -> KHomeAssistant?) : AbstractSens
 
     override fun Entity(name: String): Entity =
         Entity(
-            getKHass = getKHass,
+            kHassInstance = this,
             name = name
         )
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractSensorEntity<String>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = GenericSensor(getKHass),
+        domain = GenericSensor(kHassInstance),
         deviceClass = null
     ) {
         override fun stringToState(stateValue: String) = stateValue
@@ -32,5 +31,5 @@ class GenericSensor(override var getKHass: () -> KHomeAssistant?) : AbstractSens
 
 
 /** Access the GenericSensor Domain */
-val HasKHassContext.GenericSensor: GenericSensor
-    get() = GenericSensor(getKHass)
+val KHomeAssistant.GenericSensor: GenericSensor
+    get() = GenericSensor(this)

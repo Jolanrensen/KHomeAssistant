@@ -11,10 +11,10 @@ import nl.jolanrensen.kHomeAssistant.helper.PriorityQueue
 import nl.jolanrensen.kHomeAssistant.helper.priorityQueueOf
 
 /**
- * Scheduler used by [KHomeAssistant] to schedule and execute tasks at certain times.
- * @param kHomeAssistant the [KHomeAssistant] instance
+ * Scheduler used by [KHomeAssistantInstance] to schedule and execute tasks at certain times.
+ * @param kHomeAssistant the [KHomeAssistantInstance] instance
  */
-class Scheduler(private val kHomeAssistant: KHomeAssistant) {
+class Scheduler(private val kHomeAssistant: KHomeAssistantInstance) {
     /**
      * Returns a new instance of the scheduler job.
      * The scheduler stops itself when there are no tasks left in

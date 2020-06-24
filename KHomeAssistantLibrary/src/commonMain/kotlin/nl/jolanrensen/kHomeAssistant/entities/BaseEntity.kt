@@ -4,17 +4,15 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.SceneEntityState
 import nl.jolanrensen.kHomeAssistant.cast
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.domains.HomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Scene
 import nl.jolanrensen.kHomeAssistant.messages.Context
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
-import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
 import kotlin.reflect.KProperty1
@@ -28,25 +26,20 @@ typealias Attribute<A> = KProperty0<A>
 typealias NonSpecificAttribute<E, A> = KProperty1<E, A>
 
 open class BaseEntity<StateType : Any>(
-    override val getKHass: () -> KHomeAssistant? = { null },
+    kHassInstance: KHomeAssistant,
     open val name: String,
     open val domain: Domain<*>
-) : HasKHassContext {
-
-    override val coroutineContext: CoroutineContext
-        get() = getKHass()!!.coroutineContext
+) : KHomeAssistant by kHassInstance {
 
     private var entityExists = false
 
     @Suppress("UNNECESSARY_SAFE_CALL")
     open fun checkEntityExists() {
-        if (entityExists) return
-        getKHass?.invoke()?.apply {
-            launch {
-                if (entityID !in entityIds)
-                    throw EntityNotInHassException("The entity_id \"$entityID\" does not exist in your Home Assistant instance.")
-                entityExists = true
-            }
+        if (entityExists || !loadedInitialStates) return
+        launch {
+            if (entityID !in entityIds)
+                throw EntityNotInHassException("The entity_id \"$entityID\" does not exist in your Home Assistant instance.")
+            entityExists = true
         }
     }
 
@@ -92,7 +85,7 @@ open class BaseEntity<StateType : Any>(
 
     /** State of the entity. */
     open var state: StateType
-        get() = getKHass()!!.getState(this)
+        get() = getState(this)
         @Deprecated(
             level = DeprecationLevel.WARNING,
             message = "Uses Scene.apply, so it isn't guaranteed to work. Use functions inside a domain to be more certain."
@@ -111,7 +104,7 @@ open class BaseEntity<StateType : Any>(
     /** Get the raw attributes from Home Assistant in json format.
      * Raw attributes can also directly be obtained using yourEntity["raw_attribute"] */
     val rawAttributes: JsonObject
-        get() = getKHass()!!.getAttributes(this)
+        get() = getAttributes(this)
 
     /** Helper function to get raw attributes in json format using yourEntity["attribute"]
      * @see [BaseEntity.rawAttributes]
@@ -189,7 +182,7 @@ open class BaseEntity<StateType : Any>(
     suspend fun getContext(): Context = TODO("context uit State")
 
     /** Request the update of an entity, rather than waiting for the next scheduled update, for example Google travel time sensor, a template sensor, or a light */
-    suspend inline fun updateEntity() = callService(HomeAssistant(getKHass), "update_entity")
+    suspend inline fun updateEntity() = callService("update_entity")
 
     /** Call a service with this entity using a different serviceDomain */
     suspend fun callService(
@@ -199,7 +192,7 @@ open class BaseEntity<StateType : Any>(
         doEntityCheck: Boolean = true
     ): ResultMessage {
         if (doEntityCheck) checkEntityExists()
-        return getKHass()!!.callService(
+        return callService(
             entity = this,
             serviceDomain = serviceDomain,
             serviceName = serviceName,
@@ -213,7 +206,7 @@ open class BaseEntity<StateType : Any>(
         doEntityCheck: Boolean = true
     ): ResultMessage {
         if (doEntityCheck) checkEntityExists()
-        return getKHass()!!.callService(
+        return callService(
             entity = this,
             serviceName = serviceName,
             data = data

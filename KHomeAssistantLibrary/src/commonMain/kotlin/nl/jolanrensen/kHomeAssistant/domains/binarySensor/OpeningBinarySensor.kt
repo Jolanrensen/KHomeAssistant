@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryOpeningSensorState.OPEN
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryOpeningSensorState.CLOSED
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class OpeningBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryOpeningSensorState, OpeningBinarySensor.Entity>() {
+class OpeningBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryOpeningSensorState, OpeningBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure OpeningSensor acts as a singleton. */
     override fun equals(other: Any?) = other is OpeningBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "opening".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryOpeningSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = OpeningBinarySensor(getKHass),
+        domain = OpeningBinarySensor(kHassInstance),
         deviceClass = "opening"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryOpeningSensorState(override val onOffValue: OnOff) : DeviceCl
     object CLOSED : BinaryOpeningSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.OpeningBinarySensor: OpeningBinarySensor
-    get() = OpeningBinarySensor(getKHass)
+val KHomeAssistant.OpeningBinarySensor: OpeningBinarySensor
+    get() = OpeningBinarySensor(this)

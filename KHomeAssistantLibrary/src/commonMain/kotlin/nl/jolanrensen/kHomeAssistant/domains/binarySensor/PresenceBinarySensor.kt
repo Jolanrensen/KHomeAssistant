@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryPresenceSensorState.HOME
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryPresenceSensorState.AWAY
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class PresenceBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryPresenceSensorState, PresenceBinarySensor.Entity>() {
+class PresenceBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryPresenceSensorState, PresenceBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure PresenceSensor acts as a singleton. */
     override fun equals(other: Any?) = other is PresenceBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "presence".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryPresenceSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = PresenceBinarySensor(getKHass),
+        domain = PresenceBinarySensor(kHassInstance),
         deviceClass = "presence"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryPresenceSensorState(override val onOffValue: OnOff) : DeviceC
     object AWAY : BinaryPresenceSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.PresenceBinarySensor: PresenceBinarySensor
-    get() = PresenceBinarySensor(getKHass)
+val KHomeAssistant.PresenceBinarySensor: PresenceBinarySensor
+    get() = PresenceBinarySensor(this)

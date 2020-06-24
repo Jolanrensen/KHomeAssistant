@@ -17,7 +17,6 @@ import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
@@ -39,10 +38,10 @@ import kotlin.time.minutes
  * @param accessToken the Long-lived Access Token that can be generated from your Home Assistant profile settings
  * @param secure whether to connect over SSL or not (https or http)
  * @param debug if enabled, debug messages will be printed
- * @param automations a collection of [Automation] instances that should be run by [KHomeAssistant]
+ * @param automations a collection of [Automation] instances that should be run by [KHomeAssistantInstance]
  */
 @OptIn(ExperimentalTime::class)
-class KHomeAssistant(
+class KHomeAssistantInstance(
     /** The address on which to reach your Home Assistant server. Like "https://myHomeAssistant.com". */
     val host: String,
 
@@ -56,51 +55,15 @@ class KHomeAssistant(
     val secure: Boolean = false,
 
     /** If enabled, debug messages will be printed. */
-    val debug: Boolean = false,
+    val debug: Boolean = false
+) : KHomeAssistant {
 
-    /** A collection of [Automation] instances that should be run by [KHomeAssistant]. */
-    val automations: Collection<Automation>
-) : HasKHassContext {
+    override var loadedInitialStates: Boolean = false
 
-    /**
-     * KHomeAssistant instance.
-     * This is used to connect to your Home Assistant server and start running the provided automations.
-     * Run [run] from a suspended context (a suspend fun or in a runBlocking { } coroutine scope).
-     * This constructor is a shorthand for an instance with a single automation:
-     * ```
-     * KHomeAssistant(
-     *     // params
-     * ) { // this: Automation
-     *    // execute something
-     * }.run()
-     * ```
-     * @param host the address on which to reach your Home Assistant server. Like "https://myHomeAssistant.com"
-     * @param port the port for your Home Assistant (API), usually 8123
-     * @param accessToken the Long-lived Access Token that can be generated from your Home Assistant profile settings
-     * @param secure whether to connect over SSL or not (https or http)
-     * @param debug if enabled, debug messages will be printed
-     * @param automationName the name of the single automation defined in [automation]
-     * @param automation the automation [Automation.initialize] function defining the automation
-     */
-    constructor(
-        host: String,
-        port: Int = 8123,
-        accessToken: String,
-        secure: Boolean = false,
-        debug: Boolean = false,
-        automationName: String = "Single Automation",
-        automation: suspend Automation.() -> Unit
-    ) : this(
-        host = host,
-        port = port,
-        accessToken = accessToken,
-        secure = secure,
-        debug = debug,
-        automations = listOf(automation(automationName, automation))
-    )
+    override val instance: KHomeAssistantInstance = this
 
-    /** The function providing the kHomeAssistant instace as context to other objects. */
-    override val getKHass = { this }
+    /** A collection of [Automation] instances that should be run by [KHomeAssistantInstance]. */
+    private var automations: Collection<Automation> = listOf()
 
     /** All exceptions from couroutines in this scope will be handled here. */
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
@@ -118,11 +81,11 @@ class KHomeAssistant(
     private var rawEntityData: HashMap<String, StateResult> = hashMapOf()
 
     /** Returns all the raw entity IDs known in Home Assistant. */
-    val entityIds: Set<String>
+    override val entityIds: Set<String>
         get() = rawEntityData.keys
 
     /** Returns all entities in Home Assistant as [BaseEntity] (since we cannot know all possible types of entities) */
-    val entities: List<DefaultEntity>
+    override val entities: List<DefaultEntity>
         get() = entityIds.map {
             val (domain, name) = it.split(".")
             Domain(domain)[name]
@@ -137,8 +100,7 @@ class KHomeAssistant(
 
 
     /** HA version reported by the connected instance */
-    lateinit var haVersion: String
-
+    override lateinit var haVersion: String
 
     /** ID to represent the number of interactions with the HA instance. Used in [sendMessage]. */
     private var messageID: Int = 0
@@ -146,11 +108,11 @@ class KHomeAssistant(
     /** Mutex that has to be used to modify [messageID] to prevent race conditions. */
     private val messageIDMutex = Mutex()
 
-    /** TODO */
-    val eventListeners: HashMap<String, HashSet<suspend (Event) -> Unit>> = hashMapOf()
+    /** All the event listeners, `eventListeners["event"] =` set of listeners for this event type. */
+    override val eventListeners: HashMap<String, HashSet<suspend (Event) -> Unit>> = hashMapOf()
 
     /** All the state/attribute listeners. stateListeners["entity_id"] = set of listeners for this entity_id */
-    val stateListeners: HashMap<String, HashSet<StateListener>> = hashMapOf()
+    override val stateListeners: HashMap<String, HashSet<StateListener>> = hashMapOf()
 
     /** The current receiver thread. Responsible for receiving all messages from Home Assistant. */
     private var receiver: Job? = null
@@ -176,9 +138,49 @@ class KHomeAssistant(
     /** Instance of the scheduler for this KHomeAssistant instance. */
     private val scheduler = Scheduler(this)
 
+    /**
+     * Allows to inline creation of [KHomeAssistantInstance] and automations and starting a run.
+     *
+     * Example:
+     * ```
+     * KHomeAssistantInstance(...).run(
+     *      automation("some") {
+     *          // do somehting
+     *      },
+     *      automation("other") {
+     *          // do something
+     *      }
+     * )
+     * ```
+     * */
+    suspend fun run(vararg functionalAutomations: FunctionalAutomation) =
+        run(*functionalAutomations.map { it(this) }.toTypedArray())
+
+    /**
+     * Allows to inline creation of [KHomeAssistantInstance] and automations and starting a run.
+     *
+     * Example:
+     * ```
+     * KHomeAssistantInstance(...).run(
+     *      listOf(
+     *          automation("some") {
+     *              // do somehting
+     *          },
+     *          automation("other") {
+     *              // do something
+     *          }
+     *      )
+     * )
+     * ```
+     * */
+//    suspend fun run(functionalAutomations: Collection<FunctionalAutomation>) = run(functionalAutomations.map { it(this) })
 
     /** Run KHomeAssistant, this makes the connection, authenticates, initializes and runs the complete HA interaction */
-    suspend fun run() {
+//    suspend fun run(vararg automations: Automation) = run(automations.toList())
+
+    /** Run KHomeAssistant, this makes the connection, authenticates, initializes and runs the complete HA interaction */
+    suspend fun run(vararg automations: Automation) {
+        this.automations = automations.toList()
         println("KHomeAssistant started running at ${DateTime.nowLocal().utc}")
         if (secure) WebsocketsHttpClient.httpClient.wss(
             host = host,
@@ -293,7 +295,7 @@ class KHomeAssistant(
                                     }
 
                                     stateListeners[entityID]?.forEach {
-                                        this@KHomeAssistant.launch {
+                                        this@KHomeAssistantInstance.launch {
                                             try {
                                                 it.listener(oldState, newState)
                                             } catch (e: Exception) {
@@ -315,7 +317,7 @@ class KHomeAssistant(
                             }
 
                             eventListeners[event.event_type]?.forEach {
-                                this@KHomeAssistant.launch {
+                                this@KHomeAssistantInstance.launch {
                                     try {
                                         it(event)
                                     } catch (e: Exception) {
@@ -354,6 +356,7 @@ class KHomeAssistant(
             newCache[it.entity_id] = it
         }
         rawEntityData = newCache
+        loadedInitialStates = true
         cacheAge = TimeSource.Monotonic.markNow()
         debugPrintln("Updated cache!")
     }
@@ -372,9 +375,9 @@ class KHomeAssistant(
     /** Initialize all automations asynchronously */
     private suspend fun initializeAutomations() {
         val automationInitialisations = hashSetOf<Job>()
-        for (it in automations) this@KHomeAssistant.launch {
+        for (it in automations) this@KHomeAssistantInstance.launch {
             val inner = launch {
-                it.kHassInstance = this@KHomeAssistant
+//                it.kHassInstance = this@KHomeAssistantInstance
                 it.initialize()
             }
             try {
@@ -431,11 +434,11 @@ class KHomeAssistant(
      * @param data the optional [JsonObject] or [Map]<[String], [JsonElement]> containing the extra data for the service
      * @return the result in form of a [ResultMessage]
      * */
-    suspend fun callService(
+    override suspend fun callService(
         entity: BaseEntity<*>,
         serviceDomain: Domain<*>,
         serviceName: String,
-        data: JsonObject = json { }
+        data: JsonObject
     ) =
         callService(
             serviceDomain = serviceDomain.domainName,
@@ -452,7 +455,7 @@ class KHomeAssistant(
      * @param data the optional [JsonObject] or [Map]<[String], [JsonElement]> containing the extra data for the service
      * @return the result in form of a [ResultMessage]
      * */
-    suspend fun callService(serviceDomain: Domain<*>, serviceName: String, data: JsonObject = json { }) =
+    override suspend fun callService(serviceDomain: Domain<*>, serviceName: String, data: JsonObject) =
         callService(
             serviceDomain = serviceDomain.domainName,
             serviceName = serviceName,
@@ -466,7 +469,7 @@ class KHomeAssistant(
      * @param data the optional [JsonObject] or [Map]<[String], [JsonElement]> containing the extra data for the service
      * @return the result in form of a [ResultMessage]
      * */
-    suspend fun callService(entity: BaseEntity<*>, serviceName: String, data: JsonObject = json { }) =
+    override suspend fun callService(entity: BaseEntity<*>, serviceName: String, data: JsonObject) =
         callService(
             serviceDomain = entity.domain.domainName,
             entityID = entity.entityID,
@@ -482,11 +485,11 @@ class KHomeAssistant(
      * @param data the optional [JsonObject] or [Map]<[String], [JsonElement]> containing the extra data for the service
      * @return the result in form of a [ResultMessage]
      * */
-    suspend fun callService(
+    override suspend fun callService(
         serviceDomain: String,
         serviceName: String,
-        entityID: String? = null,
-        data: JsonObject = json { }
+        entityID: String?,
+        data: JsonObject
     ): ResultMessage =
         sendMessage<CallServiceMessage, ResultMessageBase>(
             CallServiceMessage(
@@ -507,7 +510,7 @@ class KHomeAssistant(
      * @return the attributes of [entity] in the from of a [JsonObject]
      * @throws EntityNotInHassException if the entity provided cannot be found in Home Assistant
      */
-    fun <EntityType : BaseEntity<*>> getAttributes(entity: EntityType): JsonObject =
+    override fun <EntityType : BaseEntity<*>> getAttributes(entity: EntityType): JsonObject =
         try {
             if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
             rawEntityData[entity.entityID]!!.attributes
@@ -524,7 +527,7 @@ class KHomeAssistant(
      * @throws EntityNotInHassException if the entity provided cannot be found in Home Assistant
      * @throws Exception if the state cannot be parsed using `[entity].parseStateValue()`
      */
-    fun <StateType : Any, EntityType : BaseEntity<StateType>> getState(entity: EntityType): StateType {
+    override fun <StateType : Any, EntityType : BaseEntity<StateType>> getState(entity: EntityType): StateType {
         if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
 
         val stateValue = try {
@@ -544,7 +547,7 @@ class KHomeAssistant(
     }
 
     /** println's only executed if [debug] = true */
-    fun debugPrintln(message: Any?) {
+    override fun debugPrintln(message: Any?) {
         if (debug) println("DEBUG: $message")
     }
 

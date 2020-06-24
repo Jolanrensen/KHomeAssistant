@@ -1,19 +1,19 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.OnOff.*
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
 
 open class ToggleEntity(
-    override val getKHass: () -> KHomeAssistant?,
+    kHassInstance: KHomeAssistant,
     override val name: String,
     override val domain: Domain<BaseEntity<OnOff>>
 ) : BaseEntity<OnOff>(
-    getKHass = getKHass,
+    kHassInstance = kHassInstance,
     name = name,
     domain = domain
 ) {

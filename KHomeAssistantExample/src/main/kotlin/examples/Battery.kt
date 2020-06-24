@@ -3,18 +3,19 @@ package examples
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import nl.jolanrensen.kHomeAssistant.Automation
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Notify
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.runEveryDayAt
 import java.util.HashSet
 
-class Battery(private val threshold: Int, private val alwaysSend: Boolean = false) : Automation() {
+class Battery(private val threshold: Int, private val alwaysSend: Boolean = false, kHass: KHomeAssistant) : Automation(kHass) {
 
     override suspend fun initialize() {
         runEveryDayAt(hour = 6) {
             val batteryDevices: HashSet<Pair<DefaultEntity, Int>> = hashSetOf()
 
-            for (device in kHassInstance!!.entities) {
+            for (device in entities) {
                 val battery = device["battery"]?.intOrNull
                     ?: device["battery_level"]?.intOrNull
                     ?: if (device["device_class"]?.contentOrNull == "battery")

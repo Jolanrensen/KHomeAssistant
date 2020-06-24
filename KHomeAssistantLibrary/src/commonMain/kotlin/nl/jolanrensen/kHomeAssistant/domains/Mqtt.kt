@@ -3,20 +3,14 @@ package nl.jolanrensen.kHomeAssistant.domains
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.seconds
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
 /**
  * https://www.home-assistant.io/docs/mqtt/service/
  */
-class Mqtt(override var getKHass: () -> KHomeAssistant?) : Domain<Nothing> {
+class Mqtt(kHassInstance: KHomeAssistant) : Domain<Nothing>, KHomeAssistant by kHassInstance {
     override val domainName = "mqtt"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'Mqtt.' from a KHomeAssistantContext instead of using Mqtt directly.""".trimMargin()
-    }
 
     /** Making sure Mqtt acts as a singleton. */
     override fun equals(other: Any?) = other is Mqtt
@@ -71,5 +65,5 @@ class Mqtt(override var getKHass: () -> KHomeAssistant?) : Domain<Nothing> {
 }
 
 /** Access the Mqtt Domain. */
-val HasKHassContext.Mqtt: Mqtt
-    get() = Mqtt(getKHass)
+val KHomeAssistant.Mqtt: Mqtt
+    get() = Mqtt(this)

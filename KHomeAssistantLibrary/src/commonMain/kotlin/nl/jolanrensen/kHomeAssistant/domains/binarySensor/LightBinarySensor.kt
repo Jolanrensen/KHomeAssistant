@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryLightSensorState.LIGHT
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryLightSensorState.NO_LIGHT
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class LightBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryLightSensorState, LightBinarySensor.Entity>() {
+class LightBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryLightSensorState, LightBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure LightSensor acts as a singleton. */
     override fun equals(other: Any?) = other is LightBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "light".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryLightSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = LightBinarySensor(getKHass),
+        domain = LightBinarySensor(kHassInstance),
         deviceClass = "light"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryLightSensorState(override val onOffValue: OnOff) : DeviceClas
     object NO_LIGHT : BinaryLightSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.LightBinarySensor: LightBinarySensor
-    get() = LightBinarySensor(getKHass)
+val KHomeAssistant.LightBinarySensor: LightBinarySensor
+    get() = LightBinarySensor(this)

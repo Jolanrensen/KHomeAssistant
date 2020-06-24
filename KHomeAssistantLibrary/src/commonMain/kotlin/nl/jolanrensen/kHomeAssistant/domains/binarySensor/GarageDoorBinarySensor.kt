@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGarageDoorSensorState.OPEN
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGarageDoorSensorState.CLOSED
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class GarageDoorBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryGarageDoorSensorState, GarageDoorBinarySensor.Entity>() {
+class GarageDoorBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryGarageDoorSensorState, GarageDoorBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure GarageDoorSensor acts as a singleton. */
     override fun equals(other: Any?) = other is GarageDoorBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "garage_door".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryGarageDoorSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = GarageDoorBinarySensor(getKHass),
+        domain = GarageDoorBinarySensor(kHassInstance),
         deviceClass = "garage_door"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryGarageDoorSensorState(override val onOffValue: OnOff) : Devic
     object CLOSED : BinaryGarageDoorSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.GarageDoorBinarySensor: GarageDoorBinarySensor
-    get() = GarageDoorBinarySensor(getKHass)
+val KHomeAssistant.GarageDoorBinarySensor: GarageDoorBinarySensor
+    get() = GarageDoorBinarySensor(this)

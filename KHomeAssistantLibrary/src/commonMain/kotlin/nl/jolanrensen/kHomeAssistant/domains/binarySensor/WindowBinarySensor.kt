@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryWindowSensorState.OPEN
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryWindowSensorState.CLOSED
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class WindowBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryWindowSensorState, WindowBinarySensor.Entity>() {
+class WindowBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryWindowSensorState, WindowBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure WindowSensor acts as a singleton. */
     override fun equals(other: Any?) = other is WindowBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "window".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryWindowSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = WindowBinarySensor(getKHass),
+        domain = WindowBinarySensor(kHassInstance),
         deviceClass = "window"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryWindowSensorState(override val onOffValue: OnOff) : DeviceCla
     object CLOSED : BinaryWindowSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.WindowBinarySensor: WindowBinarySensor
-    get() = WindowBinarySensor(getKHass)
+val KHomeAssistant.WindowBinarySensor: WindowBinarySensor
+    get() = WindowBinarySensor(this)

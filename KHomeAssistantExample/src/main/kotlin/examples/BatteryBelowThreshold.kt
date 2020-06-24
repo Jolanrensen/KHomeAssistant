@@ -1,12 +1,13 @@
 package examples
 
 import nl.jolanrensen.kHomeAssistant.Automation
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.Notify
 import nl.jolanrensen.kHomeAssistant.domains.sensors.BatterySensor
 import nl.jolanrensen.kHomeAssistant.entities.onStateChanged
 
-class BatteryBelowThreshold(nameOfBatterySensor: String, private val threshold: Int) : Automation() {
+class BatteryBelowThreshold(nameOfBatterySensor: String, private val threshold: Int, kHass: KHomeAssistant) : Automation(kHass) {
 
     private var belowThreshold = false
     private val batterySensor: BatterySensor.Entity = BatterySensor[nameOfBatterySensor]
@@ -27,8 +28,8 @@ class BatteryBelowThreshold(nameOfBatterySensor: String, private val threshold: 
 }
 
 // functional variant
-fun batteryBelowThreshold(nameOfBatterySensor: String, threshold: Int): Automation =
-    automation("BatteryBelowThreshold") {
+fun batteryBelowThreshold(kHass: KHomeAssistant, nameOfBatterySensor: String, threshold: Int): Automation =
+    automation(kHass, "BatteryBelowThreshold") {
         var belowThreshold = false
         val batterySensor: BatterySensor.Entity = BatterySensor[nameOfBatterySensor]
 

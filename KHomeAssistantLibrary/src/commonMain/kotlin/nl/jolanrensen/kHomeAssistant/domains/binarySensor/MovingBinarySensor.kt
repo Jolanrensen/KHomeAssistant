@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryMovingSensorState.MOVING
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryMovingSensorState.STOPPED
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class MovingBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryMovingSensorState, MovingBinarySensor.Entity>() {
+class MovingBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryMovingSensorState, MovingBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure MovingSensor acts as a singleton. */
     override fun equals(other: Any?) = other is MovingBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "moving".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryMovingSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = MovingBinarySensor(getKHass),
+        domain = MovingBinarySensor(kHassInstance),
         deviceClass = "moving"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryMovingSensorState(override val onOffValue: OnOff) : DeviceCla
     object STOPPED : BinaryMovingSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.MovingBinarySensor: MovingBinarySensor
-    get() = MovingBinarySensor(getKHass)
+val KHomeAssistant.MovingBinarySensor: MovingBinarySensor
+    get() = MovingBinarySensor(this)

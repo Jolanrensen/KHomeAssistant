@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGasSensorState.GAS
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGasSensorState.CLEAR
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class GasBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryGasSensorState, GasBinarySensor.Entity>() {
+class GasBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryGasSensorState, GasBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure GasSensor acts as a singleton. */
     override fun equals(other: Any?) = other is GasBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "gas".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryGasSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = GasBinarySensor(getKHass),
+        domain = GasBinarySensor(kHassInstance),
         deviceClass = "gas"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryGasSensorState(override val onOffValue: OnOff) : DeviceClassS
     object CLEAR : BinaryGasSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.GasBinarySensor: GasBinarySensor
-    get() = GasBinarySensor(getKHass)
+val KHomeAssistant.GasBinarySensor: GasBinarySensor
+    get() = GasBinarySensor(this)

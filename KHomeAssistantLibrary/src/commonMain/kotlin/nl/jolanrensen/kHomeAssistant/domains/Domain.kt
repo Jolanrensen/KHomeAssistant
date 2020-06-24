@@ -5,8 +5,8 @@ package nl.jolanrensen.kHomeAssistant.domains
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
@@ -16,14 +16,14 @@ import kotlin.reflect.KProperty
  * Interface where all domains (like [Light], [MediaPlayer], [Switch]) inherit from.
  * @param E the type of entity this domain has. By default (or for a domain without entity) you can use [DefaultEntity].
  */
-interface Domain<out E : BaseEntity<*>> {
+interface Domain<out E : BaseEntity<*>> : KHomeAssistant {
 
     /** The Home Assistant name for this domain, like "light". */
     val domainName: String
 
-    /** Function to access the [KHomeAssistant] instance. This is passed around [HasKHassContext] inheritors,
+    /** Function to access the [KHomeAssistantInstance] instance. This is passed around [KHomeAssistant] inheritors,
      * usually in their constructor. */
-    var getKHass: () -> KHomeAssistant?
+//    var kHassInstance: KHomeAssistant
 
     /** Function to create an entity instance in a domain with correct context.
      * @param name the name of the entity (without domain) as defined in Home Assistant
@@ -58,11 +58,6 @@ interface Domain<out E : BaseEntity<*>> {
      * */
     operator fun get(name: String, vararg names: String): List<E> = Entities(name, *names)
 
-    /** Helper function that should check whether the context ([getKHass]) is not null.
-     * @throws IllegalArgumentException if `kHomeAssistant() == null`
-     * */
-    fun checkContext()
-
     /**
      * Call a service with an entity and data.
      * For instance, turning on a light would be:
@@ -72,16 +67,13 @@ interface Domain<out E : BaseEntity<*>> {
      * @param serviceName the name of the service in Home Assistant (like "turn_on")
      * @param data a map of [String] to [JsonElement] that will be sent to Home Assistant along with the command
      * @return a [ResultMessage] containing the results of the call
-     * @throws IllegalArgumentException if `kHomeAssistant() == null`
      * */
-    suspend fun callService(serviceName: String, data: JsonObject = json { }): ResultMessage {
-        checkContext()
-        return getKHass()!!.callService(
+    suspend fun callService(serviceName: String, data: JsonObject = json { }): ResultMessage =
+        callService(
             serviceDomain = this,
             serviceName = serviceName,
             data = data
         )
-    }
 }
 
 /** Shorthand for [apply] for each, allows for DSL-like behavior on a bunch of newly instanced entities.
@@ -113,14 +105,6 @@ inline fun <E : BaseEntity<*>> Domain<E>.Entities(vararg names: String, callback
  * */
 inline fun <E : BaseEntity<*>> Domain<E>.Entity(name: String, callback: E.() -> Unit): E = Entity(name).apply(callback)
 
-///** Helper extension function to access a [Domain] inheriting object and set its reference to kHomeAssistant at the same time.
-// * @receiver [D], the [Domain] inheriting object
-// * @param kHomeAssistant the context parameter
-// * @return [D], the [Domain] inheriting object
-// * */
-//fun <D : Domain<*>> D.withContext(kHomeAssistant: () -> KHomeAssistant?): D =
-//    also { it.kHomeAssistant = kHomeAssistant }
-
 /**
  * Create a temporary [Domain]. Useful for quick service calls or for by KHomeAssistant unsupported domains.
  * For example:
@@ -128,36 +112,34 @@ inline fun <E : BaseEntity<*>> Domain<E>.Entity(name: String, callback: E.() -> 
  * Domain("some_domain").Entity("some_entity").callService("some_service")
  * Domain("some_domain").callService("some_service")
  * ```
- * @receiver any [HasKHassContext] inheriting class like [nl.jolanrensen.kHomeAssistant.Automation]
+ * @receiver any [KHomeAssistant] inheriting class like [nl.jolanrensen.kHomeAssistant.Automation]
  * @param domainName the Home Assistant name for this domain, like "light"
  * @return a [Domain] inheriting object with [DefaultEntity] as its entity
  **/
-fun HasKHassContext.Domain(domainName: String): Domain<BaseEntity<String>> = object : Domain<DefaultEntity> {
-    override val domainName = domainName
-    override var getKHass = this@Domain.getKHass
+fun KHomeAssistant.Domain(domainName: String): Domain<BaseEntity<String>> =
+    object : Domain<DefaultEntity>, KHomeAssistant by this {
+        override val domainName = domainName
 
-    override fun Entity(name: String): DefaultEntity =
-        object : DefaultEntity(getKHass = getKHass, name = name, domain = this) {
-            override fun stringToState(stateValue: String) = stateValue
-            override fun stateToString(state: String) = state
+        override fun Entity(name: String): DefaultEntity =
+            object : DefaultEntity(kHassInstance = this, name = name, domain = this) {
+                override fun stringToState(stateValue: String) = stateValue
+                override fun stateToString(state: String) = state
+            }
+
+        /** Making sure Domain acts as a singleton. */
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other == null || this::class != other::class) return false
+
+            other as Domain<*>
+
+            if (domainName != other.domainName) return false
+
+            return true
         }
 
-    override fun checkContext() = Unit // context is always present
-
-    /** Making sure Domain acts as a singleton. */
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as Domain<*>
-
-        if (domainName != other.domainName) return false
-
-        return true
+        override fun hashCode(): Int = domainName.hashCode()
     }
-
-    override fun hashCode(): Int = domainName.hashCode()
-}
 
 /**
  * Alternative to creating defining an entity.

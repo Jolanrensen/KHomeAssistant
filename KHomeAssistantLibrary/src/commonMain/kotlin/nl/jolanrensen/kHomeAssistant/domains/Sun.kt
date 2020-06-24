@@ -4,19 +4,13 @@ import com.soywiz.klock.DateTime
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.parseUtc
 import nl.jolanrensen.kHomeAssistant.*
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT_SUN
 import nl.jolanrensen.kHomeAssistant.cast
 
 
-class Sun(override var getKHass: () -> KHomeAssistant?) : Domain<Sun.Entity> {
+class Sun(kHassInstance: KHomeAssistant) : Domain<Sun.Entity>, KHomeAssistant by kHassInstance {
     override val domainName = "sun"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'Sun.' from a KHomeAssistantContext instead of using Sun directly.""".trimMargin()
-    }
 
     /** Making sure Light acts as a singleton. */
     override fun equals(other: Any?) = other is Sun
@@ -29,15 +23,15 @@ class Sun(override var getKHass: () -> KHomeAssistant?) : Domain<Sun.Entity> {
 
     /** No need to specify a name, it's just 'sun' */
 //    fun Entity(): Entity = Entity(getKHomeAssistant = kHomeAssistant)
-    override fun Entity(name: String): Entity = Entity(getKHass)
+    override fun Entity(name: String): Entity = Entity(this)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String = "sun"
     ) : BaseEntity<SunState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = Sun(getKHass)
+        domain = Sun(kHassInstance)
     ) {
 
         init {
@@ -129,7 +123,7 @@ class Sun(override var getKHass: () -> KHomeAssistant?) : Domain<Sun.Entity> {
         /** Schedule something to execute each day at sunrise.
          * @see runEveryDayAtSunrise */
         suspend fun onSunrise(offset: TimeSpan = TimeSpan.ZERO, callback: suspend Entity.() -> Unit): Entity {
-            getKHass()!!.runEveryDayAtSunrise {
+            runEveryDayAtSunrise {
                 callback(this)
             }
             return this
@@ -138,7 +132,7 @@ class Sun(override var getKHass: () -> KHomeAssistant?) : Domain<Sun.Entity> {
         /** Schedule something to execute each day at sunset.
          * @see runEveryDayAtSunset */
         suspend fun onSunset(offset: TimeSpan = TimeSpan.ZERO, callback: suspend Entity.() -> Unit): Entity {
-            getKHass()!!.runEveryDayAtSunset(offset) {
+            runEveryDayAtSunset(offset) {
                 callback(this)
             }
             return this
@@ -147,7 +141,7 @@ class Sun(override var getKHass: () -> KHomeAssistant?) : Domain<Sun.Entity> {
         /** Schedule something to execute each day at dawn.
          * @see runEveryDayAtDawn */
         suspend fun onDawn(offset: TimeSpan = TimeSpan.ZERO, callback: suspend Entity.() -> Unit): Entity {
-            getKHass()!!.runEveryDayAtDawn(offset) {
+            runEveryDayAtDawn(offset) {
                 callback(this)
             }
             return this
@@ -156,7 +150,7 @@ class Sun(override var getKHass: () -> KHomeAssistant?) : Domain<Sun.Entity> {
         /** Schedule something to execute each day at dusk.
          * @see runEveryDayAtDusk */
         suspend fun onDusk(offset: TimeSpan = TimeSpan.ZERO, callback: suspend Entity.() -> Unit): Entity {
-            getKHass()!!.runEveryDayAtDusk(offset) {
+            runEveryDayAtDusk(offset) {
                 callback(this)
             }
             return this
@@ -165,7 +159,7 @@ class Sun(override var getKHass: () -> KHomeAssistant?) : Domain<Sun.Entity> {
         /** Schedule something to execute each day at noon.
          * @see runEveryDayAtNoon */
         suspend fun onNoon(offset: TimeSpan = TimeSpan.ZERO, callback: suspend Entity.() -> Unit): Entity {
-            getKHass()!!.runEveryDayAtNoon(offset) {
+            runEveryDayAtNoon(offset) {
                 callback(this)
             }
             return this
@@ -174,7 +168,7 @@ class Sun(override var getKHass: () -> KHomeAssistant?) : Domain<Sun.Entity> {
         /** Schedule something to execute each day at midnight.
          * @see runEveryDayAtMidnight */
         suspend fun onMidnight(offset: TimeSpan = TimeSpan.ZERO, callback: suspend Entity.() -> Unit): Entity {
-            getKHass()!!.runEveryDayAtMidnight(offset) {
+            runEveryDayAtMidnight(offset) {
                 callback(this)
             }
             return this
@@ -185,9 +179,9 @@ class Sun(override var getKHass: () -> KHomeAssistant?) : Domain<Sun.Entity> {
 
 
 /** Access the Sun Domain. */
-val HasKHassContext.Sun: Sun
-    get() = Sun(getKHass)
+val KHomeAssistant.Sun: Sun
+    get() = Sun(this)
 
 /** As there is only one sun (duh), let's make the sun entity quickly reachable */
-val HasKHassContext.sun: Sun.Entity
+val KHomeAssistant.sun: Sun.Entity
     get() = Sun.Entity("")

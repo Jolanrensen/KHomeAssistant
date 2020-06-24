@@ -1,11 +1,10 @@
 package nl.jolanrensen.kHomeAssistant.core
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.messages.Event
 
-fun HasKHassContext.onEventFired(eventType: String, callback: suspend (Event) -> Unit) {
-    getKHass()!!
-            .eventListeners
-            .getOrPut(eventType) { hashSetOf() }
-            .add(callback)
+fun KHomeAssistant.onEventFired(eventType: String, callback: suspend (Event) -> Unit) {
+    eventListeners
+        .getOrPut(eventType) { hashSetOf() }
+        .add(callback)
 }

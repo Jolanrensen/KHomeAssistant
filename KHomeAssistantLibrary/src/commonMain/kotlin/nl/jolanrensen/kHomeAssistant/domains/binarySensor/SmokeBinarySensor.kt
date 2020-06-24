@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinarySmokeSensorState.SMOKE
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinarySmokeSensorState.CLEAR
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class SmokeBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinarySmokeSensorState, SmokeBinarySensor.Entity>() {
+class SmokeBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinarySmokeSensorState, SmokeBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure SmokeSensor acts as a singleton. */
     override fun equals(other: Any?) = other is SmokeBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "smoke".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinarySmokeSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = SmokeBinarySensor(getKHass),
+        domain = SmokeBinarySensor(kHassInstance),
         deviceClass = "smoke"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinarySmokeSensorState(override val onOffValue: OnOff) : DeviceClas
     object CLEAR : BinarySmokeSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.SmokeBinarySensor: SmokeBinarySensor
-    get() = SmokeBinarySensor(getKHass)
+val KHomeAssistant.SmokeBinarySensor: SmokeBinarySensor
+    get() = SmokeBinarySensor(this)

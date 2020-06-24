@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinarySafetySensorState.UNSAFE
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinarySafetySensorState.SAFE
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class SafetyBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinarySafetySensorState, SafetyBinarySensor.Entity>() {
+class SafetyBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinarySafetySensorState, SafetyBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure SafetySensor acts as a singleton. */
     override fun equals(other: Any?) = other is SafetyBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "safety".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinarySafetySensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = SafetyBinarySensor(getKHass),
+        domain = SafetyBinarySensor(kHassInstance),
         deviceClass = "safety"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinarySafetySensorState(override val onOffValue: OnOff) : DeviceCla
     object SAFE : BinarySafetySensorState(OnOff.OFF)
 }
 
-val HasKHassContext.SafetyBinarySensor: SafetyBinarySensor
-    get() = SafetyBinarySensor(getKHass)
+val KHomeAssistant.SafetyBinarySensor: SafetyBinarySensor
+    get() = SafetyBinarySensor(this)

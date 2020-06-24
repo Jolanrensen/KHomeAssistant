@@ -2,9 +2,8 @@ package nl.jolanrensen.kHomeAssistant.domains.input
 
 import kotlinx.serialization.json.json
 import kotlinx.serialization.json.jsonArray
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.AttributesDelegate
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
@@ -19,13 +18,8 @@ import kotlin.reflect.KProperty
 /**
  * https://www.home-assistant.io/integrations/input_select/
  * */
-class InputSelect(override var getKHass: () -> KHomeAssistant?) : Domain<InputSelect.Entity> {
+class InputSelect(kHassInstance: KHomeAssistant) : Domain<InputSelect.Entity>, KHomeAssistant by kHassInstance {
     override val domainName = "input_select"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'InputSelect.' from a KHomeAssistantContext instead of using InputSelect directly.""".trimMargin()
-    }
 
     /** Making sure InputSelect acts as a singleton. */
     override fun equals(other: Any?) = other is InputSelect
@@ -34,15 +28,15 @@ class InputSelect(override var getKHass: () -> KHomeAssistant?) : Domain<InputSe
     /** Reload input_select configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : BaseEntity<String>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = InputSelect(getKHass)
+        domain = InputSelect(kHassInstance)
     ) {
         init {
             attributes += arrayOf(
@@ -156,5 +150,5 @@ class InputSelect(override var getKHass: () -> KHomeAssistant?) : Domain<InputSe
 }
 
 /** Access the InputSelect Domain. */
-val HasKHassContext.InputSelect: InputSelect
-    get() = InputSelect(getKHass)
+val KHomeAssistant.InputSelect: InputSelect
+    get() = InputSelect(this)

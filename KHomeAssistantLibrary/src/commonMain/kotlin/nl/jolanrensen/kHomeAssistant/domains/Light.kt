@@ -7,11 +7,10 @@ import com.soywiz.korim.color.RGBA
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.cast
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Light.SupportedFeatures.*
 import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.helper.*
@@ -23,13 +22,8 @@ import kotlin.reflect.KProperty
  *
  * https://www.home-assistant.io/integrations/light/
  * */
-class Light(override var getKHass: () -> KHomeAssistant?) : Domain<Light.Entity> {
+class Light(kHassInstance: KHomeAssistant) : Domain<Light.Entity>, KHomeAssistant by kHassInstance {
     override val domainName = "light"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'Light.' from a KHomeAssistantContext instead of using Light directly.""".trimMargin()
-    }
 
     /** Making sure Light acts as a singleton. */
     override fun equals(other: Any?) = other is Light
@@ -49,16 +43,16 @@ class Light(override var getKHass: () -> KHomeAssistant?) : Domain<Light.Entity>
         SUPPORT_WHITE_VALUE(128)
     }
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     @OptIn(ExperimentalStdlibApi::class)
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : ToggleEntity(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = Light(getKHass)
+        domain = Light(kHassInstance)
     ) {
 
         init {
@@ -409,7 +403,7 @@ class Light(override var getKHass: () -> KHomeAssistant?) : Domain<Light.Entity>
 }
 
 /** Access the Light Domain */
-val HasKHassContext.Light: Light
-    get() = Light(getKHass)
+val KHomeAssistant.Light: Light
+    get() = Light(this)
 
 

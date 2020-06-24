@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryLockSensorState.UNLOCKED
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryLockSensorState.LOCKED
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class LockBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryLockSensorState, LockBinarySensor.Entity>() {
+class LockBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryLockSensorState, LockBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure LockSensor acts as a singleton. */
     override fun equals(other: Any?) = other is LockBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "lock".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryLockSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = LockBinarySensor(getKHass),
+        domain = LockBinarySensor(kHassInstance),
         deviceClass = "lock"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryLockSensorState(override val onOffValue: OnOff) : DeviceClass
     object LOCKED : BinaryLockSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.LockBinarySensor: LockBinarySensor
-    get() = LockBinarySensor(getKHass)
+val KHomeAssistant.LockBinarySensor: LockBinarySensor
+    get() = LockBinarySensor(this)

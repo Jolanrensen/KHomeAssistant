@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryColdSensorState.COLD
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryColdSensorState.NORMAL
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class ColdBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryColdSensorState, ColdBinarySensor.Entity>() {
+class ColdBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryColdSensorState, ColdBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure ColdSensor acts as a singleton. */
     override fun equals(other: Any?) = other is ColdBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "cold".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryColdSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = ColdBinarySensor(getKHass),
+        domain = ColdBinarySensor(kHassInstance),
         deviceClass = "cold"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryColdSensorState(override val onOffValue: OnOff) : DeviceClass
     object NORMAL : BinaryColdSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.ColdBinarySensor: ColdBinarySensor
-    get() = ColdBinarySensor(getKHass)
+val KHomeAssistant.ColdBinarySensor: ColdBinarySensor
+    get() = ColdBinarySensor(this)

@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryOccupancySensorState.OCCUPIED
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryOccupancySensorState.CLEAR
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class OccupancyBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryOccupancySensorState, OccupancyBinarySensor.Entity>() {
+class OccupancyBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryOccupancySensorState, OccupancyBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure OccupancySensor acts as a singleton. */
     override fun equals(other: Any?) = other is OccupancyBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "occupancy".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryOccupancySensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = OccupancyBinarySensor(getKHass),
+        domain = OccupancyBinarySensor(kHassInstance),
         deviceClass = "occupancy"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryOccupancySensorState(override val onOffValue: OnOff) : Device
     object CLEAR : BinaryOccupancySensorState(OnOff.OFF)
 }
 
-val HasKHassContext.OccupancyBinarySensor: OccupancyBinarySensor
-    get() = OccupancyBinarySensor(getKHass)
+val KHomeAssistant.OccupancyBinarySensor: OccupancyBinarySensor
+    get() = OccupancyBinarySensor(this)

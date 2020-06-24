@@ -3,8 +3,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 
@@ -14,13 +13,8 @@ enum class ExampleState(val stateValue: String) {
     STATE1("state1"), STATE2("state1")
 }
 
-class Example(override var getKHass: () -> KHomeAssistant?) : Domain<Example.Entity> {
+class Example(kHassInstance: KHomeAssistant) : Domain<Example.Entity>, KHomeAssistant by kHassInstance {
     override val domainName: String = "example"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'Example.' from a KHomeAssistantContext instead of using ExampleDomain directly.""".trimMargin()
-    }
 
     /** Making sure Example acts as a singleton. */
     override fun equals(other: Any?) = other is Example
@@ -30,7 +24,7 @@ class Example(override var getKHass: () -> KHomeAssistant?) : Domain<Example.Ent
 
 
     // Constructor for Entity with the right context
-    override fun Entity(name: String) = Entity(getKHass, name)
+    override fun Entity(name: String) = Entity(this, name)
 
 
     /** This class defines your entity, it can be instantiated via YourDomain.YourEntity(name: String)
@@ -38,12 +32,12 @@ class Example(override var getKHass: () -> KHomeAssistant?) : Domain<Example.Ent
      * This also includes listeners for state changes
      */
     class Entity(
-        override val getKHass: () -> KHomeAssistant? = { null },
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : BaseEntity<ExampleState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = Example(getKHass)
+        domain = Example(kHassInstance)
     ) {
         /** These are the attributes that get parsed from Home Assistant for your entity when calling getAttributes()
          * The names must thus exactly match those of Home Assistant. */
@@ -139,5 +133,5 @@ class Example(override var getKHass: () -> KHomeAssistant?) : Domain<Example.Ent
 }
 
 /** Access your domain, and set the context correctly */
-val HasKHassContext.Example: Example
-    get() = Example(getKHass)
+val KHomeAssistant.Example: Example
+    get() = Example(this)

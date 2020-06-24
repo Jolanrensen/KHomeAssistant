@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryPowerSensorState.POWER
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryPowerSensorState.NO_POWER
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class PowerBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryPowerSensorState, PowerBinarySensor.Entity>() {
+class PowerBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryPowerSensorState, PowerBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure PowerSensor acts as a singleton. */
     override fun equals(other: Any?) = other is PowerBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "power".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryPowerSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = PowerBinarySensor(getKHass),
+        domain = PowerBinarySensor(kHassInstance),
         deviceClass = "power"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryPowerSensorState(override val onOffValue: OnOff) : DeviceClas
     object NO_POWER : BinaryPowerSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.PowerBinarySensor: PowerBinarySensor
-    get() = PowerBinarySensor(getKHass)
+val KHomeAssistant.PowerBinarySensor: PowerBinarySensor
+    get() = PowerBinarySensor(this)

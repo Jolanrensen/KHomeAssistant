@@ -5,10 +5,9 @@ import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.parseUtc
 import com.soywiz.klock.seconds
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.cast
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaContentType.*
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaPlayerState.*
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.SupportedFeatures.*
@@ -23,13 +22,8 @@ import kotlin.math.max
  *
  * TODO get attributes from here https://github.com/home-assistant/core/blob/dev/homeassistant/components/media_player/__init__.py
  * */
-class MediaPlayer(override var getKHass: () -> KHomeAssistant?) : Domain<MediaPlayer.Entity> {
+class MediaPlayer(kHassInstance: KHomeAssistant) : Domain<MediaPlayer.Entity>, KHomeAssistant by kHassInstance {
     override val domainName = "media_player"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'MediaPlayer.' from a KHomeAssistantContext instead of using MediaPlayer directly.""".trimMargin()
-    }
 
     /** Making sure MediaPlayer acts as a singleton. */
     override fun equals(other: Any?) = other is MediaPlayer
@@ -78,17 +72,17 @@ class MediaPlayer(override var getKHass: () -> KHomeAssistant?) : Domain<MediaPl
         SUPPORT_SELECT_SOUND_MODE(65536)
     }
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     @Suppress("RemoveExplicitTypeArguments")
     @OptIn(ExperimentalStdlibApi::class)
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : BaseEntity<MediaPlayerState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = MediaPlayer(getKHass)
+        domain = MediaPlayer(kHassInstance)
     ) {
 
         init {
@@ -581,5 +575,5 @@ class MediaPlayer(override var getKHass: () -> KHomeAssistant?) : Domain<MediaPl
 
 
 /** Access the MediaPlayer Domain */
-val HasKHassContext.MediaPlayer: MediaPlayer
-    get() = MediaPlayer(getKHass)
+val KHomeAssistant.MediaPlayer: MediaPlayer
+    get() = MediaPlayer(this)

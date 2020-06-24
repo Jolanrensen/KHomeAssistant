@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryBatteryChargingSensorState.CHARGING
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryBatteryChargingSensorState.NOT_CHARGING
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class BatteryChargingBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryBatteryChargingSensorState, BatteryChargingBinarySensor.Entity>() {
+class BatteryChargingBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryBatteryChargingSensorState, BatteryChargingBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure BatteryChargingSensor acts as a singleton. */
     override fun equals(other: Any?) = other is BatteryChargingBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "battery_charging".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryBatteryChargingSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = BatteryChargingBinarySensor(getKHass),
+        domain = BatteryChargingBinarySensor(kHassInstance),
         deviceClass = "battery_charging"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryBatteryChargingSensorState(override val onOffValue: OnOff) : 
     object NOT_CHARGING : BinaryBatteryChargingSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.BatteryChargingBinarySensor: BatteryChargingBinarySensor
-    get() = BatteryChargingBinarySensor(getKHass)
+val KHomeAssistant.BatteryChargingBinarySensor: BatteryChargingBinarySensor
+    get() = BatteryChargingBinarySensor(this)

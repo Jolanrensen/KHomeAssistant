@@ -1,28 +1,27 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
-import nl.jolanrensen.kHomeAssistant.HasKHassContext
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryPlugSensorState.PLUGGED
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryPlugSensorState.UNPLUGGED
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class PlugBinarySensor(override var getKHass: () -> KHomeAssistant?) :
-    AbstractBinarySensor<BinaryPlugSensorState, PlugBinarySensor.Entity>() {
+class PlugBinarySensor(kHassInstance: KHomeAssistant) :
+    AbstractBinarySensor<BinaryPlugSensorState, PlugBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure PlugSensor acts as a singleton. */
     override fun equals(other: Any?) = other is PlugBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "plug".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(getKHass = getKHass, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
 
     class Entity(
-        override val getKHass: () -> KHomeAssistant?,
+        kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryPlugSensorState>(
-        getKHass = getKHass,
+        kHassInstance = kHassInstance,
         name = name,
-        domain = PlugBinarySensor(getKHass),
+        domain = PlugBinarySensor(kHassInstance),
         deviceClass = "plug"
     ) {
         override fun stringToState(stateValue: String) =
@@ -55,5 +54,5 @@ sealed class BinaryPlugSensorState(override val onOffValue: OnOff) : DeviceClass
     object UNPLUGGED : BinaryPlugSensorState(OnOff.OFF)
 }
 
-val HasKHassContext.PlugBinarySensor: PlugBinarySensor
-    get() = PlugBinarySensor(getKHass)
+val KHomeAssistant.PlugBinarySensor: PlugBinarySensor
+    get() = PlugBinarySensor(this)

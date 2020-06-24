@@ -1,25 +1,21 @@
 package nl.jolanrensen.kHomeAssistant.domains.sensors
 
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 
-abstract class AbstractSensor<StateType : Any, EntityType : AbstractSensorEntity<StateType>> : Domain<EntityType> {
+abstract class AbstractSensor<StateType : Any, EntityType : AbstractSensorEntity<StateType>>
+    (kHassInstance: KHomeAssistant) : Domain<EntityType>, KHomeAssistant by kHassInstance {
     override val domainName = "sensor"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'XXXSensor.' from a KHomeAssistantContext instead of using XXXSensor directly.""".trimMargin()
-    }
 }
 
 abstract class AbstractSensorEntity<StateType : Any>(
-    override val getKHass: () -> KHomeAssistant?,
+    kHassInstance: KHomeAssistant,
     override val name: String,
     override val domain: AbstractSensor<StateType, out AbstractSensorEntity<StateType>>,
     private val deviceClass: String?
 ) : BaseEntity<StateType>(
-    getKHass = getKHass,
+    kHassInstance = kHassInstance,
     name = name,
     domain = domain
 ) {
@@ -28,7 +24,7 @@ abstract class AbstractSensorEntity<StateType : Any>(
 
     @Suppress("UNNECESSARY_SAFE_CALL")
     override fun checkEntityExists() {
-        if (!isCorrectDevice && getKHass?.invoke() != null) {
+        if (!isCorrectDevice) {
             if (deviceClass != device_class)
                 throw IllegalArgumentException("It appears the sensor $name is a $device_class while you are using a $deviceClass")
             isCorrectDevice = true

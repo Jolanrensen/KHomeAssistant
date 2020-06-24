@@ -1,7 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 
+import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 
@@ -10,14 +10,9 @@ import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
  * Not to be confused with the "sensor" domain.
  * A "binary_sensor" is a completely different entity type.
  */
-abstract class AbstractBinarySensor<StateType : DeviceClassState, EntityType : AbstractBinarySensorEntity<StateType>>() :
-    Domain<EntityType> {
+abstract class AbstractBinarySensor<StateType : DeviceClassState, EntityType : AbstractBinarySensorEntity<StateType>>
+    (kHassInstance: KHomeAssistant) : Domain<EntityType>, KHomeAssistant by kHassInstance {
     override val domainName = "binary_sensor"
-
-    override fun checkContext() = require(getKHass() != null) {
-        """ Please initialize kHomeAssistant before calling this.
-            Make sure to use the helper function 'XXXBinarySensor.' from a KHomeAssistantContext instead of using XXXBinarySensor directly.""".trimMargin()
-    }
 
     /** Making sure AbstractBinarySensor acts as a singleton. */
     override fun equals(other: Any?) = other is AbstractBinarySensor<*, *>
@@ -25,12 +20,12 @@ abstract class AbstractBinarySensor<StateType : DeviceClassState, EntityType : A
 }
 
 abstract class AbstractBinarySensorEntity<StateType : DeviceClassState>(
-    override val getKHass: () -> KHomeAssistant?,
+    kHassInstance: KHomeAssistant,
     override val name: String,
     override val domain: AbstractBinarySensor<StateType, out AbstractBinarySensorEntity<StateType>>,
     private val deviceClass: String?
 ) : BaseEntity<StateType>(
-    getKHass = getKHass,
+    kHassInstance = kHassInstance,
     name = name,
     domain = domain
 ) {
@@ -39,7 +34,7 @@ abstract class AbstractBinarySensorEntity<StateType : DeviceClassState>(
 
     @Suppress("UNNECESSARY_SAFE_CALL")
     override fun checkEntityExists() {
-        if (!isCorrectDevice && getKHass?.invoke() != null) {
+        if (!isCorrectDevice) {
             if (deviceClass != device_class)
                 throw IllegalArgumentException("It appears the sensor $name is a $device_class while you are using a $deviceClass")
             isCorrectDevice = true
