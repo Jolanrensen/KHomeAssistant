@@ -7,6 +7,7 @@ import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.domains.getValue
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
+import nl.jolanrensen.kHomeAssistant.entities.HassAttributes
 import nl.jolanrensen.kHomeAssistant.entities.invoke
 import kotlin.test.Test
 
@@ -54,6 +55,11 @@ class Test {
             TestAutomation(kHomeAssistant)
         )
         assert(true)
+    }
+
+    @Test
+    fun `Other test`() {
+        println(HassAttributes::class.members)
     }
 
 }

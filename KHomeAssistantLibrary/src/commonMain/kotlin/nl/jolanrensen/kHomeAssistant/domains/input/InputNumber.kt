@@ -46,7 +46,7 @@ class InputNumber(kHassInstance: KHomeAssistant) : Domain<InputNumber.Entity>, K
         }
 
         init {
-            attributes += arrayOf(
+            this.hassAttributes += arrayOf(
                 ::min,
                 ::max,
                 ::initial,

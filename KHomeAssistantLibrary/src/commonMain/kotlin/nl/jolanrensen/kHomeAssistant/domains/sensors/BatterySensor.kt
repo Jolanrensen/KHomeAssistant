@@ -29,7 +29,7 @@ class BatterySensor(kHassInstance: KHomeAssistant) : AbstractSensor<Float, Batte
         override fun stateToString(state: Float) = state.toString()
 
         init {
-            attributes += arrayOf(::is_charging, ::charger_type)
+            this.hassAttributes += arrayOf(::is_charging, ::charger_type)
         }
 
         /**  Boolean to indicate whether the device is charging.  */

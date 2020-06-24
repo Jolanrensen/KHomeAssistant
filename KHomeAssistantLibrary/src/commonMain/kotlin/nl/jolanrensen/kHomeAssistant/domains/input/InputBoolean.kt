@@ -46,7 +46,7 @@ class InputBoolean(kHassInstance: KHomeAssistant) : Domain<InputBoolean.Entity>,
         }
 
         init {
-            attributes += ::editable
+            this.hassAttributes += ::editable
         }
 
         // Attributes

@@ -10,7 +10,6 @@ import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.domains.Light.SupportedFeatures.*
 import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.helper.*
@@ -22,7 +21,7 @@ import kotlin.reflect.KProperty
  *
  * https://www.home-assistant.io/integrations/light/
  * */
-class Light(kHassInstance: KHomeAssistant) : Domain<Light.Entity>, KHomeAssistant by kHassInstance {
+class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
     override val domainName = "light"
 
     /** Making sure Light acts as a singleton. */
@@ -43,37 +42,118 @@ class Light(kHassInstance: KHomeAssistant) : Domain<Light.Entity>, KHomeAssistan
         SUPPORT_WHITE_VALUE(128)
     }
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
+
+    interface HassAttributes : BaseHassAttributes {
+        // read only
+
+        /** Minimum color temperature in mireds. */
+        val min_mireds: Int
+
+        /** Maximum color temperature in mireds. */
+        val max_mireds: Int
+
+        /** List of supported effects. */
+        val effect_list: List<String>
+
+        /** Set of supported features. @see [supportedFeatures] */
+        val supported_features: Int
+
+        // read / write
+
+        /** Integer between 0 and 255 for how bright the light should be, where 0 means the light is off, 1 is the minimum brightness and 255 is the maximum brightness supported by the light. */
+        var brightness: Int
+
+        /** An HSColor containing two floats representing the hue and saturation of the color you want the light to be. Hue is scaled 0-360, and saturation is scaled 0-100. */
+        var hs_color: HSColor
+
+        /** An RGBColor containing three integers between 0 and 255 representing the RGB color you want the light to be. Note that the specified RGB value will not change the light brightness, only the color. */
+        var rgb_color: RGBColor
+
+        /** An XYColor containing two floats representing the xy color you want the light to be. */
+        var xy_color: XYColor
+
+        /** Integer between 0 and 255 for how bright a dedicated white LED should be. */
+        var white_value: Int
+
+        // write only
+        /** String with the name of one of the built-in profiles (relax, energize, concentrate, reading) or one of the custom profiles defined in light_profiles.csv in the current working directory. Light profiles define an xy color and a brightness. If a profile is given and a brightness then the profile brightness will be overwritten. */
+        var profile: String
+            @Deprecated("'profile' is write only", level = DeprecationLevel.ERROR)
+            get() = throw WriteOnlyException("'profile' is write only")
+            set(_) = error("must be overridden")
+
+        /** An integer in mireds representing the color temperature you want the light to be. */
+        var color_temp: Int
+            @Deprecated("'color_temp' is write only", level = DeprecationLevel.ERROR)
+            get() = throw WriteOnlyException("'color_temp' is write only")
+            set(_) = error("must be overridden")
+
+        /** Alternatively, you can specify the color temperature in Kelvin. */
+        var kelvin: Int
+            @Deprecated("'kelvin' is write only", level = DeprecationLevel.ERROR)
+            get() = throw WriteOnlyException("'kelvin' is write only")
+            set(_) = error("must be overridden")
+
+        /** A human-readable string of a color name, such as blue or goldenrod. All CSS3 color names are supported. */
+        var color_name: String
+            @Deprecated("'color_name' is write only", level = DeprecationLevel.ERROR)
+            get() = throw WriteOnlyException("'color_name' is write only")
+            set(_) = error("must be overridden")
+
+        /** Alternatively, you can specify brightness in percent (a number between 0 and 100), where 0 means the light is off, 1 is the minimum brightness and 100 is the maximum brightness supported by the light. */
+        var brightness_pct: Float
+            @Deprecated("'brightness_pct' is write only", level = DeprecationLevel.ERROR)
+            get() = throw WriteOnlyException("'brightness_pct' is write only")
+            set(_) = error("must be overridden")
+
+        /** Change brightness by an amount. Should be between -255..255. */
+        var brightness_step: Float
+            @Deprecated("'brightness_step' is write only", level = DeprecationLevel.ERROR)
+            get() = throw WriteOnlyException("'brightness_step' is write only")
+            set(_) = error("must be overridden")
+
+        /** Change brightness by a percentage. Should be between -100..100. */
+        var brightness_step_pct: Float
+            @Deprecated("'brightness_step_pct' is write only", level = DeprecationLevel.ERROR)
+            get() = throw WriteOnlyException("'brightness_step_pct' is write only")
+            set(_) = error("must be overridden")
+
+        /** Tell light to flash, can be either value "short" or "long". @see [flash_] */
+        var flash: String
+            @Deprecated("'flash' is write only", level = DeprecationLevel.ERROR)
+            get() = throw WriteOnlyException("'flash' is write only")
+            set(_) = error("must be overridden")
+
+        /** Applies an effect such as colorloop or random. */
+        var effect: String
+            @Deprecated("'effect' is write only", level = DeprecationLevel.ERROR)
+            get() = throw WriteOnlyException("'effect' is write only")
+            set(_) = error("must be overridden")
+
+//  TODO      /** Applies an effect such as colorloop or random. */
+//        var transition: Int
+//            @Deprecated("'effect' is write only", level = DeprecationLevel.ERROR)
+//            get() = throw WriteOnlyException("'effect' is write only")
+//            set(_) = error("must be overridden")
+    }
 
     @OptIn(ExperimentalStdlibApi::class)
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : ToggleEntity(
         kHassInstance = kHassInstance,
         name = name,
         domain = Light(kHassInstance)
-    ) {
+    ), HassAttributes {
 
-        init {
-            attributes += arrayOf(
-                ::min_mireds,
-                ::max_mireds,
-                ::effect_list,
-                ::supported_features,
-                ::color,
-                ::brightness,
-                ::hs_color,
-                ::rgb_color,
-                ::xy_color,
-                ::white_value
-            )
-        }
+        override val hassAttributes: Array<Attribute<*>> = getHassAttributes<HassAttributes>()
 
         /** Some attributes can be set using the turn_on command. For those, we define a setter-companion to getValue. */
         @Suppress("UNCHECKED_CAST")
         operator fun <V : Any?> AttributesDelegate<V>.setValue(
-            thisRef: BaseEntity<*>?,
+            thisRef: nl.jolanrensen.kHomeAssistant.entities.Entity<*>?,
             property: KProperty<*>,
             value: V
         ) {
@@ -105,60 +185,16 @@ class Light(kHassInstance: KHomeAssistant) : Domain<Light.Entity>, KHomeAssistan
         }
 
         // ----- Attributes -----
-        // read only
-
-        /** Minimum color temperature in mireds. */
-        val min_mireds: Int by attrsDelegate()
-
-        /** Maximum color temperature in mireds. */
-        val max_mireds: Int by attrsDelegate()
-
-        /** List of supported effects. */
-        val effect_list: List<String> by attrsDelegate(listOf())
-
-        /** Set of supported features. */
-        val supported_features: Set<SupportedFeatures>
-            get() = buildSet {
-                val value: Int? = rawAttributes[::supported_features.name]?.cast()
-                values().forEach {
-                    if (it.value and value!! == it.value)
-                        add(it)
-                }
-            }
-
-        // read / write
-
-        /** RGBA Color representing the color of the light. The easiest way to control the light's color. The A component is ignored.
-         * You can find a lot of colors in [com.soywiz.korim.color.Colors]
-         * */
-        var color: RGBA
-            get() = rgb_color.run { RGBA(r, g, b) }
-            set(value) {
-                runBlocking {
-                    turnOn(color = value)
-                    suspendUntilAttributeChangedTo(::color, value)
-                }
-            }
-
-        /** Integer between 0 and 255 for how bright the light should be, where 0 means the light is off, 1 is the minimum brightness and 255 is the maximum brightness supported by the light. */
-        var brightness: Int by attrsDelegate()
-
-        /** An HSColor containing two floats representing the hue and saturation of the color you want the light to be. Hue is scaled 0-360, and saturation is scaled 0-100. */
-        var hs_color: HSColor by attrsDelegate()
-
-        /** An RGBColor containing three integers between 0 and 255 representing the RGB color you want the light to be. Note that the specified RGB value will not change the light brightness, only the color. */
-        var rgb_color: RGBColor by attrsDelegate()
-
-        /** An XYColor containing two floats representing the xy color you want the light to be. */
-        var xy_color: XYColor by attrsDelegate()
-
-        /** Integer between 0 and 255 for how bright a dedicated white LED should be. */
-        var white_value: Int by attrsDelegate()
-
-        // write only
-
-        /** String with the name of one of the built-in profiles (relax, energize, concentrate, reading) or one of the custom profiles defined in light_profiles.csv in the current working directory. Light profiles define an xy color and a brightness. If a profile is given and a brightness then the profile brightness will be overwritten. */
-        var profile: String
+        override val min_mireds: Int by attrsDelegate()
+        override val max_mireds: Int by attrsDelegate()
+        override val effect_list: List<String> by attrsDelegate(listOf())
+        override val supported_features: Int by attrsDelegate(0)
+        override var brightness: Int by attrsDelegate()
+        override var hs_color: HSColor by attrsDelegate()
+        override var rgb_color: RGBColor by attrsDelegate()
+        override var white_value: Int by attrsDelegate()
+        override var xy_color: XYColor by attrsDelegate()
+        override var profile: String
             @Deprecated("'profile' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'profile' is write only")
             set(value) {
@@ -166,9 +202,7 @@ class Light(kHassInstance: KHomeAssistant) : Domain<Light.Entity>, KHomeAssistan
                     turnOn(profile = value)
                 }
             }
-
-        /** An integer in mireds representing the color temperature you want the light to be. */
-        var color_temp: Int
+        override var color_temp: Int
             @Deprecated("'color_temp' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'color_temp' is write only")
             set(value) {
@@ -176,9 +210,7 @@ class Light(kHassInstance: KHomeAssistant) : Domain<Light.Entity>, KHomeAssistan
                     turnOn(color_temp = value)
                 }
             }
-
-        /** Alternatively, you can specify the color temperature in Kelvin. */
-        var kelvin: Int
+        override var kelvin: Int
             @Deprecated("'kelvin' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'kelvin' is write only")
             set(value) {
@@ -186,9 +218,7 @@ class Light(kHassInstance: KHomeAssistant) : Domain<Light.Entity>, KHomeAssistan
                     turnOn(kelvin = value)
                 }
             }
-
-        /** A human-readable string of a color name, such as blue or goldenrod. All CSS3 color names are supported. */
-        var color_name: String
+        override var color_name: String
             @Deprecated("'color_name' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'color_name' is write only")
             set(value) {
@@ -196,9 +226,7 @@ class Light(kHassInstance: KHomeAssistant) : Domain<Light.Entity>, KHomeAssistan
                     turnOn(color_name = value)
                 }
             }
-
-        /** Alternatively, you can specify brightness in percent (a number between 0 and 100), where 0 means the light is off, 1 is the minimum brightness and 100 is the maximum brightness supported by the light. */
-        var brightness_pct: Float
+        override var brightness_pct: Float
             @Deprecated("'brightness_pct' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_pct' is write only")
             set(value) {
@@ -206,9 +234,7 @@ class Light(kHassInstance: KHomeAssistant) : Domain<Light.Entity>, KHomeAssistan
                     turnOn(brightness_pct = value)
                 }
             }
-
-        /** Change brightness by an amount. Should be between -255..255. */
-        var brightness_step: Float
+        override var brightness_step: Float
             @Deprecated("'brightness_step' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_step' is write only")
             set(value) {
@@ -216,9 +242,7 @@ class Light(kHassInstance: KHomeAssistant) : Domain<Light.Entity>, KHomeAssistan
                     turnOn(brightness_step = value)
                 }
             }
-
-        /** Change brightness by a percentage. Should be between -100..100. */
-        var brightness_step_pct: Float
+        override var brightness_step_pct: Float
             @Deprecated("'brightness_step_pct' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_step_pct' is write only")
             set(value) {
@@ -226,19 +250,13 @@ class Light(kHassInstance: KHomeAssistant) : Domain<Light.Entity>, KHomeAssistan
                     turnOn(brightness_step_pct = value)
                 }
             }
-
-        /** Tell light to flash, can be either value Flash.SHORT or Flash.LONG. */
-        var flash: Flash
+        override var flash: String
             @Deprecated("'flash' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'flash' is write only")
             set(value) {
-                runBlocking {
-                    turnOn(flash = value)
-                }
+                flash_ = Flash.values().find { it.value == value }!!
             }
-
-        /** Applies an effect such as colorloop or random. */
-        var effect: String
+        override var effect: String
             @Deprecated("'effect' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'effect' is write only")
             set(value) {
@@ -247,8 +265,11 @@ class Light(kHassInstance: KHomeAssistant) : Domain<Light.Entity>, KHomeAssistan
                 }
             }
 
+
+
+
         private fun checkIfSupported(supportedFeature: SupportedFeatures) {
-            if (supportedFeature !in supported_features)
+            if (supportedFeature !in supportedFeatures)
                 throw UnsupportedFeatureException("Unfortunately the light $name does not support ${supportedFeature.name}.")
         }
 
@@ -400,7 +421,36 @@ class Light(kHassInstance: KHomeAssistant) : Domain<Light.Entity>, KHomeAssistan
             return result
         }
     }
+
 }
+
+/** RGBA Color representing the color of the light. The easiest way to control the light's color. The A component is ignored.
+ * You can find a lot of colors in [com.soywiz.korim.color.Colors]
+ * */
+var Light.HassAttributes.color: RGBA
+    get() = rgb_color.run { RGBA(r, g, b) }
+    set(value) {
+        rgb_color = value.run { RGBColor(r, g, b) }
+    }
+
+/** Set of supported features. */
+@OptIn(ExperimentalStdlibApi::class)
+val Light.HassAttributes.supportedFeatures: Set<Light.SupportedFeatures>
+    get() = buildSet {
+        val value = supported_features
+        values().forEach {
+            if (it.value and value == it.value)
+                add(it)
+        }
+    }
+
+/** Tell light to flash, can be either value Flash.SHORT or Flash.LONG. */
+var Light.HassAttributes.flash_: Light.Flash
+    @Deprecated("'flash' is write only", level = DeprecationLevel.ERROR)
+    get() = throw WriteOnlyException("'flash' is write only")
+    set(value) {
+        flash = value.value
+    }
 
 /** Access the Light Domain */
 val KHomeAssistant.Light: Light

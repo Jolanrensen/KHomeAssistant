@@ -19,7 +19,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
 import nl.jolanrensen.kHomeAssistant.messages.*
@@ -84,7 +84,7 @@ class KHomeAssistantInstance(
     override val entityIds: Set<String>
         get() = rawEntityData.keys
 
-    /** Returns all entities in Home Assistant as [BaseEntity] (since we cannot know all possible types of entities) */
+    /** Returns all entities in Home Assistant as [Entity] (since we cannot know all possible types of entities) */
     override val entities: List<DefaultEntity>
         get() = entityIds.map {
             val (domain, name) = it.split(".")
@@ -435,7 +435,7 @@ class KHomeAssistantInstance(
      * @return the result in form of a [ResultMessage]
      * */
     override suspend fun callService(
-        entity: BaseEntity<*>,
+        entity: Entity<*>,
         serviceDomain: Domain<*>,
         serviceName: String,
         data: JsonObject
@@ -469,7 +469,7 @@ class KHomeAssistantInstance(
      * @param data the optional [JsonObject] or [Map]<[String], [JsonElement]> containing the extra data for the service
      * @return the result in form of a [ResultMessage]
      * */
-    override suspend fun callService(entity: BaseEntity<*>, serviceName: String, data: JsonObject) =
+    override suspend fun callService(entity: Entity<*>, serviceName: String, data: JsonObject) =
         callService(
             serviceDomain = entity.domain.domainName,
             entityID = entity.entityID,
@@ -510,7 +510,7 @@ class KHomeAssistantInstance(
      * @return the attributes of [entity] in the from of a [JsonObject]
      * @throws EntityNotInHassException if the entity provided cannot be found in Home Assistant
      */
-    override fun <EntityType : BaseEntity<*>> getAttributes(entity: EntityType): JsonObject =
+    override fun <EntityType : Entity<*>> getAttributes(entity: EntityType): JsonObject =
         try {
             if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
             rawEntityData[entity.entityID]!!.attributes
@@ -527,7 +527,7 @@ class KHomeAssistantInstance(
      * @throws EntityNotInHassException if the entity provided cannot be found in Home Assistant
      * @throws Exception if the state cannot be parsed using `[entity].parseStateValue()`
      */
-    override fun <StateType : Any, EntityType : BaseEntity<StateType>> getState(entity: EntityType): StateType {
+    override fun <StateType : Any, EntityType : Entity<StateType>> getState(entity: EntityType): StateType {
         if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
 
         val stateValue = try {

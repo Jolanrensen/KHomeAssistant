@@ -47,7 +47,7 @@ abstract class AbstractBinarySensorEntity<StateType : DeviceClassState>(
 
 
     init {
-        attributes += arrayOf(
+        this.hassAttributes += arrayOf(
             ::device_class
         )
     }

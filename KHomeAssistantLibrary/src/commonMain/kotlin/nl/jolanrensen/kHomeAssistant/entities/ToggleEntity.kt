@@ -11,7 +11,7 @@ import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 open class ToggleEntity(
     kHassInstance: KHomeAssistant,
     override val name: String,
-    override val domain: Domain<BaseEntity<OnOff>>
+    override val domain: Domain<Entity<OnOff>>
 ) : BaseEntity<OnOff>(
     kHassInstance = kHassInstance,
     name = name,

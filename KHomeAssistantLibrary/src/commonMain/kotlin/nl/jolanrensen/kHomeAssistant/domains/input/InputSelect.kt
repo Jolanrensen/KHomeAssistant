@@ -6,10 +6,10 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.AttributesDelegate
-import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.suspendUntilAttributeChanged
-import nl.jolanrensen.kHomeAssistant.entities.suspendUntilStateChangedTo
 import nl.jolanrensen.kHomeAssistant.contentEquals
+import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.entities.suspendUntilStateChangedTo
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 
@@ -39,7 +39,7 @@ class InputSelect(kHassInstance: KHomeAssistant) : Domain<InputSelect.Entity>, K
         domain = InputSelect(kHassInstance)
     ) {
         init {
-            attributes += arrayOf(
+            this.hassAttributes += arrayOf(
                 ::options,
                 ::editable
             )
@@ -48,7 +48,7 @@ class InputSelect(kHassInstance: KHomeAssistant) : Domain<InputSelect.Entity>, K
         /** Some attributes are writable. */
         @Suppress("UNCHECKED_CAST")
         operator fun <V : Any?> AttributesDelegate<V>.setValue(
-            thisRef: BaseEntity<*>?,
+            thisRef: nl.jolanrensen.kHomeAssistant.entities.Entity<*>?,
             property: KProperty<*>,
             value: V
         ) {

@@ -4,6 +4,7 @@ import com.soywiz.klock.TimeSpan
 import kotlinx.serialization.json.*
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.SceneEntityState
+import nl.jolanrensen.kHomeAssistant.entities.Attribute
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
@@ -53,7 +54,11 @@ class Scene(kHassInstance: KHomeAssistant) : Domain<Scene.Entity>, KHomeAssistan
      * @param sceneId the ID that will belong to the scene. Can be used to overwrite scene.
      * @param data the entities' states and attributes that define this scene.
      * @param snapshotEntities entities here will have their current state and attributes copied over to the scene. */
-    suspend fun create(sceneId: String, data: Iterable<SceneEntityState<out Any>>, snapshotEntities: Iterable<BaseEntity<*>>? = null): ResultMessage =
+    suspend fun create(
+        sceneId: String,
+        data: Iterable<SceneEntityState<out Any>>,
+        snapshotEntities: Iterable<nl.jolanrensen.kHomeAssistant.entities.Entity<*>>? = null
+    ): ResultMessage =
         callService(
             serviceName = "create",
             data = json {
@@ -82,17 +87,14 @@ class Scene(kHassInstance: KHomeAssistant) : Domain<Scene.Entity>, KHomeAssistan
     class Entity(
         kHassInstance: KHomeAssistant,
         override val name: String
-    ) : DefaultEntity(
+    ) : BaseEntity<String>(
         kHassInstance = kHassInstance,
         name = name,
         domain = Scene(kHassInstance)
     ) {
 
-        init {
-            attributes += arrayOf(
-                ::entities
-            )
-        }
+        override val hassAttributes: Array<Attribute<*>> = super.hassAttributes + ::entity_id
+
 
         @Suppress("DeprecatedCallableAddReplaceWith")
         @Deprecated(message = "state will always be \"scening\"", level = DeprecationLevel.WARNING)

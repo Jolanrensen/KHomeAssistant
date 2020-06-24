@@ -16,12 +16,12 @@ import nl.jolanrensen.kHomeAssistant.runAt
  * }
  * ```
  * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [BaseEntity] inheriting entity
+ * @param E the type of the receiver, a [Entity] inheriting entity
  * @receiver the entity for which to create the listener
  * @param callback the block of code to execute when any attribute has changed
  * @return the entity
  */
-fun <S : Any, E : BaseEntity<S>> E.onAttributesChanged(
+fun <S : Any, E : Entity<S>> E.onAttributesChanged(
         callback: suspend E.() -> Unit
 ): E {
     checkEntityExists()
@@ -37,20 +37,20 @@ fun <S : Any, E : BaseEntity<S>> E.onAttributesChanged(
 
 /**
  * Creates a listener executed when the specified attribute of the entity changes.
- * The attribute must have the same name as in Home Assistant (or in [BaseEntity.rawAttributes]).
+ * The attribute must have the same name as in Home Assistant (or in [Entity.rawAttributes]).
  * ```
  * myEntity.onAttributeChanged("my_attribute") {
  *     // do something
  * }
  * ```
  * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [BaseEntity] inheriting entity
+ * @param E the type of the receiver, a [Entity] inheriting entity
  * @receiver the entity for which to create the listener
  * @param attribute the name of the attribute (as in Home Assistant)
  * @param callback the block of code to execute when any attribute has changed
  * @return the entity
  */
-fun <S : Any, E : BaseEntity<S>> E.onAttributeChanged(
+fun <S : Any, E : Entity<S>> E.onAttributeChanged(
         attribute: String,
         callback: suspend E.() -> Unit
 ): E {
@@ -85,13 +85,13 @@ fun <S : Any, E : BaseEntity<S>> E.onAttributeChanged(
  * ```
  * @param A the type of the attribute
  * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [BaseEntity] inheriting entity
+ * @param E the type of the receiver, a [Entity] inheriting entity
  * @receiver the entity for which to create the listener
  * @param attribute the reference (::myAttribute) to the attribute in the entity
  * @param callback the block of code to execute when any attribute has changed
  * @return the entity
  */
-fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChanged(
+fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChanged(
         attribute: Attribute<A>,
         callback: suspend E.() -> Unit
 ): E {
@@ -130,13 +130,13 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChanged(
  * ```
  * @param A the type of the attribute
  * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [BaseEntity] inheriting entity
+ * @param E the type of the receiver, a [Entity] inheriting entity
  * @receiver the attribute reference (::myAttribute) for which to create the listener
  * @param entity the entity for which to create the listener
  * @param callback the block of code to execute when any attribute has changed
  * @return the attribute
  */
-fun <A : Any?, S : Any, E : BaseEntity<S>> Attribute<A>.onChanged(
+fun <A : Any?, S : Any, E : Entity<S>> Attribute<A>.onChanged(
         entity: E,
         callback: suspend E.() -> Unit
 ): Attribute<A> {
@@ -161,14 +161,14 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> Attribute<A>.onChanged(
  * ```
  * @param A the type of the attribute
  * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [BaseEntity] inheriting entity
+ * @param E the type of the receiver, a [Entity] inheriting entity
  * @receiver the entity for which to create the listener
  * @param attribute the reference (::myAttribute) to the attribute in the entity
  * @param newAttributeValue the value the attribute must match to execute the [callback]
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChangedTo(
+fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChangedTo(
         attribute: Attribute<A>,
         newAttributeValue: A,
         callback: suspend E.() -> Unit
@@ -194,14 +194,14 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChangedTo(
  * ```
  * @param A the type of the attribute
  * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [BaseEntity] inheriting entity
+ * @param E the type of the receiver, a [Entity] inheriting entity
  * @param entity the entity for which to create the listener
  * @receiver the reference (::myAttribute) to the attribute in the entity
  * @param newAttributeValue the value the attribute must match to execute the [callback]
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : BaseEntity<S>> Attribute<A>.onChangedTo(
+fun <A : Any?, S : Any, E : Entity<S>> Attribute<A>.onChangedTo(
         entity: E,
         newAttributeValue: A,
         callback: suspend E.() -> Unit
@@ -227,14 +227,14 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> Attribute<A>.onChangedTo(
  * ```
  * @param A the type of the attribute
  * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [BaseEntity] inheriting entity
+ * @param E the type of the receiver, a [Entity] inheriting entity
  * @receiver the entity for which to create the listener
  * @param attribute the reference (::myAttribute) to the attribute in the entity
  * @param newAttributeValue the value the attribute must NOT match to execute the [callback]
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChangedNotTo(
+fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChangedNotTo(
         attribute: Attribute<A>,
         newAttributeValue: A,
         callback: suspend E.() -> Unit
@@ -260,14 +260,14 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChangedNotTo(
  * ```
  * @param A the type of the attribute
  * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [BaseEntity] inheriting entity
+ * @param E the type of the receiver, a [Entity] inheriting entity
  * @param entity the entity for which to create the listener
  * @receiver attribute the reference (::myAttribute) to the attribute in the entity
  * @param newAttributeValue the value the attribute must NOT match to execute the [callback]
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : BaseEntity<S>> Attribute<A>.onChangedNotTo(
+fun <A : Any?, S : Any, E : Entity<S>> Attribute<A>.onChangedNotTo(
         entity: E,
         newAttributeValue: A,
         callback: suspend E.() -> Unit
@@ -297,13 +297,13 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> Attribute<A>.onChangedNotTo(
  * ```
  * @param A the type of the attribute
  * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [BaseEntity] inheriting entity
+ * @param E the type of the receiver, a [Entity] inheriting entity
  * @receiver the entity for which to create the listener
  * @param attribute the reference (MyDomain.MyEntity::myAttribute) to the attribute in the entity
  * @param callback the block of code to execute when any attribute has changed
  * @return the entity
  */
-fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChanged(
+fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChanged(
         attribute: NonSpecificAttribute<E, A>,
         callback: suspend E.() -> Unit
 ): E {
@@ -342,13 +342,13 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChanged(
  * ```
  * @param A the type of the attribute
  * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [BaseEntity] inheriting entity
+ * @param E the type of the receiver, a [Entity] inheriting entity
  * @receiver the attribute reference (::myAttribute) for which to create the listener
  * @param entity the entity for which to create the listener
  * @param callback the block of code to execute when any attribute has changed
  * @return the attribute
  */
-fun <A : Any?, S : Any, E : BaseEntity<S>> NonSpecificAttribute<E, A>.onChanged(
+fun <A : Any?, S : Any, E : Entity<S>> NonSpecificAttribute<E, A>.onChanged(
         entity: E,
         callback: suspend E.() -> Unit
 ): NonSpecificAttribute<E, A> {
@@ -373,14 +373,14 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> NonSpecificAttribute<E, A>.onChanged(
  * ```
  * @param A the type of the attribute
  * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [BaseEntity] inheriting entity
+ * @param E the type of the receiver, a [Entity] inheriting entity
  * @receiver the entity for which to create the listener
  * @param attribute the reference (MyDomain.MyEntity::myAttribute) to the attribute in the entity
  * @param newAttributeValue the value the attribute must match to execute the [callback]
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChangedTo(
+fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChangedTo(
         attribute: NonSpecificAttribute<E, A>,
         newAttributeValue: A,
         callback: suspend E.() -> Unit
@@ -406,14 +406,14 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChangedTo(
  * ```
  * @param A the type of the attribute
  * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [BaseEntity] inheriting entity
+ * @param E the type of the receiver, a [Entity] inheriting entity
  * @param entity the entity for which to create the listener
  * @receiver the reference (MyDomain.MyEntity::myAttribute) to the attribute in the entity
  * @param newAttributeValue the value the attribute must match to execute the [callback]
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : BaseEntity<S>> NonSpecificAttribute<E, A>.onChangedTo(
+fun <A : Any?, S : Any, E : Entity<S>> NonSpecificAttribute<E, A>.onChangedTo(
         entity: E,
         newAttributeValue: A,
         callback: suspend E.() -> Unit
@@ -439,14 +439,14 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> NonSpecificAttribute<E, A>.onChangedT
  * ```
  * @param A the type of the attribute
  * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [BaseEntity] inheriting entity
+ * @param E the type of the receiver, a [Entity] inheriting entity
  * @receiver the entity for which to create the listener
  * @param attribute the reference (MyDomain.MyEntity::myAttribute) to the attribute in the entity
  * @param newAttributeValue the value the attribute must NOT match to execute the [callback]
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChangedNotTo(
+fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChangedNotTo(
         attribute: NonSpecificAttribute<E, A>,
         newAttributeValue: A,
         callback: suspend E.() -> Unit
@@ -472,14 +472,14 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> E.onAttributeChangedNotTo(
  * ```
  * @param A the type of the attribute
  * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [BaseEntity] inheriting entity
+ * @param E the type of the receiver, a [Entity] inheriting entity
  * @param entity the entity for which to create the listener
  * @receiver attribute the reference (MyDomain.MyEntity::myAttribute) to the attribute in the entity
  * @param newAttributeValue the value the attribute must NOT match to execute the [callback]
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : BaseEntity<S>> NonSpecificAttribute<E, A>.onChangedNotTo(
+fun <A : Any?, S : Any, E : Entity<S>> NonSpecificAttribute<E, A>.onChangedNotTo(
         entity: E,
         newAttributeValue: A,
         callback: suspend E.() -> Unit
@@ -488,13 +488,13 @@ fun <A : Any?, S : Any, E : BaseEntity<S>> NonSpecificAttribute<E, A>.onChangedN
     return this
 }
 
-suspend fun <A : Any?, S : Any, E : BaseEntity<S>> E.suspendUntilAttributeChangedTo(
+suspend fun <A : Any?, S : Any, E : Entity<S>> E.suspendUntilAttributeChangedTo(
         attribute: Attribute<A>,
         newAttributeValue: A,
         timeout: TimeSpan = 2.seconds
 ) = suspendUntilAttributeChanged(attribute, { it == newAttributeValue }, timeout)
 
-suspend fun <A : Any?, S : Any, E : BaseEntity<S>> E.suspendUntilAttributeChanged(
+suspend fun <A : Any?, S : Any, E : Entity<S>> E.suspendUntilAttributeChanged(
         attribute: Attribute<A>,
         condition: (A) -> Boolean,
         timeout: TimeSpan = 2.seconds

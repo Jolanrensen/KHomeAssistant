@@ -6,11 +6,11 @@ import com.soywiz.klock.TimeFormat.Companion.FORMAT_TIME
 import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
+import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.AttributesDelegate
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.suspendUntilAttributeChangedTo
-import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 
@@ -60,7 +60,7 @@ class InputDatetime(kHassInstance: KHomeAssistant) : Domain<InputDatetime.Entity
     ) {
 
         init {
-            attributes += arrayOf(
+            this.hassAttributes += arrayOf(
                 ::has_time,
                 ::has_date,
                 ::hasDateAndTime,
@@ -83,7 +83,7 @@ class InputDatetime(kHassInstance: KHomeAssistant) : Domain<InputDatetime.Entity
 
         /** Some attributes can be set using the set_datetime command. For those, we define a setter-companion to getValue. */
         operator fun <V : Any?> AttributesDelegate<V>.setValue(
-            thisRef: BaseEntity<*>?,
+            thisRef: nl.jolanrensen.kHomeAssistant.entities.Entity<*>?,
             property: KProperty<*>,
             value: V
         ) {

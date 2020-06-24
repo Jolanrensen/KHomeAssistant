@@ -3,10 +3,10 @@ package nl.jolanrensen.kHomeAssistant.domains.input
 import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
+import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.suspendUntilStateChangedTo
-import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 
@@ -47,7 +47,7 @@ class InputText(kHassInstance: KHomeAssistant) : Domain<InputText.Entity>, KHome
         }
 
         init {
-            attributes += listOf(
+            this.hassAttributes += listOf(
                 ::min,
                 ::max,
                 ::initial,

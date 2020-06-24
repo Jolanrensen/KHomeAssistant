@@ -2,7 +2,7 @@ package nl.jolanrensen.kHomeAssistant
 
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.entities.Entity
 
 /**
  * Used in [nl.jolanrensen.kHomeAssistant.domains.Scene] to describe the state and attributes
@@ -28,7 +28,7 @@ import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
  * @param attributes the attributes for the [entity] in the scene (will not be checked)
  */
 class SceneEntityState<StateType : Any>(
-    val entity: BaseEntity<StateType>,
+    val entity: Entity<StateType>,
     val state: StateType,
     val attributes: JsonObject = json { }
 )

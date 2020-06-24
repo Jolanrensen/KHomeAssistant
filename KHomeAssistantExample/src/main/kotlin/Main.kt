@@ -52,6 +52,10 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
 
         println(denon_avrx2200w)
 
+        Light[""] {
+
+        }
+
 
 //        println(
 //            Scene.apply(

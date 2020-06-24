@@ -8,16 +8,16 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.SceneEntityState
 import nl.jolanrensen.kHomeAssistant.cast
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.Scene
 import nl.jolanrensen.kHomeAssistant.messages.Context
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
 import kotlin.reflect.KProperty1
 
-typealias DefaultEntity = BaseEntity<String>
+typealias DefaultEntity = Entity<String>
 
 /** Type returned when using myEntity::myAttribute */
 typealias Attribute<A> = KProperty0<A>
@@ -25,43 +25,33 @@ typealias Attribute<A> = KProperty0<A>
 /** Type returned when using SomeDomain.Entity::myAttribute */
 typealias NonSpecificAttribute<E, A> = KProperty1<E, A>
 
-open class BaseEntity<StateType : Any>(
-    kHassInstance: KHomeAssistant,
+/** Alias for [Entity]. */
+typealias BaseEntity<StateType> = Entity<StateType>
+
+open class Entity<StateType : Any>(
+    open val kHassInstance: KHomeAssistant,
     open val name: String,
     open val domain: Domain<*>
-) : KHomeAssistant by kHassInstance {
+) : HassAttributes {
+
+    init {
+        this.checkEntityExists()
+    }
 
     private var entityExists = false
 
     @Suppress("UNNECESSARY_SAFE_CALL")
     open fun checkEntityExists() {
-        if (entityExists || !loadedInitialStates) return
-        launch {
-            if (entityID !in entityIds)
+        if (entityExists || !kHassInstance.loadedInitialStates) return
+        kHassInstance.launch {
+            if (entityID !in kHassInstance.entityIds)
                 throw EntityNotInHassException("The entity_id \"$entityID\" does not exist in your Home Assistant instance.")
             entityExists = true
         }
     }
 
-    val attributes: ArrayList<Attribute<*>> = arrayListOf()
-
-    init {
-        this.checkEntityExists()
-
-        attributes += arrayOf(
-            ::friendly_name,
-            ::state,
-            ::hidden,
-            ::entity_picture,
-            ::icon,
-            ::assumed_state,
-            ::device_class,
-            ::unit_of_measurement,
-            ::initial_state,
-            ::entityID,
-            ::rawAttributes
-        )
-    }
+    /** All attributes as described in Home Assistant. */
+    open val hassAttributes: Array<Attribute<*>> = getHassAttributes<HassAttributes>()
 
     /** Given a string stateValue, this method should return the correct StateType */
     @Suppress("UNCHECKED_CAST")
@@ -85,7 +75,7 @@ open class BaseEntity<StateType : Any>(
 
     /** State of the entity. */
     open var state: StateType
-        get() = getState(this)
+        get() = kHassInstance.getState(this)
         @Deprecated(
             level = DeprecationLevel.WARNING,
             message = "Uses Scene.apply, so it isn't guaranteed to work. Use functions inside a domain to be more certain."
@@ -93,7 +83,7 @@ open class BaseEntity<StateType : Any>(
         set(value) {
             println("Attempting to set state of $entityID using Scene.apply")
             runBlocking {
-                Scene.apply(SceneEntityState(this@BaseEntity, value))
+                kHassInstance.Scene.apply(SceneEntityState(this@Entity, value))
                 suspendUntilStateChangedTo(value)
             }
         }
@@ -104,10 +94,10 @@ open class BaseEntity<StateType : Any>(
     /** Get the raw attributes from Home Assistant in json format.
      * Raw attributes can also directly be obtained using yourEntity["raw_attribute"] */
     val rawAttributes: JsonObject
-        get() = getAttributes(this)
+        get() = kHassInstance.getAttributes(this)
 
     /** Helper function to get raw attributes in json format using yourEntity["attribute"]
-     * @see [BaseEntity.rawAttributes]
+     * @see [Entity.rawAttributes]
      *
      * For example:
      * ```
@@ -149,32 +139,15 @@ open class BaseEntity<StateType : Any>(
 
     // Default attributes
 
-    /** Name of the entity as displayed in the UI. */
-    val friendly_name: String by attrsDelegate()
-
-    /** Is true if the entity is hidden. */
-    val hidden: Boolean by attrsDelegate(false)
-
-    /** URL used as picture for entity. */
-    val entity_picture: String by attrsDelegate()
-
-    /** Icon used for this enitity. Usually of the kind "mdi:icon" */
-    val icon: String by attrsDelegate()
-
-    /** For switches with an assumed state two buttons are shown (turn off, turn on) instead of a switch. If assumed_state is false you will get the default switch icon. */
-    val assumed_state: Boolean by attrsDelegate(true)
-
-    //    /** The class of the device as set by configuration, changing the device state and icon that is displayed on the UI (see below). It does not set the unit_of_measurement.*/
-    val device_class: String by attrsDelegate() // TODO maybe move to binary sensor, sensor, cover and media player only
-
-    /** Defines the units of measurement, if any. This will also influence the graphical presentation in the history visualisation as continuous value. Sensors with missing unit_of_measurement are showing as discrete values. */
-    val unit_of_measurement: String? by attrsDelegate(null)
-
-    /** Defines the initial state for automations, on or off. */
-    val initial_state: String by attrsDelegate()
-
-    /** ID given by Home Assistant if the entity was created from the UI instead of the yaml. */
-    val id: String by attrsDelegate()
+    override val friendly_name: String by attrsDelegate()
+    override val hidden: Boolean by attrsDelegate(false)
+    override val entity_picture: String by attrsDelegate()
+    override val icon: String by attrsDelegate()
+    override val assumed_state: Boolean by attrsDelegate(true)
+    override val device_class: String by attrsDelegate() // TODO maybe move to binary sensor, sensor, cover and media player only
+    override val unit_of_measurement: String? by attrsDelegate(null)
+    override val initial_state: String by attrsDelegate()
+    override val id: String by attrsDelegate()
 
 
     suspend fun getLastChanged(): String = TODO("last_changed uit State")
@@ -192,7 +165,7 @@ open class BaseEntity<StateType : Any>(
         doEntityCheck: Boolean = true
     ): ResultMessage {
         if (doEntityCheck) checkEntityExists()
-        return callService(
+        return kHassInstance.callService(
             entity = this,
             serviceDomain = serviceDomain,
             serviceName = serviceName,
@@ -206,7 +179,7 @@ open class BaseEntity<StateType : Any>(
         doEntityCheck: Boolean = true
     ): ResultMessage {
         if (doEntityCheck) checkEntityExists()
-        return callService(
+        return kHassInstance.callService(
             entity = this,
             serviceName = serviceName,
             data = data
@@ -222,8 +195,12 @@ open class BaseEntity<StateType : Any>(
     val entityID: String
         get() = "$domainName.$name"
 
-    override fun toString() = "${domain::class.simpleName} ($domainName) Entity($name) {${
-    attributes
+    open val additionalToStringAttributes: Array<Attribute<*>> = arrayOf(::state, ::rawAttributes)
+
+    /** Get printable String for this entity.
+     * Also prints [additionalToStringAttributes]. */
+    override fun toString(): String = "${domain::class.simpleName} ($domainName) Entity($name) {${
+    (hassAttributes + additionalToStringAttributes)
         .filter {
             try {
                 it.get()
@@ -241,7 +218,7 @@ open class BaseEntity<StateType : Any>(
         if (this === other) return true
         if (other == null || this::class != other::class) return false
 
-        other as BaseEntity<*>
+        other as Entity<*>
 
         if (name != other.name) return false
         if (domain != other.domain) return false
@@ -295,7 +272,7 @@ interface AttributesDelegate<V : Any?> {
  * }
  * ```
  * */
-inline operator fun <S : Any, E : BaseEntity<S>> E.invoke(callback: E.() -> Unit): E = apply(callback)
+inline operator fun <S : Any, E : Entity<S>> E.invoke(callback: E.() -> Unit): E = apply(callback)
 
 /**
  * Shorthand for apply for each, allows for DSL-like behavior on collections of entities.
@@ -308,22 +285,8 @@ inline operator fun <S : Any, E : BaseEntity<S>> E.invoke(callback: E.() -> Unit
  * }
  * ```
  * */
-inline operator fun <S : Any, E : BaseEntity<S>> Iterable<E>.invoke(callback: E.() -> Unit): Iterable<E> =
+inline operator fun <S : Any, E : Entity<S>> Iterable<E>.invoke(callback: E.() -> Unit): Iterable<E> =
     apply { forEach(callback) }
 
-//suspend fun <S : Any, E : BaseEntity<S>> Iterable<E>.callService(
-//    serviceDomain: Domain<*>,
-//    serviceName: String,
-//    data: JsonObject = mapOf(),
-//    doEntityCheck: Boolean = true
-//): ResultMessage {
-//    if (doEntityCheck) forEach { it.checkEntityExists() }
-//
-//    return serviceDomain.getKHomeAssistant()!!.callService(
-//        serviceDomain = serviceDomain,
-//        serviceName = serviceName,
-//        data = data + json {
-//
-//        }
-//    )
-//}
+inline fun <reified A : HassAttributes> getHassAttributes(): Array<Attribute<*>> =
+    A::class.members.filterIsInstance<KProperty0<*>>().toTypedArray()

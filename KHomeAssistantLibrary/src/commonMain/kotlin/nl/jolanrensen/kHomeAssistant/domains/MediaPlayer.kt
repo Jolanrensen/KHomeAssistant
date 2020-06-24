@@ -86,7 +86,7 @@ class MediaPlayer(kHassInstance: KHomeAssistant) : Domain<MediaPlayer.Entity>, K
     ) {
 
         init {
-            attributes += arrayOf(
+            this.hassAttributes += arrayOf(
                 ::media_content_type,
                 ::media_content_id,
                 ::media_duration,

@@ -7,7 +7,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
-import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
@@ -16,14 +16,14 @@ import kotlin.reflect.KProperty
  * Interface where all domains (like [Light], [MediaPlayer], [Switch]) inherit from.
  * @param E the type of entity this domain has. By default (or for a domain without entity) you can use [DefaultEntity].
  */
-interface Domain<out E : BaseEntity<*>> : KHomeAssistant {
+interface Domain<out E : Entity<*>> {
 
     /** The Home Assistant name for this domain, like "light". */
     val domainName: String
 
     /** Function to access the [KHomeAssistantInstance] instance. This is passed around [KHomeAssistant] inheritors,
      * usually in their constructor. */
-//    var kHassInstance: KHomeAssistant
+    val kHassInstance: KHomeAssistant
 
     /** Function to create an entity instance in a domain with correct context.
      * @param name the name of the entity (without domain) as defined in Home Assistant
@@ -69,7 +69,7 @@ interface Domain<out E : BaseEntity<*>> : KHomeAssistant {
      * @return a [ResultMessage] containing the results of the call
      * */
     suspend fun callService(serviceName: String, data: JsonObject = json { }): ResultMessage =
-        callService(
+        kHassInstance.callService(
             serviceDomain = this,
             serviceName = serviceName,
             data = data
@@ -88,7 +88,7 @@ interface Domain<out E : BaseEntity<*>> : KHomeAssistant {
  * @param callback the block of code that is executed on each of the entities with the entity as this
  * @return a list of the instances of the entities
  * */
-inline fun <E : BaseEntity<*>> Domain<E>.Entities(vararg names: String, callback: E.() -> Unit): List<E> =
+inline fun <E : Entity<*>> Domain<E>.Entities(vararg names: String, callback: E.() -> Unit): List<E> =
     Entities(*names).apply { forEach(callback) }
 
 /** Shorthand for [apply], allows for DSL-like behavior on a newly instanced entity.
@@ -103,7 +103,7 @@ inline fun <E : BaseEntity<*>> Domain<E>.Entities(vararg names: String, callback
  * @param callback the block of code that is executed with the entity as this
  * @return an instance of the entity
  * */
-inline fun <E : BaseEntity<*>> Domain<E>.Entity(name: String, callback: E.() -> Unit): E = Entity(name).apply(callback)
+inline fun <E : Entity<*>> Domain<E>.Entity(name: String, callback: E.() -> Unit): E = Entity(name).apply(callback)
 
 /**
  * Create a temporary [Domain]. Useful for quick service calls or for by KHomeAssistant unsupported domains.
@@ -116,12 +116,13 @@ inline fun <E : BaseEntity<*>> Domain<E>.Entity(name: String, callback: E.() -> 
  * @param domainName the Home Assistant name for this domain, like "light"
  * @return a [Domain] inheriting object with [DefaultEntity] as its entity
  **/
-fun KHomeAssistant.Domain(domainName: String): Domain<BaseEntity<String>> =
-    object : Domain<DefaultEntity>, KHomeAssistant by this {
+fun KHomeAssistant.Domain(domainName: String): Domain<Entity<String>> =
+    object : Domain<DefaultEntity> {
         override val domainName = domainName
+        override var kHassInstance: KHomeAssistant = this@Domain
 
         override fun Entity(name: String): DefaultEntity =
-            object : DefaultEntity(kHassInstance = this, name = name, domain = this) {
+            object : DefaultEntity(kHassInstance = kHassInstance, name = name, domain = this) {
                 override fun stringToState(stateValue: String) = stateValue
                 override fun stateToString(state: String) = state
             }
@@ -151,4 +152,4 @@ fun KHomeAssistant.Domain(domainName: String): Domain<BaseEntity<String>> =
  * val my_light by Light
  * ```
  */
-operator fun <E : BaseEntity<*>> Domain<E>.getValue(thisRef: Any?, property: KProperty<*>): E = Entity(property.name)
+operator fun <E : Entity<*>> Domain<E>.getValue(thisRef: Any?, property: KProperty<*>): E = Entity(property.name)

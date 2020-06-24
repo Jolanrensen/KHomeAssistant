@@ -34,7 +34,7 @@ abstract class AbstractSensorEntity<StateType : Any>(
     }
 
     init {
-        attributes += arrayOf(
+        this.hassAttributes += arrayOf(
             ::device_class,
             ::readable_state,
             ::deviceClass // TODO REMOVE!
