@@ -17,6 +17,10 @@ apply plugin: 'maven-publish'
 //apply plugin: 'kotlinx-serialization'
 
 
+dependencies {
+    dokkaRuntime "org.jetbrains.dokka:dokka-fatjar:0.10.1"
+}
+
 dokka {
     outputFormat = 'html'
     outputDirectory = "$buildDir/dokka"

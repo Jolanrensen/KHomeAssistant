@@ -43,19 +43,15 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
 
     val shield_cast by MediaPlayer
 
-    val test by Domain("scene")
-    val test2 by Domain("scene")
-
     override suspend fun initialize() {
 
+        println(sun)
 
         println(denon_avrx2200w {
-            this.supported_features
+            supportedFeatures
         })
 
-        InputText[""] {
-            pattern
-        }
+
 
 
 //        println(

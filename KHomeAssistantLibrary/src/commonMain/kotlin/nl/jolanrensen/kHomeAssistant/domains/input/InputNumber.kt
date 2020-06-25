@@ -91,6 +91,7 @@ class InputNumber(override val kHassInstance: KHomeAssistant) : Domain<InputNumb
         override val max: Float by attrsDelegate(Float.MIN_VALUE)
         override val initial: Float by attrsDelegate()
         override val step: Float by attrsDelegate(1f)
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("mode_"))
         override val mode: String by attrsDelegate()
         override val editable: Boolean by attrsDelegate()
 

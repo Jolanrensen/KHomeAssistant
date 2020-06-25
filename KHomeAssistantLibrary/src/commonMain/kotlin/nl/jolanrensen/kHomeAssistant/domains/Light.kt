@@ -214,6 +214,7 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
         override val min_mireds: Int by attrsDelegate()
         override val max_mireds: Int by attrsDelegate()
         override val effect_list: List<String> by attrsDelegate(listOf())
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("supportedFeatures"))
         override val supported_features: Int by attrsDelegate(0)
         override var brightness: Int by attrsDelegate()
         override var hs_color: HSColor by attrsDelegate()
@@ -276,6 +277,7 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
                     turnOn(brightness_step_pct = value)
                 }
             }
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("flash_"))
         override var flash: String
             @Deprecated("'flash' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'flash' is write only")

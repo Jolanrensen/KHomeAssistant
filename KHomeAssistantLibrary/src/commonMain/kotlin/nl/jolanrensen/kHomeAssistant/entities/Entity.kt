@@ -41,7 +41,7 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
 
     @Suppress("UNNECESSARY_SAFE_CALL")
     open fun checkEntityExists() {
-        if (entityExists || !kHassInstance.loadedInitialStates) return
+        if (entityExists || !(kHassInstance?.loadedInitialStates == true)) return
         kHassInstance.launch {
             if (entityID !in kHassInstance.entityIds)
                 throw EntityNotInHassException("The entity_id \"$entityID\" does not exist in your Home Assistant instance.")
@@ -194,7 +194,7 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
     val entityID: String
         get() = "$domainName.$name"
 
-    open val additionalToStringAttributes: Array<Attribute<*>> = arrayOf(::state, ::rawAttributes)
+    open val additionalToStringAttributes: Array<Attribute<*>> = arrayOf(::state, ::rawAttributes, ::entityID)
 
     /** Get printable String for this entity.
      * Also prints [additionalToStringAttributes]. */
@@ -290,6 +290,9 @@ inline operator fun <A : HassAttributes, S : Any, E : Entity<S, A>> Iterable<E>.
 
 inline fun <reified A : HassAttributes> getHassAttributes(): Array<Attribute<*>> =
     A::class.members.filter { it.isAbstract }.filterIsInstance<KProperty<*>>().toTypedArray()
+
+inline fun <reified A : HassAttributes> getHassAttributesHelpers(): Array<Attribute<*>> =
+    A::class.members.filter { !it.isAbstract }.filterIsInstance<KProperty<*>>().toTypedArray()
 
 private val test = "".toJson()
 

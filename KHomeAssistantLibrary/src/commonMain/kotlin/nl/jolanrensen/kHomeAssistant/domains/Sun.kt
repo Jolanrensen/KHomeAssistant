@@ -4,10 +4,7 @@ import com.soywiz.klock.DateTimeTz
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.parseUtc
 import nl.jolanrensen.kHomeAssistant.*
-import nl.jolanrensen.kHomeAssistant.entities.Attribute
-import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
-import nl.jolanrensen.kHomeAssistant.entities.BaseHassAttributes
-import nl.jolanrensen.kHomeAssistant.entities.getHassAttributes
+import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT_SUN
 
 
@@ -109,14 +106,21 @@ class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
         // ----- Attributes -----
 
         override val hassAttributes: Array<Attribute<*>> = getHassAttributes<HassAttributes>()
+        override val additionalToStringAttributes: Array<Attribute<*>> = super.additionalToStringAttributes +
+                getHassAttributesHelpers<HassAttributes>()
 
         // read only
-
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextRising"))
         override val next_rising: String by attrsDelegate()
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextSetting"))
         override val next_setting: String by attrsDelegate()
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextDawn"))
         override val next_dawn: String by attrsDelegate()
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextDusk"))
         override val next_dusk: String by attrsDelegate()
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextNoon"))
         override val next_noon: String by attrsDelegate()
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextMidnight"))
         override val next_midnight: String by attrsDelegate()
         override val elevation: Float by attrsDelegate()
         override val azimuth: Float by attrsDelegate()

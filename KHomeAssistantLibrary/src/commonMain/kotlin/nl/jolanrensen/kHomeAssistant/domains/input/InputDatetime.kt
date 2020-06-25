@@ -197,7 +197,11 @@ class InputDatetime(override val kHassInstance: KHomeAssistant) : Domain<InputDa
         override val has_date: Boolean by attrsDelegate(false)
         override val timestamp: Long by attrsDelegate()
         override val editable: Boolean by attrsDelegate()
+
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("year_"))
         override var year: Int by attrsDelegate()
+
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("month_"))
         override var month: Int by attrsDelegate()
         override var day: Int by attrsDelegate()
         override var hour: Int by attrsDelegate()

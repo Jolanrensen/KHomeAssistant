@@ -101,7 +101,9 @@ class InputText(override val kHassInstance: KHomeAssistant) : Domain<InputText.E
         override val min: Int by attrsDelegate(0)
         override val max: Int by attrsDelegate(255)
         override val initial: String by attrsDelegate("")
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("pattern_"))
         override val pattern: String by attrsDelegate()
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("mode_"))
         override val mode: String by attrsDelegate()
         override val editable: Boolean by attrsDelegate()
 

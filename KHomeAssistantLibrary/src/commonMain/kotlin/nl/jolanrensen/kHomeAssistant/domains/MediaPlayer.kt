@@ -212,6 +212,8 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
     ), HassAttributes {
 
         override val hassAttributes: Array<Attribute<*>> = getHassAttributes<HassAttributes>()
+        override val additionalToStringAttributes: Array<Attribute<*>> = super.additionalToStringAttributes +
+                getHassAttributesHelpers<HassAttributes>()
 
         /** state can also be writable. */
         override var state: MediaPlayerState
@@ -247,7 +249,9 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
 
         override val media_content_type: String by attrsDelegate()
         override val media_content_id: String by attrsDelegate()
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("mediaDuration"))
         override val media_duration: Float by attrsDelegate()
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("mediaPositionUpdatedAt"))
         override val media_position_updated_at: String by attrsDelegate()
         override val media_image_url: String by attrsDelegate()
         override val media_image_remotely_accessible: Boolean by attrsDelegate()
@@ -265,10 +269,12 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
         override val app_name: String by attrsDelegate()
         override val source_list: List<String> by attrsDelegate(listOf())
         override val sound_mode_list: List<String> by attrsDelegate(listOf())
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("supportedFeatures"))
         override val supported_features: Int by attrsDelegate(0)
         override var media_track: Int by attrsDelegate()
         override var volume_level: Float by attrsDelegate()
         override var is_volume_muted: Boolean by attrsDelegate()
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("mediaPosition"))
         override var media_position: Float by attrsDelegate()
         override var source: String by attrsDelegate()
         override var sound_mode: String by attrsDelegate()
