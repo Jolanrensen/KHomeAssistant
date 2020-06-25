@@ -6,17 +6,17 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGarageDoorSensor
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGarageDoorSensorState.CLOSED
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class GarageDoorBinarySensor(kHassInstance: KHomeAssistant) :
+class GarageDoorBinarySensor(override val kHassInstance: KHomeAssistant) :
     AbstractBinarySensor<BinaryGarageDoorSensorState, GarageDoorBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure GarageDoorSensor acts as a singleton. */
     override fun equals(other: Any?) = other is GarageDoorBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "garage_door".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryGarageDoorSensorState>(
         kHassInstance = kHassInstance,

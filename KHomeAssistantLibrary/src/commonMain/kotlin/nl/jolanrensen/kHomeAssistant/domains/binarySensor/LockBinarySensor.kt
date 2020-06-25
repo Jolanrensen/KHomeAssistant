@@ -6,17 +6,17 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryLockSensorState.
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryLockSensorState.LOCKED
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class LockBinarySensor(kHassInstance: KHomeAssistant) :
+class LockBinarySensor(override val kHassInstance: KHomeAssistant) :
     AbstractBinarySensor<BinaryLockSensorState, LockBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure LockSensor acts as a singleton. */
     override fun equals(other: Any?) = other is LockBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "lock".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryLockSensorState>(
         kHassInstance = kHassInstance,

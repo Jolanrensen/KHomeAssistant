@@ -5,8 +5,8 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
-import nl.jolanrensen.kHomeAssistant.entities.suspendUntilStateChangedTo
+import nl.jolanrensen.kHomeAssistant.domains.Light
+import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 
@@ -14,7 +14,7 @@ import kotlin.reflect.KProperty
  * Input Text domain
  * https://www.home-assistant.io/integrations/input_text/
  * */
-class InputText(kHassInstance: KHomeAssistant) : Domain<InputText.Entity>, KHomeAssistant by kHassInstance {
+class InputText(override val kHassInstance: KHomeAssistant) : Domain<InputText.Entity> {
     override val domainName = "input_text"
 
     /** Making sure InputText acts as a singleton. */
@@ -24,20 +24,58 @@ class InputText(kHassInstance: KHomeAssistant) : Domain<InputText.Entity>, KHome
     /** Reload input_text configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String) = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String) = Entity(kHassInstance = kHassInstance, name = name)
 
     enum class InputTextMode(val stateValue: String) {
         TEXT("text"), PASSWORD("password")
     }
 
+    interface HassAttributes : BaseHassAttributes {
+        // read only
+
+        /** Minimum length for the text value. 0 is the minimum number of characters allowed in an entity state. */
+        val min: Int
+
+        /** Maximum length for the text value. 255 is the maximum number of characters allowed in an entity state. */
+        val max: Int
+
+        /** Initial value when Home Assistant starts. */
+        val initial: String
+
+        /** Regex pattern for client-side validation. @see [pattern_]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("pattern_"))
+        val pattern: String
+
+        /** Can specify text or password. Elements of type “password” provide a way for the user to securely enter a value. @see [mode_]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("mode_"))
+        val mode: String
+
+        /** Is true if this input text is editable. */
+        val editable: Boolean
+
+        // Helper functions
+
+        /** Regex pattern for client-side validation. */
+        val pattern_: Regex
+            get() = Regex(pattern)
+
+        /** Can specify text or password. Elements of type “password” provide a way for the user to securely enter a value. */
+        val mode_: InputTextMode
+            get() = try {
+                InputTextMode.values().find { it.stateValue == mode }!!
+            } catch (e: Exception) {
+                InputTextMode.TEXT
+            }
+    }
+
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
-    ) : BaseEntity<String>(
+    ) : BaseEntity<String, HassAttributes>(
         kHassInstance = kHassInstance,
         name = name,
         domain = InputText(kHassInstance)
-    ) {
+    ), HassAttributes {
         /** Delegate so you can control an [InputText] like a local variable
          * Simply type "var yourString by [InputText].Entity("your_string")
          **/
@@ -46,16 +84,7 @@ class InputText(kHassInstance: KHomeAssistant) : Domain<InputText.Entity>, KHome
             state = value
         }
 
-        init {
-            this.hassAttributes += listOf(
-                ::min,
-                ::max,
-                ::initial,
-                ::pattern,
-                ::mode,
-                ::editable
-            )
-        }
+        override val hassAttributes: Array<Attribute<*>> = getHassAttributes<HassAttributes>()
 
         override fun stringToState(stateValue: String) = stateValue
 
@@ -69,32 +98,12 @@ class InputText(kHassInstance: KHomeAssistant) : Domain<InputText.Entity>, KHome
             }
 
         // Attributes
-        // read only
-
-        /** Minimum length for the text value. 0 is the minimum number of characters allowed in an entity state. */
-        val min: Int by attrsDelegate(0)
-
-        /** Maximum length for the text value. 255 is the maximum number of characters allowed in an entity state. */
-        val max: Int by attrsDelegate(255)
-
-        /** Initial value when Home Assistant starts. */
-        val initial: String by attrsDelegate()
-
-        /** Regex pattern for client-side validation. */
-        val pattern: Regex
-            get() = Regex(rawAttributes[::pattern.name]!!.cast<String>()!!)
-
-        /** Can specify text or password. Elements of type “password” provide a way for the user to securely enter a value. */
-        val mode: InputTextMode
-            get() =
-                try {
-                    InputTextMode.values()
-                        .find { it.stateValue == rawAttributes[::mode.name]!!.cast<String>()!! }!!
-                } catch (e: Exception) {
-                    InputTextMode.TEXT
-                }
-
-        val editable: Boolean by attrsDelegate()
+        override val min: Int by attrsDelegate(0)
+        override val max: Int by attrsDelegate(255)
+        override val initial: String by attrsDelegate("")
+        override val pattern: String by attrsDelegate()
+        override val mode: String by attrsDelegate()
+        override val editable: Boolean by attrsDelegate()
 
         /** Set the state value. */
         @OptIn(ExperimentalStdlibApi::class)
@@ -104,7 +113,7 @@ class InputText(kHassInstance: KHomeAssistant) : Domain<InputText.Entity>, KHome
                 data = json {
                     value.let {
                         val pattern = try {
-                            pattern
+                            pattern_
                         } catch (e: Exception) {
                             null
                         }

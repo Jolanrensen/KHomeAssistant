@@ -6,17 +6,17 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryPresenceSensorSt
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryPresenceSensorState.AWAY
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class PresenceBinarySensor(kHassInstance: KHomeAssistant) :
+class PresenceBinarySensor(override val kHassInstance: KHomeAssistant) :
     AbstractBinarySensor<BinaryPresenceSensorState, PresenceBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure PresenceSensor acts as a singleton. */
     override fun equals(other: Any?) = other is PresenceBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "presence".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryPresenceSensorState>(
         kHassInstance = kHassInstance,

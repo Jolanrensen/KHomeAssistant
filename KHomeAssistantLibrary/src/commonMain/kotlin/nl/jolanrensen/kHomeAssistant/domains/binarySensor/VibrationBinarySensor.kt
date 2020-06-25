@@ -6,17 +6,17 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryVibrationSensorS
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryVibrationSensorState.CLEAR
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class VibrationBinarySensor(kHassInstance: KHomeAssistant) :
+class VibrationBinarySensor(override val kHassInstance: KHomeAssistant) :
     AbstractBinarySensor<BinaryVibrationSensorState, VibrationBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure VibrationSensor acts as a singleton. */
     override fun equals(other: Any?) = other is VibrationBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "vibration".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryVibrationSensorState>(
         kHassInstance = kHassInstance,

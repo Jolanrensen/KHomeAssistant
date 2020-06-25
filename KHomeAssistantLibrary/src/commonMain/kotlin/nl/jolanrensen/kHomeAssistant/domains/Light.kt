@@ -57,6 +57,7 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
         val effect_list: List<String>
 
         /** Set of supported features. @see [supportedFeatures] */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("supportedFeatures"))
         val supported_features: Int
 
         // read / write
@@ -64,13 +65,13 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
         /** Integer between 0 and 255 for how bright the light should be, where 0 means the light is off, 1 is the minimum brightness and 255 is the maximum brightness supported by the light. */
         var brightness: Int
 
-        /** An HSColor containing two floats representing the hue and saturation of the color you want the light to be. Hue is scaled 0-360, and saturation is scaled 0-100. */
+        /** An HSColor containing two floats representing the hue and saturation of the color you want the light to be. Hue is scaled 0-360, and saturation is scaled 0-100. @see [color]. */
         var hs_color: HSColor
 
-        /** An RGBColor containing three integers between 0 and 255 representing the RGB color you want the light to be. Note that the specified RGB value will not change the light brightness, only the color. */
+        /** An RGBColor containing three integers between 0 and 255 representing the RGB color you want the light to be. Note that the specified RGB value will not change the light brightness, only the color. @see [color]. */
         var rgb_color: RGBColor
 
-        /** An XYColor containing two floats representing the xy color you want the light to be. */
+        /** An XYColor containing two floats representing the xy color you want the light to be. @see [color].  */
         var xy_color: XYColor
 
         /** Integer between 0 and 255 for how bright a dedicated white LED should be. */
@@ -120,6 +121,7 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
             set(_) = error("must be overridden")
 
         /** Tell light to flash, can be either value "short" or "long". @see [flash_] */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("flash_"))
         var flash: String
             @Deprecated("'flash' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'flash' is write only")
@@ -131,18 +133,42 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
             get() = throw WriteOnlyException("'effect' is write only")
             set(_) = error("must be overridden")
 
-//  TODO      /** Applies an effect such as colorloop or random. */
-//        var transition: Int
-//            @Deprecated("'effect' is write only", level = DeprecationLevel.ERROR)
-//            get() = throw WriteOnlyException("'effect' is write only")
-//            set(_) = error("must be overridden")
+
+        // Helper getter/setters
+        /** RGBA Color representing the color of the light. The easiest way to control the light's color. The A component is ignored.
+         * You can find a lot of colors in [com.soywiz.korim.color.Colors]
+         * */
+        var color: RGBA
+            get() = rgb_color.run { RGBA(r, g, b) }
+            set(value) {
+                rgb_color = value.run { RGBColor(r, g, b) }
+            }
+
+        /** Set of supported features. */
+        @OptIn(ExperimentalStdlibApi::class)
+        val supportedFeatures: Set<SupportedFeatures>
+            get() = buildSet {
+                val value = supported_features
+                values().forEach {
+                    if (it.value and value == it.value)
+                        add(it)
+                }
+            }
+
+        /** Tell light to flash, can be either value Flash.SHORT or Flash.LONG. */
+        var flash_: Flash
+            @Deprecated("'flash' is write only", level = DeprecationLevel.ERROR)
+            get() = throw WriteOnlyException("'flash' is write only")
+            set(value) {
+                flash = value.value
+            }
     }
 
     @OptIn(ExperimentalStdlibApi::class)
     class Entity(
         override val kHassInstance: KHomeAssistant,
         override val name: String
-    ) : ToggleEntity(
+    ) : ToggleEntity<HassAttributes>(
         kHassInstance = kHassInstance,
         name = name,
         domain = Light(kHassInstance)
@@ -153,7 +179,7 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
         /** Some attributes can be set using the turn_on command. For those, we define a setter-companion to getValue. */
         @Suppress("UNCHECKED_CAST")
         operator fun <V : Any?> AttributesDelegate<V>.setValue(
-            thisRef: nl.jolanrensen.kHomeAssistant.entities.Entity<*>?,
+            thisRef: Entity?,
             property: KProperty<*>,
             value: V
         ) {
@@ -423,34 +449,6 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
     }
 
 }
-
-/** RGBA Color representing the color of the light. The easiest way to control the light's color. The A component is ignored.
- * You can find a lot of colors in [com.soywiz.korim.color.Colors]
- * */
-var Light.HassAttributes.color: RGBA
-    get() = rgb_color.run { RGBA(r, g, b) }
-    set(value) {
-        rgb_color = value.run { RGBColor(r, g, b) }
-    }
-
-/** Set of supported features. */
-@OptIn(ExperimentalStdlibApi::class)
-val Light.HassAttributes.supportedFeatures: Set<Light.SupportedFeatures>
-    get() = buildSet {
-        val value = supported_features
-        values().forEach {
-            if (it.value and value == it.value)
-                add(it)
-        }
-    }
-
-/** Tell light to flash, can be either value Flash.SHORT or Flash.LONG. */
-var Light.HassAttributes.flash_: Light.Flash
-    @Deprecated("'flash' is write only", level = DeprecationLevel.ERROR)
-    get() = throw WriteOnlyException("'flash' is write only")
-    set(value) {
-        flash = value.value
-    }
 
 /** Access the Light Domain */
 val KHomeAssistant.Light: Light

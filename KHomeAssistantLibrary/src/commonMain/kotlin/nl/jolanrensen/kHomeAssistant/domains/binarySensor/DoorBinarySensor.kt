@@ -6,17 +6,17 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryDoorSensorState.
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryDoorSensorState.CLOSED
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class DoorBinarySensor(kHassInstance: KHomeAssistant) :
+class DoorBinarySensor(override val kHassInstance: KHomeAssistant) :
     AbstractBinarySensor<BinaryDoorSensorState, DoorBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure DoorSensor acts as a singleton. */
     override fun equals(other: Any?) = other is DoorBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "door".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryDoorSensorState>(
         kHassInstance = kHassInstance,

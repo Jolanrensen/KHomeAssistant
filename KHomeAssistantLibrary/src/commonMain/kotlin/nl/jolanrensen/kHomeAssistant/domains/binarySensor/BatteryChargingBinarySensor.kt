@@ -6,17 +6,17 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryBatteryChargingS
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryBatteryChargingSensorState.NOT_CHARGING
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class BatteryChargingBinarySensor(kHassInstance: KHomeAssistant) :
+class BatteryChargingBinarySensor(override val kHassInstance: KHomeAssistant) :
     AbstractBinarySensor<BinaryBatteryChargingSensorState, BatteryChargingBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure BatteryChargingSensor acts as a singleton. */
     override fun equals(other: Any?) = other is BatteryChargingBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "battery_charging".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryBatteryChargingSensorState>(
         kHassInstance = kHassInstance,

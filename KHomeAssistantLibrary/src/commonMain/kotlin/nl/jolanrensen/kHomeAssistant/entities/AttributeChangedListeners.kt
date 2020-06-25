@@ -21,17 +21,17 @@ import nl.jolanrensen.kHomeAssistant.runAt
  * @param callback the block of code to execute when any attribute has changed
  * @return the entity
  */
-fun <S : Any, E : Entity<S>> E.onAttributesChanged(
-        callback: suspend E.() -> Unit
+fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributesChanged(
+    callback: suspend E.() -> Unit
 ): E {
     checkEntityExists()
-    stateListeners
-            .getOrPut(entityID) { hashSetOf() }
-            .add(StateListener({ oldState, newState ->
-                if (oldState.attributes != newState.attributes)
-                    callback()
+    kHassInstance.stateListeners
+        .getOrPut(entityID) { hashSetOf() }
+        .add(StateListener({ oldState, newState ->
+            if (oldState.attributes != newState.attributes)
+                callback()
 
-            }))
+        }))
     return this
 }
 
@@ -50,17 +50,17 @@ fun <S : Any, E : Entity<S>> E.onAttributesChanged(
  * @param callback the block of code to execute when any attribute has changed
  * @return the entity
  */
-fun <S : Any, E : Entity<S>> E.onAttributeChanged(
-        attribute: String,
-        callback: suspend E.() -> Unit
+fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributeChanged(
+    attribute: String,
+    callback: suspend E.() -> Unit
 ): E {
     checkEntityExists()
-    stateListeners
-            .getOrPut(entityID) { hashSetOf() }
-            .add(StateListener({ oldState, newState ->
-                if (oldState.attributes[attribute] != newState.attributes[attribute])
-                    callback()
-            }))
+    kHassInstance.stateListeners
+        .getOrPut(entityID) { hashSetOf() }
+        .add(StateListener({ oldState, newState ->
+            if (oldState.attributes[attribute] != newState.attributes[attribute])
+                callback()
+        }))
     return this
 }
 
@@ -91,25 +91,25 @@ fun <S : Any, E : Entity<S>> E.onAttributeChanged(
  * @param callback the block of code to execute when any attribute has changed
  * @return the entity
  */
-fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChanged(
-        attribute: Attribute<A>,
-        callback: suspend E.() -> Unit
+fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChanged(
+    attribute: Attribute<A>,
+    callback: suspend E.() -> Unit
 ): E {
     checkEntityExists()
-    stateListeners
-            .getOrPut(entityID) { hashSetOf() }
-            .add(StateListener({ oldState, _ ->
+    kHassInstance.stateListeners
+        .getOrPut(entityID) { hashSetOf() }
+        .add(StateListener({ oldState, _ ->
 
-                // get the old attribute value by temporarily setting the old attributes as alternative in the delegate
-                alternativeAttributes = oldState.attributes
-                val oldAttributeValue = attribute.get()
-                alternativeAttributes = null
+            // get the old attribute value by temporarily setting the old attributes as alternative in the delegate
+            alternativeAttributes = oldState.attributes
+            val oldAttributeValue = attribute.call(this)
+            alternativeAttributes = null
 
-                val newAttributeValue = attribute.get()
+            val newAttributeValue = attribute.call(this)
 
-                if (oldAttributeValue != newAttributeValue)
-                    callback()
-            }))
+            if (oldAttributeValue != newAttributeValue)
+                callback()
+        }))
     return this
 }
 
@@ -136,9 +136,9 @@ fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChanged(
  * @param callback the block of code to execute when any attribute has changed
  * @return the attribute
  */
-fun <A : Any?, S : Any, E : Entity<S>> Attribute<A>.onChanged(
-        entity: E,
-        callback: suspend E.() -> Unit
+fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> Attribute<A>.onChanged(
+    entity: E,
+    callback: suspend E.() -> Unit
 ): Attribute<A> {
     entity.onAttributeChanged(this, callback)
     return this
@@ -168,12 +168,12 @@ fun <A : Any?, S : Any, E : Entity<S>> Attribute<A>.onChanged(
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChangedTo(
-        attribute: Attribute<A>,
-        newAttributeValue: A,
-        callback: suspend E.() -> Unit
+fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChangedTo(
+    attribute: Attribute<A>,
+    newAttributeValue: A,
+    callback: suspend E.() -> Unit
 ): E = onAttributeChanged(attribute) {
-    if (attribute.get() == newAttributeValue)
+    if (attribute.call(this) == newAttributeValue)
         callback()
 }
 
@@ -201,10 +201,10 @@ fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChangedTo(
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : Entity<S>> Attribute<A>.onChangedTo(
-        entity: E,
-        newAttributeValue: A,
-        callback: suspend E.() -> Unit
+fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> Attribute<A>.onChangedTo(
+    entity: E,
+    newAttributeValue: A,
+    callback: suspend E.() -> Unit
 ): Attribute<A> {
     entity.onAttributeChangedTo(this, newAttributeValue, callback)
     return this
@@ -234,12 +234,12 @@ fun <A : Any?, S : Any, E : Entity<S>> Attribute<A>.onChangedTo(
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChangedNotTo(
-        attribute: Attribute<A>,
-        newAttributeValue: A,
-        callback: suspend E.() -> Unit
+fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChangedNotTo(
+    attribute: Attribute<A>,
+    newAttributeValue: A,
+    callback: suspend E.() -> Unit
 ): E = onAttributeChanged(attribute) {
-    if (attribute.get() != newAttributeValue)
+    if (attribute.call(this) != newAttributeValue)
         callback()
 }
 
@@ -267,10 +267,10 @@ fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChangedNotTo(
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : Entity<S>> Attribute<A>.onChangedNotTo(
-        entity: E,
-        newAttributeValue: A,
-        callback: suspend E.() -> Unit
+fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> Attribute<A>.onChangedNotTo(
+    entity: E,
+    newAttributeValue: A,
+    callback: suspend E.() -> Unit
 ): Attribute<A> {
     entity.onAttributeChangedNotTo(this, newAttributeValue, callback)
     return this
@@ -303,25 +303,25 @@ fun <A : Any?, S : Any, E : Entity<S>> Attribute<A>.onChangedNotTo(
  * @param callback the block of code to execute when any attribute has changed
  * @return the entity
  */
-fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChanged(
-        attribute: NonSpecificAttribute<E, A>,
-        callback: suspend E.() -> Unit
+fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChanged(
+    attribute: NonSpecificAttribute<E, A>,
+    callback: suspend E.() -> Unit
 ): E {
     checkEntityExists()
-    stateListeners
-            .getOrPut(entityID) { hashSetOf() }
-            .add(StateListener({ oldState, _ ->
+    kHassInstance.stateListeners
+        .getOrPut(entityID) { hashSetOf() }
+        .add(StateListener({ oldState, _ ->
 
-                // get the old attribute value by temporarily setting the old attributes as alternative in the delegate
-                alternativeAttributes = oldState.attributes
-                val oldAttributeValue = attribute.get(this)
-                alternativeAttributes = null
+            // get the old attribute value by temporarily setting the old attributes as alternative in the delegate
+            alternativeAttributes = oldState.attributes
+            val oldAttributeValue = attribute.get(this)
+            alternativeAttributes = null
 
-                val newAttributeValue = attribute.get(this)
+            val newAttributeValue = attribute.get(this)
 
-                if (oldAttributeValue != newAttributeValue)
-                    callback()
-            }))
+            if (oldAttributeValue != newAttributeValue)
+                callback()
+        }))
     return this
 }
 
@@ -348,9 +348,9 @@ fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChanged(
  * @param callback the block of code to execute when any attribute has changed
  * @return the attribute
  */
-fun <A : Any?, S : Any, E : Entity<S>> NonSpecificAttribute<E, A>.onChanged(
-        entity: E,
-        callback: suspend E.() -> Unit
+fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> NonSpecificAttribute<E, A>.onChanged(
+    entity: E,
+    callback: suspend E.() -> Unit
 ): NonSpecificAttribute<E, A> {
     entity.onAttributeChanged(this, callback)
     return this
@@ -380,10 +380,10 @@ fun <A : Any?, S : Any, E : Entity<S>> NonSpecificAttribute<E, A>.onChanged(
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChangedTo(
-        attribute: NonSpecificAttribute<E, A>,
-        newAttributeValue: A,
-        callback: suspend E.() -> Unit
+fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChangedTo(
+    attribute: NonSpecificAttribute<E, A>,
+    newAttributeValue: A,
+    callback: suspend E.() -> Unit
 ): E = onAttributeChanged(attribute = attribute) {
     if (attribute.get(this) == newAttributeValue)
         callback()
@@ -413,10 +413,10 @@ fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChangedTo(
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : Entity<S>> NonSpecificAttribute<E, A>.onChangedTo(
-        entity: E,
-        newAttributeValue: A,
-        callback: suspend E.() -> Unit
+fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> NonSpecificAttribute<E, A>.onChangedTo(
+    entity: E,
+    newAttributeValue: A,
+    callback: suspend E.() -> Unit
 ): NonSpecificAttribute<E, A> {
     entity.onAttributeChangedTo(this, newAttributeValue, callback)
     return this
@@ -446,10 +446,10 @@ fun <A : Any?, S : Any, E : Entity<S>> NonSpecificAttribute<E, A>.onChangedTo(
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChangedNotTo(
-        attribute: NonSpecificAttribute<E, A>,
-        newAttributeValue: A,
-        callback: suspend E.() -> Unit
+fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChangedNotTo(
+    attribute: NonSpecificAttribute<E, A>,
+    newAttributeValue: A,
+    callback: suspend E.() -> Unit
 ): E = onAttributeChanged(attribute) {
     if (attribute.get(this) != newAttributeValue)
         callback()
@@ -479,28 +479,28 @@ fun <A : Any?, S : Any, E : Entity<S>> E.onAttributeChangedNotTo(
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <A : Any?, S : Any, E : Entity<S>> NonSpecificAttribute<E, A>.onChangedNotTo(
-        entity: E,
-        newAttributeValue: A,
-        callback: suspend E.() -> Unit
+fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> NonSpecificAttribute<E, A>.onChangedNotTo(
+    entity: E,
+    newAttributeValue: A,
+    callback: suspend E.() -> Unit
 ): NonSpecificAttribute<E, A> {
     entity.onAttributeChangedNotTo(this, newAttributeValue, callback)
     return this
 }
 
-suspend fun <A : Any?, S : Any, E : Entity<S>> E.suspendUntilAttributeChangedTo(
-        attribute: Attribute<A>,
-        newAttributeValue: A,
-        timeout: TimeSpan = 2.seconds
+suspend fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.suspendUntilAttributeChangedTo(
+    attribute: Attribute<A>,
+    newAttributeValue: A,
+    timeout: TimeSpan = 2.seconds
 ) = suspendUntilAttributeChanged(attribute, { it == newAttributeValue }, timeout)
 
-suspend fun <A : Any?, S : Any, E : Entity<S>> E.suspendUntilAttributeChanged(
-        attribute: Attribute<A>,
-        condition: (A) -> Boolean,
-        timeout: TimeSpan = 2.seconds
+suspend fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.suspendUntilAttributeChanged(
+    attribute: Attribute<A>,
+    condition: (A) -> Boolean,
+    timeout: TimeSpan = 2.seconds
 ) {
     checkEntityExists()
-    if (condition(attribute.get())) return
+    if (condition(attribute.call(this))) return
 
     val continueChannel = Channel<Unit>()
 
@@ -508,21 +508,21 @@ suspend fun <A : Any?, S : Any, E : Entity<S>> E.suspendUntilAttributeChanged(
     var task: Task? = null
 
     stateListener = StateListener({ _, _ ->
-        if (condition(attribute.get())) {
-            stateListeners[entityID]?.remove(stateListener)
+        if (condition(attribute.call(this))) {
+            kHassInstance.stateListeners[entityID]?.remove(stateListener)
             task?.cancel()
             continueChannel.send(Unit)
         }
     }, true)
 
-    task = runAt(DateTimeTz.nowLocal() + timeout) {
-        stateListeners[entityID]?.remove(stateListener)
+    task = kHassInstance.runAt(DateTimeTz.nowLocal() + timeout) {
+        kHassInstance.stateListeners[entityID]?.remove(stateListener)
         continueChannel.send(Unit)
     }
 
-    stateListeners
-            .getOrPut(entityID) { hashSetOf() }
-            .add(stateListener)
+    kHassInstance.stateListeners
+        .getOrPut(entityID) { hashSetOf() }
+        .add(stateListener)
 
     continueChannel.receive()
 }

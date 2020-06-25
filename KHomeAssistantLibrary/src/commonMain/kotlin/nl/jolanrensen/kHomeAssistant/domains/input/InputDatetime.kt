@@ -6,11 +6,8 @@ import com.soywiz.klock.TimeFormat.Companion.FORMAT_TIME
 import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.entities.AttributesDelegate
-import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
-import nl.jolanrensen.kHomeAssistant.entities.suspendUntilAttributeChangedTo
+import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 
@@ -18,7 +15,7 @@ import kotlin.reflect.KProperty
  * Input Datetime
  * https://www.home-assistant.io/integrations/input_datetime
  * */
-class InputDatetime(kHassInstance: KHomeAssistant) : Domain<InputDatetime.Entity>, KHomeAssistant by kHassInstance {
+class InputDatetime(override val kHassInstance: KHomeAssistant) : Domain<InputDatetime.Entity> {
     override val domainName = "input_datetime"
 
     /** Making sure InputDatetime acts as a singleton. */
@@ -28,7 +25,7 @@ class InputDatetime(kHassInstance: KHomeAssistant) : Domain<InputDatetime.Entity
     /** Reload input_datetime configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String) = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String) = Entity(kHassInstance = kHassInstance, name = name)
 
     class State(val value: String) {
         /** Only use if `has_time == true && has_date == false`. */
@@ -49,154 +46,80 @@ class InputDatetime(kHassInstance: KHomeAssistant) : Domain<InputDatetime.Entity
             }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    class Entity(
-        kHassInstance: KHomeAssistant,
-        override val name: String
-    ) : BaseEntity<State>(
-        kHassInstance = kHassInstance,
-        name = name,
-        domain = InputDatetime(kHassInstance)
-    ) {
-
-        init {
-            this.hassAttributes += arrayOf(
-                ::has_time,
-                ::has_date,
-                ::hasDateAndTime,
-                ::timestamp,
-                ::editable,
-                ::year,
-                ::month,
-                ::day,
-                ::hour,
-                ::minute,
-                ::second,
-                ::date,
-                ::dateTime
-            )
-        }
-
-        override fun stringToState(stateValue: String) = State(stateValue)
-
-        override fun stateToString(state: State) = state.value
-
-        /** Some attributes can be set using the set_datetime command. For those, we define a setter-companion to getValue. */
-        operator fun <V : Any?> AttributesDelegate<V>.setValue(
-            thisRef: nl.jolanrensen.kHomeAssistant.entities.Entity<*>?,
-            property: KProperty<*>,
-            value: V
-        ) {
-            runBlocking {
-                when (property.name) {
-                    ::day.name -> {
-                        try {
-                            setDate(localDate = Date(year = year, month = month, day = value as Int))
-                        } catch (e: Exception) {
-                            throw Exception("Can't set day, $name has no date.", e)
-                        }
-                    }
-                    ::hour.name -> {
-                        try {
-                            setTime(localTime = Time(hour = value as Int, minute = minute, second = second))
-                        } catch (e: Exception) {
-                            throw Exception("Can't set hour, $name has no time.", e)
-                        }
-                    }
-                    ::minute.name -> {
-                        try {
-                            setTime(localTime = Time(hour = hour, minute = value as Int, second = second))
-                        } catch (e: Exception) {
-                            throw Exception("Can't set minute, $name has no time.", e)
-                        }
-                    }
-                    ::second.name -> {
-                        try {
-                            setTime(localTime = Time(hour = hour, minute = minute, second = value as Int))
-                        } catch (e: Exception) {
-                            throw Exception("Can't set second, $name has no time.", e)
-                        }
-                    }
-                }
-                Unit
-            }
-        }
-
-        // Attributes
+    interface HassAttributes : BaseHassAttributes {
         // read only
 
         /** true if this entity has a time. */
-        val has_time: Boolean by attrsDelegate(false)
+        val has_time: Boolean
 
         /** true if this entity has a date. */
-        val has_date: Boolean by attrsDelegate(false)
+        val has_date: Boolean
+
+        /** A UNIX timestamp representing the (UTC) date and time (in seconds) held in the input. */
+        val timestamp: Long
+
+        /** True of this input datetime is editable. */
+        val editable: Boolean
+
+
+        // read / write
+
+        /** The year of the date. @see [year_]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("year_"))
+        var year: Int
+
+        /** The month of the date. @see [month_]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("month_"))
+        var month: Int
+
+        /** The day (of the month) of the date, if [has_date]. */
+        var day: Int
+
+        /** The hour of the time, if [has_time]. */
+        var hour: Int
+
+        /** The minute of the time, if [has_time]. */
+        var minute: Int
+
+        /** The second of the time, if [has_time]. */
+        var second: Int
+
+        // Helpers
 
         /** true if this entity has a date and a time */
         val hasDateAndTime: Boolean
             get() = has_date && has_time
 
-        /** A UNIX timestamp representing the (UTC) date and time (in seconds) held in the input. */
-        val timestamp: Long by attrsDelegate()
-
-        val editable: Boolean by attrsDelegate()
-
-
-        // read/write
-
-        /** The year of the date, if [has_date]. Use `year!!.year` to get the year as [Int].*/
-        var year: Year
-            get() = Year(this[::year.name]!!.cast<Int>()!!)
+        /** The year of the date, if [has_date]. Use `year_.year` to get the year as [Int].*/
+        var year_: Year
+            get() = Year(year)
             set(value) {
-                runBlocking {
-                    try {
-                        setDate(localDate = Date(year = value, month = month, day = day))
-                    } catch (e: Exception) {
-                        throw Exception("Can't set year, $name has no date.", e)
-                    }
-                }
+                year = value.year
             }
 
-        /** The month of the date, if [has_date]. Use `month!!.index1` to get the month as [Int] (with January == 1). */
-        var month: Month
-            get() = Month(this[::month.name]!!.cast<Int>()!!)
+        /** The month of the date, if [has_date]. Use `month_.index1` to get the month as [Int] (with January == 1). */
+        var month_: Month
+            get() = Month(month)
             set(value) {
-                runBlocking {
-                    try {
-                        setDate(localDate = Date(year = year, month = value, day = day))
-                    } catch (e: Exception) {
-                        throw Exception("Can't set month, $name has no date.", e)
-                    }
-                }
+                month = value.index1
             }
-
-        /** The day (of the month) of the date, if [has_date]. */
-        var day: Int by attrsDelegate()
-
-        /** The hour of the time, if [has_time]. */
-        var hour: Int by attrsDelegate()
-
-        /** The minute of the time, if [has_time]. */
-        var minute: Int by attrsDelegate()
-
-        /** The second of the time, if [has_time]. */
-        var second: Int by attrsDelegate()
 
         /** The date (in local time) as represented in Home Assistant, if [has_date]. */
         var date: Date
             get() = Date(year, month, day)
             set(value) {
-                runBlocking {
-                    setDate(localDate = value)
-                }
+                year = value.year
+                month = value.month1
+                day = value.day
             }
 
         /** The time (in local time) as represented in Home Assistant, if [has_time]. */
         var time: Time
             get() = Time(hour, minute, second)
             set(value) {
-                runBlocking {
-                    setTime(localTime = value)
-                }
+                hour = value.hour
+                minute = value.minute
+                second = value.second
             }
 
         /** The date and time (in local time) as represented in Home Assistant, if [has_date] and [has_time].
@@ -206,6 +129,96 @@ class InputDatetime(kHassInstance: KHomeAssistant) : Domain<InputDatetime.Entity
          * */
         var dateTime: DateTimeTz
             get() = DateTime(date, time).localUnadjusted
+            set(value) {
+                date = value.local.date
+                time = value.local.time
+            }
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    class Entity(
+        override val kHassInstance: KHomeAssistant,
+        override val name: String
+    ) : BaseEntity<State, HassAttributes>(
+        kHassInstance = kHassInstance,
+        name = name,
+        domain = InputDatetime(kHassInstance)
+    ), HassAttributes {
+
+        override val hassAttributes: Array<Attribute<*>> = getHassAttributes<HassAttributes>()
+
+        override fun stringToState(stateValue: String) = State(stateValue)
+        override fun stateToString(state: State) = state.value
+
+        /** Some attributes can be set using the set_datetime command. For those, we define a setter-companion to getValue. */
+        operator fun <V : Any?> AttributesDelegate<V>.setValue(
+            thisRef: Entity?,
+            property: KProperty<*>,
+            value: V
+        ) {
+            runBlocking {
+                when (property.name) {
+                    ::year.name -> try {
+                        setDate(localDate = Date(year = value as Int, month = month, day = day))
+                    } catch (e: Exception) {
+                        throw Exception("Can't set year, $name has no date.", e)
+                    }
+                    ::month.name -> try {
+                        setDate(localDate = Date(year = year, month = value as Int, day = day))
+                    } catch (e: Exception) {
+                        throw Exception("Can't set month, $name has no date.", e)
+                    }
+                    ::day.name -> try {
+                        setDate(localDate = Date(year = year, month = month, day = value as Int))
+                    } catch (e: Exception) {
+                        throw Exception("Can't set day, $name has no date.", e)
+                    }
+                    ::hour.name -> try {
+                        setTime(localTime = Time(hour = value as Int, minute = minute, second = second))
+                    } catch (e: Exception) {
+                        throw Exception("Can't set hour, $name has no time.", e)
+                    }
+                    ::minute.name -> try {
+                        setTime(localTime = Time(hour = hour, minute = value as Int, second = second))
+                    } catch (e: Exception) {
+                        throw Exception("Can't set minute, $name has no time.", e)
+                    }
+                    ::second.name -> try {
+                        setTime(localTime = Time(hour = hour, minute = minute, second = value as Int))
+                    } catch (e: Exception) {
+                        throw Exception("Can't set second, $name has no time.", e)
+                    }
+                }
+                Unit
+            }
+        }
+
+        override val has_time: Boolean by attrsDelegate(false)
+        override val has_date: Boolean by attrsDelegate(false)
+        override val timestamp: Long by attrsDelegate()
+        override val editable: Boolean by attrsDelegate()
+        override var year: Int by attrsDelegate()
+        override var month: Int by attrsDelegate()
+        override var day: Int by attrsDelegate()
+        override var hour: Int by attrsDelegate()
+        override var minute: Int by attrsDelegate()
+        override var second: Int by attrsDelegate()
+        override var date: Date
+            get() = super.date
+            set(value) {
+                runBlocking {
+                    setDate(localDate = value)
+                }
+            }
+        override var time: Time
+            get() = super.time
+            set(value) {
+                runBlocking {
+                    setTime(localTime = value)
+                }
+            }
+        override var dateTime: DateTimeTz
+            get() = super.dateTime
             set(value) {
                 runBlocking {
                     setDateTime(localDateTime = value)

@@ -435,7 +435,7 @@ class KHomeAssistantInstance(
      * @return the result in form of a [ResultMessage]
      * */
     override suspend fun callService(
-        entity: Entity<*>,
+        entity: Entity<*, *>,
         serviceDomain: Domain<*>,
         serviceName: String,
         data: JsonObject
@@ -469,7 +469,7 @@ class KHomeAssistantInstance(
      * @param data the optional [JsonObject] or [Map]<[String], [JsonElement]> containing the extra data for the service
      * @return the result in form of a [ResultMessage]
      * */
-    override suspend fun callService(entity: Entity<*>, serviceName: String, data: JsonObject) =
+    override suspend fun callService(entity: Entity<*, *>, serviceName: String, data: JsonObject) =
         callService(
             serviceDomain = entity.domain.domainName,
             entityID = entity.entityID,
@@ -510,7 +510,7 @@ class KHomeAssistantInstance(
      * @return the attributes of [entity] in the from of a [JsonObject]
      * @throws EntityNotInHassException if the entity provided cannot be found in Home Assistant
      */
-    override fun <EntityType : Entity<*>> getAttributes(entity: EntityType): JsonObject =
+    override fun <EntityType : Entity<*, *>> getRawAttributes(entity: EntityType): JsonObject =
         try {
             if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
             rawEntityData[entity.entityID]!!.attributes
@@ -527,7 +527,7 @@ class KHomeAssistantInstance(
      * @throws EntityNotInHassException if the entity provided cannot be found in Home Assistant
      * @throws Exception if the state cannot be parsed using `[entity].parseStateValue()`
      */
-    override fun <StateType : Any, EntityType : Entity<StateType>> getState(entity: EntityType): StateType {
+    override fun <StateType : Any, EntityType : Entity<StateType, *>> getState(entity: EntityType): StateType {
         if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
 
         val stateValue = try {

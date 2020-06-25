@@ -7,7 +7,7 @@ import nl.jolanrensen.kHomeAssistant.helper.GeoPoint
 /**
  * https://www.home-assistant.io/integrations/homeassistant
  */
-class HomeAssistant(kHassInstance: KHomeAssistant) : Domain<Nothing>, KHomeAssistant by kHassInstance {
+class HomeAssistant(override val kHassInstance: KHomeAssistant) : Domain<Nothing> {
     override val domainName: String = "homeassistant"
 
     /** Making sure HomeAssistant acts as a singleton. */

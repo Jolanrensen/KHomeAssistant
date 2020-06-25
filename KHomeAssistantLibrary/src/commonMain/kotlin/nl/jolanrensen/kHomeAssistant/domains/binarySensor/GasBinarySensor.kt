@@ -6,17 +6,17 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGasSensorState.G
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGasSensorState.CLEAR
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class GasBinarySensor(kHassInstance: KHomeAssistant) :
+class GasBinarySensor(override val kHassInstance: KHomeAssistant) :
     AbstractBinarySensor<BinaryGasSensorState, GasBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure GasSensor acts as a singleton. */
     override fun equals(other: Any?) = other is GasBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "gas".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryGasSensorState>(
         kHassInstance = kHassInstance,

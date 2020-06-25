@@ -6,17 +6,17 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryLightSensorState
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryLightSensorState.NO_LIGHT
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class LightBinarySensor(kHassInstance: KHomeAssistant) :
+class LightBinarySensor(override val kHassInstance: KHomeAssistant) :
     AbstractBinarySensor<BinaryLightSensorState, LightBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure LightSensor acts as a singleton. */
     override fun equals(other: Any?) = other is LightBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "light".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryLightSensorState>(
         kHassInstance = kHassInstance,

@@ -2,23 +2,27 @@ package nl.jolanrensen.kHomeAssistant.domains.sensors
 
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Domain
+import nl.jolanrensen.kHomeAssistant.entities.Attribute
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.entities.BaseHassAttributes
+import nl.jolanrensen.kHomeAssistant.entities.HassAttributes
 
-abstract class AbstractSensor<StateType : Any, EntityType : AbstractSensorEntity<StateType>>
-    (kHassInstance: KHomeAssistant) : Domain<EntityType>, KHomeAssistant by kHassInstance {
+abstract class AbstractSensor
+<StateType : Any, AttrsType : BaseHassAttributes, EntityType : AbstractSensorEntity<StateType, AttrsType>>
+    (override val kHassInstance: KHomeAssistant) : Domain<EntityType> {
     override val domainName = "sensor"
 }
 
-abstract class AbstractSensorEntity<StateType : Any>(
-    kHassInstance: KHomeAssistant,
+abstract class AbstractSensorEntity<StateType : Any, AttrsType : BaseHassAttributes>(
+    override val kHassInstance: KHomeAssistant,
     override val name: String,
-    override val domain: AbstractSensor<StateType, out AbstractSensorEntity<StateType>>,
+    override val domain: AbstractSensor<StateType, AttrsType, out AbstractSensorEntity<StateType, AttrsType>>,
     private val deviceClass: String?
-) : BaseEntity<StateType>(
+) : BaseEntity<StateType, AttrsType>(
     kHassInstance = kHassInstance,
     name = name,
     domain = domain
-) {
+), BaseHassAttributes {
 
     private var isCorrectDevice = false
 
@@ -33,19 +37,12 @@ abstract class AbstractSensorEntity<StateType : Any>(
         super.checkEntityExists()
     }
 
-    init {
-        this.hassAttributes += arrayOf(
-            ::device_class,
-            ::readable_state,
-            ::deviceClass // TODO REMOVE!
-        )
-    }
+    override val additionalToStringAttributes: Array<Attribute<*>> =
+        super.additionalToStringAttributes + ::deviceClass + ::readableState
 
-    /** The class of the device as set by configuration, changing the device state and icon that is displayed on the UI (see below). It does not set the unit_of_measurement.*/
-//    val device_class: String by attrsDelegate()
 
     /** Readable state with added unit of measurement, aka '50%'. */
-    val readable_state: String
+    val readableState: String
         get() = unit_of_measurement?.let { "$state$unit_of_measurement" } ?: state.toString()
 
 }

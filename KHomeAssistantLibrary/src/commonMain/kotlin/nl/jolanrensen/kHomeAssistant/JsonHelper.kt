@@ -1,6 +1,9 @@
 package nl.jolanrensen.kHomeAssistant
 
 import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonNull.jsonNull
+import nl.jolanrensen.kHomeAssistant.entities.HassAttributes
+import nl.jolanrensen.kHomeAssistant.entities.convertHassAttrsToJson
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -96,6 +99,27 @@ fun <T : Any?> JsonElement.cast(type: KType): T = try {
 } catch (e: Exception) {
     throw IllegalArgumentException("Couldn't cast $this to type $type", e)
 }
+
+@Suppress("UNCHECKED_CAST")
+fun Any?.toJson(): JsonElement = this?.let {
+    when (it) {
+        is Number -> JsonPrimitive(it)
+        is String -> JsonPrimitive(it)
+        is Boolean -> JsonPrimitive(it)
+
+        is Array<*> -> JsonArray(it.map { it.toJson() })
+        is List<*> -> JsonArray(it.map { it.toJson() })
+
+        is Map<*, *> -> JsonObject(
+            it
+                .mapKeys { it.toString() }
+                .mapValues { it.toJson() }
+        )
+
+        is HassAttributes -> it.convertHassAttrsToJson()
+        else -> throw IllegalArgumentException("Couldn't cast $this to json")
+    }
+} ?: jsonNull
 
 operator fun JsonArray.plus(other: JsonArray) = JsonArray(content + other.content)
 operator fun JsonObject.plus(other: JsonObject) = JsonObject(content + other.content)

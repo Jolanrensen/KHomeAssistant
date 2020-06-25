@@ -3,15 +3,18 @@ package nl.jolanrensen.kHomeAssistant.domains.binarySensor
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.domains.Domain
+import nl.jolanrensen.kHomeAssistant.entities.Attribute
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
+import nl.jolanrensen.kHomeAssistant.entities.BaseHassAttributes
 
 /**
  * https://www.home-assistant.io/integrations/binary_sensor/
  * Not to be confused with the "sensor" domain.
  * A "binary_sensor" is a completely different entity type.
  */
-abstract class AbstractBinarySensor<StateType : DeviceClassState, EntityType : AbstractBinarySensorEntity<StateType>>
-    (kHassInstance: KHomeAssistant) : Domain<EntityType>, KHomeAssistant by kHassInstance {
+abstract class AbstractBinarySensor
+<StateType : DeviceClassState, EntityType : AbstractBinarySensorEntity<StateType>>
+    (override val kHassInstance: KHomeAssistant) : Domain<EntityType> {
     override val domainName = "binary_sensor"
 
     /** Making sure AbstractBinarySensor acts as a singleton. */
@@ -20,15 +23,15 @@ abstract class AbstractBinarySensor<StateType : DeviceClassState, EntityType : A
 }
 
 abstract class AbstractBinarySensorEntity<StateType : DeviceClassState>(
-    kHassInstance: KHomeAssistant,
+    override val kHassInstance: KHomeAssistant,
     override val name: String,
     override val domain: AbstractBinarySensor<StateType, out AbstractBinarySensorEntity<StateType>>,
     private val deviceClass: String?
-) : BaseEntity<StateType>(
+) : BaseEntity<StateType, BaseHassAttributes>(
     kHassInstance = kHassInstance,
     name = name,
     domain = domain
-) {
+), BaseHassAttributes {
 
     private var isCorrectDevice = false
 
@@ -45,39 +48,10 @@ abstract class AbstractBinarySensorEntity<StateType : DeviceClassState>(
 
     override fun stateToString(state: StateType): String = state.onOffValue.stateValue
 
-
-    init {
-        this.hassAttributes += arrayOf(
-            ::device_class
-        )
-    }
-
-
-    /** The class of the device as set by configuration, changing the device state and icon that is displayed on the UI (see below). It does not set the unit_of_measurement.*/
-//    val device_class: String by attrsDelegate()
+    override val additionalToStringAttributes: Array<Attribute<*>> =
+        super.additionalToStringAttributes + ::deviceClass
 }
 
 abstract class DeviceClassState {
     abstract val onOffValue: OnOff
 }
-
-
-
-//sealed class BatteryCharging : DeviceClassState("battery_charging") {
-//    override fun parseState(onOff: OnOff): BatteryCharging = when (onOff) {
-//        OnOff.ON -> CHARGING
-//        OnOff.OFF -> NOT_CHARGING
-//        else -> throw IllegalArgumentException("$onOff is not supported")
-//    }
-//
-//    object CHARGING : BatteryCharging() {
-//        override fun toOnOff() = OnOff.ON
-//    }
-//
-//    object NOT_CHARGING : BatteryCharging() {
-//        override fun toOnOff() = OnOff.OFF
-//    }
-//}
-//
-//val <D : AbstractBinarySensor.DeviceClassState> HasContext.BinarySensor: AbstractBinarySensor<D>
-//    get() = AbstractBinarySensor<D>(getKHomeAssistant)

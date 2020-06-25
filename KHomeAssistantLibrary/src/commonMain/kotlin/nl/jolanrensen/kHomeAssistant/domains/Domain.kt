@@ -16,7 +16,7 @@ import kotlin.reflect.KProperty
  * Interface where all domains (like [Light], [MediaPlayer], [Switch]) inherit from.
  * @param E the type of entity this domain has. By default (or for a domain without entity) you can use [DefaultEntity].
  */
-interface Domain<out E : Entity<*>> {
+interface Domain<out E : Entity<*, *>> {
 
     /** The Home Assistant name for this domain, like "light". */
     val domainName: String
@@ -88,7 +88,7 @@ interface Domain<out E : Entity<*>> {
  * @param callback the block of code that is executed on each of the entities with the entity as this
  * @return a list of the instances of the entities
  * */
-inline fun <E : Entity<*>> Domain<E>.Entities(vararg names: String, callback: E.() -> Unit): List<E> =
+inline fun <E : Entity<*, *>> Domain<E>.Entities(vararg names: String, callback: E.() -> Unit): List<E> =
     Entities(*names).apply { forEach(callback) }
 
 /** Shorthand for [apply], allows for DSL-like behavior on a newly instanced entity.
@@ -103,7 +103,7 @@ inline fun <E : Entity<*>> Domain<E>.Entities(vararg names: String, callback: E.
  * @param callback the block of code that is executed with the entity as this
  * @return an instance of the entity
  * */
-inline fun <E : Entity<*>> Domain<E>.Entity(name: String, callback: E.() -> Unit): E = Entity(name).apply(callback)
+inline fun <E : Entity<*, *>> Domain<E>.Entity(name: String, callback: E.() -> Unit): E = Entity(name).apply(callback)
 
 /**
  * Create a temporary [Domain]. Useful for quick service calls or for by KHomeAssistant unsupported domains.
@@ -116,7 +116,7 @@ inline fun <E : Entity<*>> Domain<E>.Entity(name: String, callback: E.() -> Unit
  * @param domainName the Home Assistant name for this domain, like "light"
  * @return a [Domain] inheriting object with [DefaultEntity] as its entity
  **/
-fun KHomeAssistant.Domain(domainName: String): Domain<Entity<String>> =
+fun KHomeAssistant.Domain(domainName: String): Domain<DefaultEntity> =
     object : Domain<DefaultEntity> {
         override val domainName = domainName
         override var kHassInstance: KHomeAssistant = this@Domain
@@ -152,4 +152,4 @@ fun KHomeAssistant.Domain(domainName: String): Domain<Entity<String>> =
  * val my_light by Light
  * ```
  */
-operator fun <E : Entity<*>> Domain<E>.getValue(thisRef: Any?, property: KProperty<*>): E = Entity(property.name)
+operator fun <E : Entity<*, *>> Domain<E>.getValue(thisRef: Any?, property: KProperty<*>): E = Entity(property.name)

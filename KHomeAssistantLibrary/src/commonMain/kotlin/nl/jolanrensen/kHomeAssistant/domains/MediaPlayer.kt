@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import com.soywiz.klock.DateTime
+import com.soywiz.klock.DateTimeTz
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.parseUtc
 import com.soywiz.klock.seconds
@@ -16,13 +16,14 @@ import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT
 import nl.jolanrensen.kHomeAssistant.helper.UnsupportedFeatureException
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.math.max
+import kotlin.reflect.KProperty
 
 /**
  * https://www.home-assistant.io/integrations/media_player/
  *
  * TODO get attributes from here https://github.com/home-assistant/core/blob/dev/homeassistant/components/media_player/__init__.py
  * */
-class MediaPlayer(kHassInstance: KHomeAssistant) : Domain<MediaPlayer.Entity>, KHomeAssistant by kHassInstance {
+class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlayer.Entity> {
     override val domainName = "media_player"
 
     /** Making sure MediaPlayer acts as a singleton. */
@@ -72,52 +73,145 @@ class MediaPlayer(kHassInstance: KHomeAssistant) : Domain<MediaPlayer.Entity>, K
         SUPPORT_SELECT_SOUND_MODE(65536)
     }
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
+
+    interface HassAttributes : BaseHassAttributes {
+        // read only
+
+        /** Content type of current playing media. */
+        val media_content_type: String
+
+        /** Content ID of current playing media. */
+        val media_content_id: String
+
+        /** Duration of current playing media in seconds. @see [mediaDuration]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("mediaDuration"))
+        val media_duration: Float
+
+        /** When was the position of the current playing media valid in utc string. @see [mediaPositionUpdatedAt]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("mediaPositionUpdatedAt"))
+        val media_position_updated_at: String
+
+        /** Image url of current playing media. */
+        val media_image_url: String
+
+        /** If the image url is remotely accessible. */
+        val media_image_remotely_accessible: Boolean
+
+        /** Hash value for media image. */
+        val media_image_hash: String
+
+        /** Title of current playing media. */
+        val media_title: String
+
+        /** Artist of current playing media, music track only. */
+        val media_artist: String
+
+        /** Album name of current playing media, music track only. */
+        val media_album_name: String
+
+        /** Album artist of current playing media, music track only. */
+        val media_album_artist: String
+
+        /** Title of series of current playing media, TV show only. */
+        val media_series_title: String
+
+        /** Season of current playing media, TV show only. */
+        val media_season: Int // TODO check
+
+        /** Episode of current playing media, TV show only. */
+        val media_episode: String
+
+        /** Channel currently playing. */
+        val media_channel: Int // TODO check
+
+        /** Title of playlist currently playing. */
+        val media_playlist: String
+
+        /** ID of the currently running app. */
+        val app_id: String
+
+        /** Name of the currently running app. */
+        val app_name: String
+
+        /** List of available input sources. */
+        val source_list: List<String>
+
+        /** List of available sound modes. */
+        val sound_mode_list: List<String>
+
+        /** Set of supported features. @see [supportedFeatures] */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("supportedFeatures"))
+        val supported_features: Int
+
+
+        // Read / write
+
+        /** Track number of current playing media, music track only. */
+        var media_track: Int
+
+        /** Volume level of the media player (0f..1f). */
+        var volume_level: Float
+
+        /** Boolean if volume is currently muted. */
+        var is_volume_muted: Boolean
+
+        /** Position of current playing media in seconds. @see [mediaPosition]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("mediaPosition"))
+        var media_position: Float
+
+        /** Name of the current input source. */
+        var source: String
+
+        /** Name of the current sound mode. */
+        var sound_mode: String
+
+        /** Boolean if shuffle is enabled. */
+        var shuffle: Boolean
+
+
+        // Helper functions
+
+        /** Duration of current playing media. */
+        val mediaDuration: TimeSpan
+            get() = media_duration.seconds
+
+        /** When was the position of the current playing media valid. */
+        val mediaPositionUpdatedAt: DateTimeTz
+            get() = HASS_DATE_FORMAT.parseUtc(media_position_updated_at).local
+
+        /** Set of supported features. */
+        @OptIn(ExperimentalStdlibApi::class)
+        val supportedFeatures: Set<SupportedFeatures>
+            get() = buildSet {
+                val value = supported_features
+                SupportedFeatures.values().forEach {
+                    if (it.value and value == it.value)
+                        add(it)
+                }
+            }
+
+        /** Position of current playing media. */
+        var mediaPosition: TimeSpan
+            get() = media_position.seconds
+            set(value) {
+                media_position = value.seconds.toFloat()
+            }
+
+    }
 
     @Suppress("RemoveExplicitTypeArguments")
     @OptIn(ExperimentalStdlibApi::class)
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
-    ) : BaseEntity<MediaPlayerState>(
+    ) : BaseEntity<MediaPlayerState, HassAttributes>(
         kHassInstance = kHassInstance,
         name = name,
         domain = MediaPlayer(kHassInstance)
-    ) {
+    ), HassAttributes {
 
-        init {
-            this.hassAttributes += arrayOf(
-                ::media_content_type,
-                ::media_content_id,
-                ::media_duration,
-                ::media_position_updated_at,
-                ::media_image_url,
-                ::media_image_remotely_accessible,
-                ::media_image_hash,
-                ::media_title,
-                ::media_artist,
-                ::media_album_name,
-                ::media_album_artist,
-                ::media_track,
-                ::media_series_title,
-                ::media_season,
-                ::media_episode,
-                ::media_channel,
-                ::media_playlist,
-                ::app_id,
-                ::app_name,
-                ::source_list,
-                ::sound_mode_list,
-                ::supported_features,
-                ::device_class,
-                ::volume_level,
-                ::is_volume_muted,
-                ::media_position,
-                ::source,
-                ::sound_mode,
-                ::shuffle
-            )
-        }
+        override val hassAttributes: Array<Attribute<*>> = getHassAttributes<HassAttributes>()
 
         /** state can also be writable. */
         override var state: MediaPlayerState
@@ -126,151 +220,59 @@ class MediaPlayer(kHassInstance: KHomeAssistant) : Domain<MediaPlayer.Entity>, K
                 runBlocking { switchTo(value) }
             }
 
-
-        // ----- Attributes -----
-        // read only
-
-        /** Content type of current playing media. */
-        val media_content_type: String by attrsDelegate()
-
-        /** Content ID of current playing media. */
-        val media_content_id: String by attrsDelegate()
-
-        /** Duration of current playing media. */
-        val media_duration: TimeSpan
-            get() {
-                val value: Float = rawAttributes[::media_duration.name]!!.cast()!!
-                return value.seconds
-            }
-
-        /** When was the position of the current playing media valid. */
-        val media_position_updated_at: DateTime
-            get() {
-                val value: String = rawAttributes[::media_position_updated_at.name]!!.cast()!!
-                return value.let { HASS_DATE_FORMAT.parseUtc(it) }
-            }
-
-        /** Image url of current playing media. */
-        val media_image_url: String by attrsDelegate()
-
-        /** If the image url is remotely accessible. */
-        val media_image_remotely_accessible: Boolean by attrsDelegate()
-
-        /** Hash value for media image. */
-        val media_image_hash: String by attrsDelegate()
-
-        /** Title of current playing media. */
-        val media_title: String by attrsDelegate()
-
-        /** Artist of current playing media, music track only. */
-        val media_artist: String by attrsDelegate()
-
-        /** Album name of current playing media, music track only. */
-        val media_album_name: String by attrsDelegate()
-
-        /** Album artist of current playing media, music track only. */
-        val media_album_artist: String by attrsDelegate()
-
-        /** Track number of current playing media, music track only. */
-        var media_track: Int // TODO check
-            get() = attrsDelegate<Int>().getValue(this, ::media_track)
-            @Deprecated(level = DeprecationLevel.WARNING, message = "Should work but use with caution!")
-            set(value) {
-                runBlocking {
-                    while (media_track < value)
-                        mediaNextTrack()
-                    while (media_track > value)
-                        mediaPreviousTrack()
+        /** Some attributes can be set using service calls. For those, we define a setter-companion to getValue. */
+        @Suppress("UNCHECKED_CAST")
+        operator fun <V : Any?> AttributesDelegate<V>.setValue(
+            thisRef: Entity?,
+            property: KProperty<*>,
+            value: V
+        ) {
+            runBlocking {
+                when (property.name) {
+                    ::media_track.name -> { // TODO check
+                        value as Int
+                        while (media_track < value) mediaNextTrack()
+                        while (media_track > value) mediaPreviousTrack()
+                    }
+                    ::volume_level.name -> volumeSet(value as Float)
+                    ::is_volume_muted.name -> volumeMute(value as Boolean)
+                    ::media_position.name -> mediaSeek((value as Float).seconds)
+                    ::source.name -> selectSource(value as String)
+                    ::sound_mode.name -> selectSoundMode(value as String)
+                    ::shuffle.name -> shuffleSet(value as Boolean)
                 }
+                Unit
             }
+        }
 
-        /** Title of series of current playing media, TV show only. */
-        val media_series_title: String by attrsDelegate()
-
-        /** Season of current playing media, TV show only. */
-        val media_season: Int by attrsDelegate() // TODO check
-
-        /** Episode of current playing media, TV show only. */
-        val media_episode: String by attrsDelegate()
-
-        /** Channel currently playing. */
-        val media_channel: Int by attrsDelegate() // TODO check
-
-        /** Title of playlist currently playing. */
-        val media_playlist: String by attrsDelegate()
-
-        /** ID of the currently running app. */
-        val app_id: String by attrsDelegate()
-
-        /** Name of the currently running app. */
-        val app_name: String by attrsDelegate()
-
-        /** List of available input sources. */
-        val source_list: List<String> by attrsDelegate(listOf())
-
-        /** List of available sound modes. */
-        val sound_mode_list: List<String> by attrsDelegate(listOf())
-
-        /** Set of supported features. */
-        val supported_features: Set<SupportedFeatures>
-            get() = buildSet {
-                val value: Int = rawAttributes[::supported_features.name]!!.cast<Int>()!!
-                SupportedFeatures.values().forEach {
-                    if (it.value and value == it.value)
-                        add(it)
-                }
-            }
-
-        /** The class of the device as set by configuration, changing the device state and icon that is displayed on the UI (see below). It does not set the unit_of_measurement.*/
-//        val device_class: String by attrsDelegate()
-
-
-        // read / write
-
-        /** Volume level of the media player (0f..1f). */
-        var volume_level: Float
-            get() = attrsDelegate<Float>().getValue(this, ::volume_level)
-            set(value) {
-                runBlocking { volumeSet(value) }
-            }
-
-        /** Boolean if volume is currently muted. */
-        var is_volume_muted: Boolean
-            get() = attrsDelegate<Boolean>().getValue(this, ::is_volume_muted)
-            set(value) {
-                runBlocking { volumeMute(value) }
-            }
-
-        /** Position of current playing media. */
-        var media_position: TimeSpan
-            get() {
-                val value: Float = rawAttributes[::media_position.name]!!.cast()!!
-                return value.seconds
-            }
-            set(value) {
-                runBlocking { mediaSeek(value) }
-            }
-
-        /** Name of the current input source. */
-        var source: String
-            get() = attrsDelegate<String>().getValue(this, ::source)
-            set(value) {
-                runBlocking { selectSource(value) }
-            }
-
-        /** Name of the current sound mode. */
-        var sound_mode: String
-            get() = attrsDelegate<String>().getValue(this, ::sound_mode)
-            set(value) {
-                runBlocking { selectSoundMode(value) }
-            }
-
-        /** Boolean if shuffle is enabled. */
-        var shuffle: Boolean
-            get() = attrsDelegate<Boolean>().getValue(this, ::shuffle)
-            set(value) {
-                runBlocking { shuffleSet(value) }
-            }
+        override val media_content_type: String by attrsDelegate()
+        override val media_content_id: String by attrsDelegate()
+        override val media_duration: Float by attrsDelegate()
+        override val media_position_updated_at: String by attrsDelegate()
+        override val media_image_url: String by attrsDelegate()
+        override val media_image_remotely_accessible: Boolean by attrsDelegate()
+        override val media_image_hash: String by attrsDelegate()
+        override val media_title: String by attrsDelegate()
+        override val media_artist: String by attrsDelegate()
+        override val media_album_name: String by attrsDelegate()
+        override val media_album_artist: String by attrsDelegate()
+        override val media_series_title: String by attrsDelegate()
+        override val media_season: Int by attrsDelegate()
+        override val media_episode: String by attrsDelegate()
+        override val media_channel: Int by attrsDelegate()
+        override val media_playlist: String by attrsDelegate()
+        override val app_id: String by attrsDelegate()
+        override val app_name: String by attrsDelegate()
+        override val source_list: List<String> by attrsDelegate(listOf())
+        override val sound_mode_list: List<String> by attrsDelegate(listOf())
+        override val supported_features: Int by attrsDelegate(0)
+        override var media_track: Int by attrsDelegate()
+        override var volume_level: Float by attrsDelegate()
+        override var is_volume_muted: Boolean by attrsDelegate()
+        override var media_position: Float by attrsDelegate()
+        override var source: String by attrsDelegate()
+        override var sound_mode: String by attrsDelegate()
+        override var shuffle: Boolean by attrsDelegate()
 
 
         // some helper attributes
@@ -317,7 +319,7 @@ class MediaPlayer(kHassInstance: KHomeAssistant) : Domain<MediaPlayer.Entity>, K
 
         private fun checkIfSupported(vararg supportedFeatures: SupportedFeatures) {
             supportedFeatures.forEach {
-                if (it !in supported_features)
+                if (it !in supportedFeatures)
                     throw UnsupportedFeatureException("Unfortunately the media player $name does not support ${it.name}.")
             }
         }

@@ -8,7 +8,7 @@ import nl.jolanrensen.kHomeAssistant.Task
 import nl.jolanrensen.kHomeAssistant.core.StateListener
 import nl.jolanrensen.kHomeAssistant.runAt
 
-fun <S : Any, E : Entity<S>> E.onStateChangedToNot(
+fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChangedToNot(
     newState: S,
     callback: suspend E.() -> Unit
 ): E {
@@ -19,7 +19,7 @@ fun <S : Any, E : Entity<S>> E.onStateChangedToNot(
     return this
 }
 
-fun <S : Any, E : Entity<S>> E.onStateChangedTo(
+fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChangedTo(
     newState: S,
     callback: suspend E.() -> Unit
 ): E {
@@ -30,11 +30,12 @@ fun <S : Any, E : Entity<S>> E.onStateChangedTo(
     return this
 }
 
-fun <S : Any, E : Entity<S>> E.onStateChanged(
+fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChanged(
     callback: suspend E.() -> Unit
 ): E {
     checkEntityExists()
-    stateListeners
+    kHassInstance
+        .stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add(StateListener({ oldState, newState ->
             if (oldState.state != newState.state)
@@ -43,12 +44,12 @@ fun <S : Any, E : Entity<S>> E.onStateChanged(
     return this
 }
 
-suspend fun <S : Any, E : Entity<S>> E.suspendUntilStateChangedTo(
+suspend fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.suspendUntilStateChangedTo(
     newState: S,
     timeout: TimeSpan = 1.seconds
 ) = suspendUntilStateChanged({ it == newState }, timeout)
 
-suspend fun <S : Any, E : Entity<S>> E.suspendUntilStateChanged(
+suspend fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.suspendUntilStateChanged(
     condition: (S) -> Boolean,
     timeout: TimeSpan = 1.seconds
 ) {
@@ -62,18 +63,18 @@ suspend fun <S : Any, E : Entity<S>> E.suspendUntilStateChanged(
 
     stateListener = StateListener({ _, _ ->
         if (condition(state)) {
-            stateListeners[entityID]?.remove(stateListener)
+            kHassInstance.stateListeners[entityID]?.remove(stateListener)
             task?.cancel()
             continueChannel.send(Unit)
         }
     }, true)
 
-    task = runAt(DateTimeTz.nowLocal() + timeout) {
-        stateListeners[entityID]?.remove(stateListener)
+    task = kHassInstance.runAt(DateTimeTz.nowLocal() + timeout) {
+        kHassInstance.stateListeners[entityID]?.remove(stateListener)
         continueChannel.send(Unit)
     }
 
-    stateListeners
+    kHassInstance.stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add(stateListener)
 

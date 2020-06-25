@@ -98,48 +98,48 @@ suspend fun KHomeAssistant.runEvery(
 /** Schedule something to execute each day at sunrise. */
 suspend fun KHomeAssistant.runEveryDayAtSunrise(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
-        getNextLocalExecutionTime = { sun.next_rising.local + offset },
-        whenToUpdate = { update -> sun::next_rising.onChanged(sun) { update() } },
+        getNextLocalExecutionTime = { sun.nextRising + offset },
+        whenToUpdate = { update -> sun::nextRising.onChanged(sun) { update() } },
         callback = callback
     )
 
 /** Schedule something to execute each day at sunset. */
 suspend fun KHomeAssistant.runEveryDayAtSunset(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
-        getNextLocalExecutionTime = { sun.next_setting.local + offset },
-        whenToUpdate = { update -> sun::next_setting.onChanged(sun) { update() } },
+        getNextLocalExecutionTime = { sun.nextSetting + offset },
+        whenToUpdate = { update -> sun::nextSetting.onChanged(sun) { update() } },
         callback = callback
     )
 
 /** Schedule something to execute each day at dawn. */
 suspend fun KHomeAssistant.runEveryDayAtDawn(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
-        getNextLocalExecutionTime = { sun.next_dawn.local + offset },
-        whenToUpdate = { update -> sun::next_dawn.onChanged(sun) { update() } },
+        getNextLocalExecutionTime = { sun.nextDawn + offset },
+        whenToUpdate = { update -> sun::nextDawn.onChanged(sun) { update() } },
         callback = callback
     )
 
 /** Schedule something to execute each day at dusk. */
 suspend fun KHomeAssistant.runEveryDayAtDusk(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
-        getNextLocalExecutionTime = { sun.next_dusk.local + offset },
-        whenToUpdate = { update -> sun::next_dusk.onChanged(sun) { update() } },
+        getNextLocalExecutionTime = { sun.nextDusk + offset },
+        whenToUpdate = { update -> sun::nextDusk.onChanged(sun) { update() } },
         callback = callback
     )
 
 /** Schedule something to execute each day at noon. */
 suspend fun KHomeAssistant.runEveryDayAtNoon(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
-        getNextLocalExecutionTime = { sun.next_noon.local + offset },
-        whenToUpdate = { update -> sun::next_noon.onChanged(sun) { update() } },
+        getNextLocalExecutionTime = { sun.nextNoon + offset },
+        whenToUpdate = { update -> sun::nextNoon.onChanged(sun) { update() } },
         callback = callback
     )
 
 /** Schedule something to execute each day at midnight. */
 suspend fun KHomeAssistant.runEveryDayAtMidnight(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
-        getNextLocalExecutionTime = { sun.next_midnight.local + offset },
-        whenToUpdate = { update -> sun::next_midnight.onChanged(sun) { update() } },
+        getNextLocalExecutionTime = { sun.nextMidnight + offset },
+        whenToUpdate = { update -> sun::nextMidnight.onChanged(sun) { update() } },
         callback = callback
     )
 

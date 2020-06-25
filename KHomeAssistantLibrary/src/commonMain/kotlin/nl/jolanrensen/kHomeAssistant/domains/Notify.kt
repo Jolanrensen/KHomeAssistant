@@ -11,7 +11,7 @@ import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 /**
  * https://www.home-assistant.io/integrations/notify/
  */
-class Notify(kHassInstance: KHomeAssistant) : Domain<Nothing>, KHomeAssistant by kHassInstance {
+class Notify(override val kHassInstance: KHomeAssistant) : Domain<Nothing> {
     override val domainName = "notify"
 
     /** Making sure Notify acts as a singleton. */

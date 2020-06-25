@@ -6,7 +6,7 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 /**
  *
  */
-class Hassio(kHassInstance: KHomeAssistant) : Domain<Nothing>, KHomeAssistant by kHassInstance {
+class Hassio(override val kHassInstance: KHomeAssistant) : Domain<Nothing> {
     override val domainName = "hassio"
 
     /** Making sure Hassio acts as a singleton. */

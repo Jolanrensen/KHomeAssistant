@@ -6,17 +6,17 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryHeatSensorState.
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryHeatSensorState.NORMAL
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class HeatBinarySensor(kHassInstance: KHomeAssistant) :
+class HeatBinarySensor(override val kHassInstance: KHomeAssistant) :
     AbstractBinarySensor<BinaryHeatSensorState, HeatBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure HeatSensor acts as a singleton. */
     override fun equals(other: Any?) = other is HeatBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "heat".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryHeatSensorState>(
         kHassInstance = kHassInstance,

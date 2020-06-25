@@ -6,17 +6,17 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinarySoundSensorState
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinarySoundSensorState.CLEAR
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class SoundBinarySensor(kHassInstance: KHomeAssistant) :
+class SoundBinarySensor(override val kHassInstance: KHomeAssistant) :
     AbstractBinarySensor<BinarySoundSensorState, SoundBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure SoundSensor acts as a singleton. */
     override fun equals(other: Any?) = other is SoundBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "sound".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinarySoundSensorState>(
         kHassInstance = kHassInstance,

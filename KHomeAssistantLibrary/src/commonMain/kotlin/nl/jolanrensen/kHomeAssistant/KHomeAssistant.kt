@@ -44,7 +44,7 @@ interface KHomeAssistant : CoroutineScope {
      * @return the result in form of a [ResultMessage]
      * */
     suspend fun callService(
-        entity: Entity<*>,
+        entity: Entity<*, *>,
         serviceDomain: Domain<*>,
         serviceName: String,
         data: JsonObject = json { }
@@ -66,7 +66,7 @@ interface KHomeAssistant : CoroutineScope {
      * @param data the optional [JsonObject] or [Map]<[String], [JsonElement]> containing the extra data for the service
      * @return the result in form of a [ResultMessage]
      * */
-    suspend fun callService(entity: Entity<*>, serviceName: String, data: JsonObject = json { }): ResultMessage
+    suspend fun callService(entity: Entity<*, *>, serviceName: String, data: JsonObject = json { }): ResultMessage
 
     /**
      * Calls the given service on Home Assistant.
@@ -90,7 +90,7 @@ interface KHomeAssistant : CoroutineScope {
      * @return the attributes of [entity] in the from of a [JsonObject]
      * @throws EntityNotInHassException if the entity provided cannot be found in Home Assistant
      */
-    fun <EntityType : Entity<*>> getAttributes(entity: EntityType): JsonObject
+    fun <EntityType : Entity<*, *>> getRawAttributes(entity: EntityType): JsonObject
 
     /**
      * Return the state of the given entity from Home Assistant.
@@ -101,7 +101,7 @@ interface KHomeAssistant : CoroutineScope {
      * @throws EntityNotInHassException if the entity provided cannot be found in Home Assistant
      * @throws Exception if the state cannot be parsed using `[entity].parseStateValue()`
      */
-    fun <StateType : Any, EntityType : Entity<StateType>> getState(entity: EntityType): StateType
+    fun <StateType : Any, EntityType : Entity<StateType, *>> getState(entity: EntityType): StateType
 
     /** println's only executed if [debug] = true */
     fun debugPrintln(message: Any?)

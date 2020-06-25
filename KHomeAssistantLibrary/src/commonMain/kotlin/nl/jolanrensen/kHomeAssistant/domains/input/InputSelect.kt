@@ -4,12 +4,9 @@ import kotlinx.serialization.json.json
 import kotlinx.serialization.json.jsonArray
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.entities.AttributesDelegate
-import nl.jolanrensen.kHomeAssistant.entities.suspendUntilAttributeChanged
 import nl.jolanrensen.kHomeAssistant.contentEquals
-import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
-import nl.jolanrensen.kHomeAssistant.entities.suspendUntilStateChangedTo
+import nl.jolanrensen.kHomeAssistant.domains.Domain
+import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 
@@ -18,7 +15,7 @@ import kotlin.reflect.KProperty
 /**
  * https://www.home-assistant.io/integrations/input_select/
  * */
-class InputSelect(kHassInstance: KHomeAssistant) : Domain<InputSelect.Entity>, KHomeAssistant by kHassInstance {
+class InputSelect(override val kHassInstance: KHomeAssistant) : Domain<InputSelect.Entity> {
     override val domainName = "input_select"
 
     /** Making sure InputSelect acts as a singleton. */
@@ -28,27 +25,45 @@ class InputSelect(kHassInstance: KHomeAssistant) : Domain<InputSelect.Entity>, K
     /** Reload input_select configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
+
+    interface HassAttributes : BaseHassAttributes {
+        // Read only attributes
+
+        /** If true this input select is editable */
+        val editable: Boolean
+
+        // Read-write attributes
+
+        /** List of options to choose from. */
+        var options: List<String>
+    }
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
-    ) : BaseEntity<String>(
+    ) : BaseEntity<String, HassAttributes>(
         kHassInstance = kHassInstance,
         name = name,
         domain = InputSelect(kHassInstance)
-    ) {
-        init {
-            this.hassAttributes += arrayOf(
-                ::options,
-                ::editable
-            )
-        }
+    ), HassAttributes {
+
+        override val hassAttributes: Array<Attribute<*>> = getHassAttributes<HassAttributes>()
+
+        override fun stringToState(stateValue: String) = stateValue
+        override fun stateToString(state: String) = state
+
+        /** [state] can also be writable. */
+        override var state: String
+            get() = super.state
+            set(value) {
+                runBlocking { selectOption(value) }
+            }
 
         /** Some attributes are writable. */
         @Suppress("UNCHECKED_CAST")
         operator fun <V : Any?> AttributesDelegate<V>.setValue(
-            thisRef: nl.jolanrensen.kHomeAssistant.entities.Entity<*>?,
+            thisRef: Entity?,
             property: KProperty<*>,
             value: V
         ) {
@@ -62,25 +77,10 @@ class InputSelect(kHassInstance: KHomeAssistant) : Domain<InputSelect.Entity>, K
             }
         }
 
-        // Read only attributes
+        // attributes
+        override val editable: Boolean by attrsDelegate()
+        override var options: List<String> by attrsDelegate()
 
-        val editable: Boolean by attrsDelegate()
-
-        // Read-write attributes
-
-        /** List of options to choose from. */
-        var options: List<String> by attrsDelegate()
-
-        override fun stringToState(stateValue: String) = stateValue
-
-        override fun stateToString(state: String) = state
-
-        /** [state] can also be writable. */
-        override var state: String
-            get() = super.state
-            set(value) {
-                runBlocking { selectOption(value) }
-            }
 
         /** Select the previous option. */
         suspend fun selectPrevious(async: Boolean = false): ResultMessage {

@@ -1,6 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.entities.HassAttributes
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 
 
@@ -8,7 +9,7 @@ import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
  *
  * https://www.home-assistant.io/integrations/switch/
  * */
-class Switch(kHassInstance: KHomeAssistant) : Domain<Switch.Entity>, KHomeAssistant by kHassInstance {
+class Switch(override val kHassInstance: KHomeAssistant) : Domain<Switch.Entity> {
     override val domainName = "switch"
 
     /** Making sure Light acts as a singleton. */
@@ -16,12 +17,12 @@ class Switch(kHassInstance: KHomeAssistant) : Domain<Switch.Entity>, KHomeAssist
     override fun hashCode(): Int = domainName.hashCode()
 
     /** Constructor of Switch.Entity with right context */
-    override fun Entity(name: String) = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String) = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
-    ) : ToggleEntity(
+    ) : ToggleEntity<HassAttributes>(
         kHassInstance = kHassInstance,
         domain = Switch(kHassInstance),
         name = name

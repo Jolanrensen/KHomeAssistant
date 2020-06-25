@@ -28,22 +28,29 @@ class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
     override fun Entity(name: String): Entity = Entity(kHassInstance)
 
     interface HassAttributes : BaseHassAttributes {
-        /** Date and time of the next sun rising (in UTC). */
+
+        /** Date and time of the next sun rising (in UTC). @see [nextRising]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextRising"))
         val next_rising: String
 
-        /** Date and time of the next sun setting (in UTC). */
+        /** Date and time of the next sun setting (in UTC). @see [nextSetting]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextSetting"))
         val next_setting: String
 
-        /** Date and time of the next dawn (in UTC). */
+        /** Date and time of the next dawn (in UTC). @see [nextDawn]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextDawn"))
         val next_dawn: String
 
-        /** Date and time of the next dusk (in UTC). */
+        /** Date and time of the next dusk (in UTC). @see [nextDusk]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextDusk"))
         val next_dusk: String
 
-        /** Date and time of the next solar noon (in UTC). */
+        /** Date and time of the next solar noon (in UTC). @see [nextNoon]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextNoon"))
         val next_noon: String
 
-        /** Date and time of the next solar midnight (in UTC). */
+        /** Date and time of the next solar midnight (in UTC). @see [nextMidnight]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextMidnight"))
         val next_midnight: String
 
         /** Solar elevation. This is the angle between the sun and the horizon. Negative values mean the sun is below the horizon. */
@@ -54,12 +61,38 @@ class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
 
         /** True if the Sun is currently rising, after solar midnight and before solar noon. */
         val rising: Boolean
+
+        // Helper getter/setters
+        
+        /** Date and time of the next sun rising (in local time). */
+        val nextRising: DateTimeTz
+            get() = HASS_DATE_FORMAT_SUN.parseUtc(next_rising).local
+
+        /** Date and time of the next sun setting (in local time). */
+        val nextSetting: DateTimeTz
+            get() = HASS_DATE_FORMAT_SUN.parseUtc(next_setting).local
+
+        /** Date and time of the next dawn (in local time). */
+        val nextDawn: DateTimeTz
+            get() = HASS_DATE_FORMAT_SUN.parseUtc(next_dawn).local
+
+        /** Date and time of the next dusk (in local time). */
+        val nextDusk: DateTimeTz
+            get() = HASS_DATE_FORMAT_SUN.parseUtc(next_dusk).local
+
+        /** Date and time of the next solar noon (in local time). */
+        val nextNoon: DateTimeTz
+            get() = HASS_DATE_FORMAT_SUN.parseUtc(next_noon).local
+
+        /** Date and time of the next solar midnight (in local time). */
+        val nextMidnight: DateTimeTz
+            get() = HASS_DATE_FORMAT_SUN.parseUtc(next_midnight).local
     }
 
     class Entity(
         override val kHassInstance: KHomeAssistant,
         override val name: String = "sun"
-    ) : BaseEntity<SunState>(
+    ) : BaseEntity<SunState, HassAttributes>(
         kHassInstance = kHassInstance,
         name = name,
         domain = Sun(kHassInstance)
@@ -88,6 +121,22 @@ class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
         override val elevation: Float by attrsDelegate()
         override val azimuth: Float by attrsDelegate()
         override val rising: Boolean by attrsDelegate()
+
+        /** True of the Sun is above the horizon. */
+        val isUp: Boolean
+            get() = state == SunState.ABOVE_HORIZON
+
+        /** True of the Sun is above the horizon. */
+        val isAboveHorizon: Boolean
+            get() = state == SunState.ABOVE_HORIZON
+
+        /** True of the Sun is below the horizon. */
+        val isDown: Boolean
+            get() = state == SunState.BELOW_HORIZON
+
+        /** True of the Sun is below the horizon. */
+        val isBelowHorizon: Boolean
+            get() = state == SunState.BELOW_HORIZON
 
         /** Schedule something to execute each day at sunrise.
          * @see runEveryDayAtSunrise */
@@ -145,46 +194,6 @@ class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
     }
 
 }
-
-/** Date and time of the next sun rising (in local time). */
-val Sun.Entity.nextRising: DateTimeTz
-    get() = HASS_DATE_FORMAT_SUN.parseUtc(next_rising).local
-
-/** Date and time of the next sun setting (in local time). */
-val Sun.Entity.nextSetting: DateTimeTz
-    get() = HASS_DATE_FORMAT_SUN.parseUtc(next_setting).local
-
-/** Date and time of the next dawn (in local time). */
-val Sun.Entity.nextDawn: DateTimeTz
-    get() = HASS_DATE_FORMAT_SUN.parseUtc(next_dawn).local
-
-/** Date and time of the next dusk (in local time). */
-val Sun.Entity.nextDusk: DateTimeTz
-    get() = HASS_DATE_FORMAT_SUN.parseUtc(next_dusk).local
-
-/** Date and time of the next solar noon (in local time). */
-val Sun.Entity.nextNoon: DateTimeTz
-    get() = HASS_DATE_FORMAT_SUN.parseUtc(next_noon).local
-
-/** Date and time of the next solar midnight (in local time). */
-val Sun.Entity.nextMidnight: DateTimeTz
-    get() = HASS_DATE_FORMAT_SUN.parseUtc(next_midnight).local
-
-/** True of the Sun is above the horizon. */
-val Sun.Entity.isUp: Boolean
-    get() = state == Sun.SunState.ABOVE_HORIZON
-
-/** True of the Sun is above the horizon. */
-val Sun.Entity.isAboveHorizon: Boolean
-    get() = state == Sun.SunState.ABOVE_HORIZON
-
-/** True of the Sun is below the horizon. */
-val Sun.Entity.isDown: Boolean
-    get() = state == Sun.SunState.BELOW_HORIZON
-
-/** True of the Sun is below the horizon. */
-val Sun.Entity.isBelowHorizon: Boolean
-    get() = state == Sun.SunState.BELOW_HORIZON
 
 
 /** Access the Sun Domain. */

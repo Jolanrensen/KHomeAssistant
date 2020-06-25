@@ -5,15 +5,14 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
-import nl.jolanrensen.kHomeAssistant.entities.suspendUntilStateChangedTo
+import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.reflect.KProperty
 
 /**
  * https://www.home-assistant.io/integrations/input_number/
  */
-class InputNumber(kHassInstance: KHomeAssistant) : Domain<InputNumber.Entity>, KHomeAssistant by kHassInstance {
+class InputNumber(override val kHassInstance: KHomeAssistant) : Domain<InputNumber.Entity> {
     override val domainName = "input_number"
 
     /** Making sure InputNumber acts as a singleton. */
@@ -23,20 +22,49 @@ class InputNumber(kHassInstance: KHomeAssistant) : Domain<InputNumber.Entity>, K
     /** Reload input_number configuration. */
     suspend fun reload() = callService("reload")
 
-    override fun Entity(name: String) = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String) = Entity(kHassInstance = kHassInstance, name = name)
 
     enum class InputNumberMode(val stateValue: String) {
         BOX("box"), SLIDER("slider")
     }
 
+    interface HassAttributes : BaseHassAttributes {
+        // read only
+
+        /** Minimum value. */
+        val min: Float
+
+        /** Maximum value. */
+        val max: Float
+
+        /** Initial value when Home Assistant starts. */ // TODO different than initial_state?
+        val initial: Float
+
+        /** Step value. Smallest value 0.001. */
+        val step: Float
+
+        /** Can specify box or slider. @see [mode_]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("mode_"))
+        val mode: String
+
+        /** Is true if this input number is editable. */
+        val editable: Boolean
+
+        // Helpers
+
+        /** Can specify box or slider. */
+        val mode_: InputNumberMode
+            get() = InputNumberMode.values().find { it.stateValue == mode } ?: InputNumberMode.SLIDER
+    }
+
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
-    ) : BaseEntity<Float>(
+    ) : BaseEntity<Float, HassAttributes>(
         kHassInstance = kHassInstance,
         name = name,
         domain = InputNumber(kHassInstance)
-    ) {
+    ), HassAttributes {
         /** Delegate so you can control an InputNumber like a local variable
          * Simply type "var yourFloat by InputNumber.Entity("your_float")
          **/
@@ -45,16 +73,7 @@ class InputNumber(kHassInstance: KHomeAssistant) : Domain<InputNumber.Entity>, K
             state = value
         }
 
-        init {
-            this.hassAttributes += arrayOf(
-                ::min,
-                ::max,
-                ::initial,
-                ::step,
-                ::mode,
-                ::editable
-            )
-        }
+        override val hassAttributes: Array<Attribute<*>> = getHassAttributes<HassAttributes>()
 
         override fun stringToState(stateValue: String) = stateValue.toFloatOrNull()
 
@@ -68,28 +87,12 @@ class InputNumber(kHassInstance: KHomeAssistant) : Domain<InputNumber.Entity>, K
             }
 
         // Attributes
-        // read only
-
-        /** Minimum value. */
-        val min: Float by attrsDelegate(Float.MIN_VALUE)
-
-        /** Maximum value. */
-        val max: Float by attrsDelegate(Float.MIN_VALUE)
-
-        /** Initial value when Home Assistant starts. */ // TODO different than initial_state?
-        val initial: Float by attrsDelegate()
-
-        /** Step value. Smallest value 0.001. */
-        val step: Float by attrsDelegate(1f)
-
-        /** Can specify box or slider. */
-        val mode: InputNumberMode
-            get() = rawAttributes[::mode.name]?.cast<String>()
-                ?.let { value -> InputNumberMode.values().find { it.stateValue == value } }
-                ?: InputNumberMode.SLIDER
-
-        val editable: Boolean by attrsDelegate()
-
+        override val min: Float by attrsDelegate(Float.MIN_VALUE)
+        override val max: Float by attrsDelegate(Float.MIN_VALUE)
+        override val initial: Float by attrsDelegate()
+        override val step: Float by attrsDelegate(1f)
+        override val mode: String by attrsDelegate()
+        override val editable: Boolean by attrsDelegate()
 
         /** Decrement the value by 'step'. */
         suspend fun decrement() = callService("decrement")

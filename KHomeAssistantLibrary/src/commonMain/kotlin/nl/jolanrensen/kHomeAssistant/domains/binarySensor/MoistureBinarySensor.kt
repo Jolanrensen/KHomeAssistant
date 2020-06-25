@@ -6,17 +6,17 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryMoistureSensorSt
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryMoistureSensorState.DRY
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class MoistureBinarySensor(kHassInstance: KHomeAssistant) :
+class MoistureBinarySensor(override val kHassInstance: KHomeAssistant) :
     AbstractBinarySensor<BinaryMoistureSensorState, MoistureBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure MoistureSensor acts as a singleton. */
     override fun equals(other: Any?) = other is MoistureBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "moisture".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryMoistureSensorState>(
         kHassInstance = kHassInstance,

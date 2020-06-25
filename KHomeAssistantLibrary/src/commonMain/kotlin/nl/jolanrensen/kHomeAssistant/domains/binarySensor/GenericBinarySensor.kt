@@ -6,17 +6,17 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGenericSensorSta
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryGenericSensorState.OFF
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class GenericBinarySensor(kHassInstance: KHomeAssistant) :
+class GenericBinarySensor(override val kHassInstance: KHomeAssistant) :
     AbstractBinarySensor<BinaryGenericSensorState, GenericBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure GenericSensor acts as a singleton. */
     override fun equals(other: Any?) = other is GenericBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "generic".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryGenericSensorState>(
         kHassInstance = kHassInstance,

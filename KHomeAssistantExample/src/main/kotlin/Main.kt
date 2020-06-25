@@ -1,11 +1,10 @@
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.SceneEntityState
-import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.domains.*
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
+import nl.jolanrensen.kHomeAssistant.domains.input.InputText
 import nl.jolanrensen.kHomeAssistant.entities.invoke
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
@@ -50,10 +49,12 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
     override suspend fun initialize() {
 
 
-        println(denon_avrx2200w)
+        println(denon_avrx2200w {
+            this.supported_features
+        })
 
-        Light[""] {
-
+        InputText[""] {
+            pattern
         }
 
 

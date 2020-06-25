@@ -6,17 +6,17 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryProblemSensorSta
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryProblemSensorState.OK
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class ProblemBinarySensor(kHassInstance: KHomeAssistant) :
+class ProblemBinarySensor(override val kHassInstance: KHomeAssistant) :
     AbstractBinarySensor<BinaryProblemSensorState, ProblemBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure ProblemSensor acts as a singleton. */
     override fun equals(other: Any?) = other is ProblemBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "problem".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryProblemSensorState>(
         kHassInstance = kHassInstance,

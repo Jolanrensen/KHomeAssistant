@@ -12,15 +12,14 @@ import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.Scene
 import nl.jolanrensen.kHomeAssistant.messages.Context
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
-import kotlin.reflect.KClass
+import nl.jolanrensen.kHomeAssistant.toJson
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty0
 import kotlin.reflect.KProperty1
 
 typealias DefaultEntity = Entity<String, HassAttributes>
 
 /** Type returned when using myEntity::myAttribute */
-typealias Attribute<A> = KProperty0<A>
+typealias Attribute<A> = KProperty<A>
 
 /** Type returned when using SomeDomain.Entity::myAttribute */
 typealias NonSpecificAttribute<E, A> = KProperty1<E, A>
@@ -28,7 +27,7 @@ typealias NonSpecificAttribute<E, A> = KProperty1<E, A>
 /** Alias for [Entity]. */
 typealias BaseEntity<StateType, AttrsType> = Entity<StateType, AttrsType>
 
-open class Entity<StateType : Any, AttrsType: HassAttributes>(
+open class Entity<StateType : Any, AttrsType : HassAttributes>(
     open val kHassInstance: KHomeAssistant,
     open val name: String,
     open val domain: Domain<*>
@@ -76,10 +75,10 @@ open class Entity<StateType : Any, AttrsType: HassAttributes>(
     /** State of the entity. */
     open var state: StateType
         get() = kHassInstance.getState(this)
-        @Deprecated(
-            level = DeprecationLevel.WARNING,
-            message = "Uses Scene.apply, so it isn't guaranteed to work. Use functions inside a domain to be more certain."
-        )
+//        @Deprecated(
+//            level = DeprecationLevel.WARNING,
+//            message = "Uses Scene.apply, so it isn't guaranteed to work. Use functions inside a domain to be more certain."
+//        )
         set(value) {
             println("Attempting to set state of $entityID using Scene.apply")
             runBlocking {
@@ -94,7 +93,7 @@ open class Entity<StateType : Any, AttrsType: HassAttributes>(
     /** Get the raw attributes from Home Assistant in json format.
      * Raw attributes can also directly be obtained using yourEntity["raw_attribute"] */
     val rawAttributes: JsonObject
-        get() = kHassInstance.getAttributes(this)
+        get() = kHassInstance.getRawAttributes(this)
 
     /** Helper function to get raw attributes in json format using yourEntity["attribute"]
      * @see [Entity.rawAttributes]
@@ -203,12 +202,12 @@ open class Entity<StateType : Any, AttrsType: HassAttributes>(
     (hassAttributes + additionalToStringAttributes)
         .filter {
             try {
-                it.get()
+                it.call(this)
             } catch (e: Exception) {
                 null
             } != null
         }
-        .map { "\n    ${it.name} = ${it.get()}" }
+        .map { "\n    ${it.name} = ${it.call(this)}" }
         .toString()
         .run { subSequence(1, length - 1) }
     }\n}"
@@ -272,7 +271,8 @@ interface AttributesDelegate<V : Any?> {
  * }
  * ```
  * */
-inline operator fun <A : HassAttributes, S : Any, E : Entity<S, A>> E.invoke(callback: E.() -> Unit): E = apply(callback)
+inline operator fun <A : HassAttributes, S : Any, E : Entity<S, A>> E.invoke(callback: E.() -> Unit): E =
+    apply(callback)
 
 /**
  * Shorthand for apply for each, allows for DSL-like behavior on collections of entities.
@@ -289,4 +289,12 @@ inline operator fun <A : HassAttributes, S : Any, E : Entity<S, A>> Iterable<E>.
     apply { forEach(callback) }
 
 inline fun <reified A : HassAttributes> getHassAttributes(): Array<Attribute<*>> =
-    A::class.members.filterIsInstance<KProperty0<*>>().toTypedArray()
+    A::class.members.filter { it.isAbstract }.filterIsInstance<KProperty<*>>().toTypedArray()
+
+private val test = "".toJson()
+
+inline fun <reified A : HassAttributes> A.convertHassAttrsToJson(): JsonObject = JsonObject(
+    getHassAttributes<A>().map<Attribute<*>, Pair<String, JsonElement>> {
+        it.name to it.call(this).toJson()
+    }.toMap()
+)

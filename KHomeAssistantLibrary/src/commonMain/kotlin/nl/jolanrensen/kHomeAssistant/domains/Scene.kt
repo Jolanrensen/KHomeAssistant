@@ -1,19 +1,20 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import com.soywiz.klock.TimeSpan
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.SceneEntityState
-import nl.jolanrensen.kHomeAssistant.entities.Attribute
-import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
-import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
+import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import nl.jolanrensen.kHomeAssistant.plus
 
 /**
  * https://www.home-assistant.io/integrations/scene/
  */
-class Scene(kHassInstance: KHomeAssistant) : Domain<Scene.Entity>, KHomeAssistant by kHassInstance {
+class Scene(override val kHassInstance: KHomeAssistant) : Domain<Scene.Entity> {
     override val domainName = "scene"
 
     /** Making sure Scene acts as a singleton. */
@@ -28,7 +29,10 @@ class Scene(kHassInstance: KHomeAssistant) : Domain<Scene.Entity>, KHomeAssistan
      * @param data the entity's states and attributes that define this scene.
      * @param transition smoothen the transition to the scene.
      */
-    suspend fun apply(data: SceneEntityState<out Any>, transition: TimeSpan? = null): ResultMessage =
+    suspend fun apply(
+        data: SceneEntityState<out Any, out BaseHassAttributes>,
+        transition: TimeSpan? = null
+    ): ResultMessage =
         apply(listOf(data), transition)
 
     /**
@@ -36,7 +40,10 @@ class Scene(kHassInstance: KHomeAssistant) : Domain<Scene.Entity>, KHomeAssistan
      * @param data the entities' states and attributes that define this scene.
      * @param transition smoothen the transition to the scene.
      */
-    suspend fun apply(data: Iterable<SceneEntityState<out Any>>, transition: TimeSpan? = null): ResultMessage =
+    suspend fun apply(
+        data: Iterable<SceneEntityState<out Any, out BaseHassAttributes>>,
+        transition: TimeSpan? = null
+    ): ResultMessage =
         callService(
             serviceName = "apply",
             data = json {
@@ -56,8 +63,8 @@ class Scene(kHassInstance: KHomeAssistant) : Domain<Scene.Entity>, KHomeAssistan
      * @param snapshotEntities entities here will have their current state and attributes copied over to the scene. */
     suspend fun create(
         sceneId: String,
-        data: Iterable<SceneEntityState<out Any>>,
-        snapshotEntities: Iterable<nl.jolanrensen.kHomeAssistant.entities.Entity<*>>? = null
+        data: Iterable<SceneEntityState<out Any, out BaseHassAttributes>>,
+        snapshotEntities: Iterable<BaseEntity<*, *>>? = null
     ): ResultMessage =
         callService(
             serviceName = "create",
@@ -72,29 +79,50 @@ class Scene(kHassInstance: KHomeAssistant) : Domain<Scene.Entity>, KHomeAssistan
             }
         )
 
-    private fun getEntitiesObject(data: Iterable<SceneEntityState<out Any>>): JsonObject = json {
-        for (sceneEntityState in data) {
-            @Suppress("UNCHECKED_CAST")
-            sceneEntityState as SceneEntityState<Any>
-            sceneEntityState.entity.entityID to json {
-                "state" to sceneEntityState.entity.stateToString(sceneEntityState.state)
-            } + sceneEntityState.attributes
-        }
+    private fun getEntitiesObject(data: Iterable<SceneEntityState<out Any, out BaseHassAttributes>>): JsonObject = TODO()
+//        json {
+//            for (sceneEntityState in data) {
+//                @Suppress("UNCHECKED_CAST")
+//                sceneEntityState as SceneEntityState<Any, out BaseHassAttributes>
+//                sceneEntityState.entity.entityID to json {
+//                    "state" to sceneEntityState.entity.stateToString(sceneEntityState.state)
+//                } + sceneEntityState.attributes.convertHassAttrsToJson() + sceneEntityState.additionalAttributes
+//
+//            }
+//        }
+
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
+
+    interface HassAttributes : BaseHassAttributes {
+        // Read only
+
+        /** All entities that are affected by this scene (as [DefaultEntity]s) */
+        val entity_id: List<String>
+
+
+        // Helpers
+//        /** All entities that are affected by this scene (as [DefaultEntity]s)
+//         * example from automation: TODO?
+//         * ```
+//         * val entities: List<DefaultEntity> = sceneEntity.entityIds.map { it() }
+//         * ```*/
+//        val entityIds: List<KHomeAssistant.() -> DefaultEntity>
+//            get() = entity_id.map {
+//                val (domain, name) = it.split(".")
+//                ({ Domain(domain)[name] })
+//            }
     }
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
-
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
-    ) : BaseEntity<String>(
+    ) : BaseEntity<String, HassAttributes>(
         kHassInstance = kHassInstance,
         name = name,
         domain = Scene(kHassInstance)
-    ) {
+    ), HassAttributes {
 
-        override val hassAttributes: Array<Attribute<*>> = super.hassAttributes + ::entity_id
-
+        override val hassAttributes: Array<Attribute<*>> = getHassAttributes<HassAttributes>()
 
         @Suppress("DeprecatedCallableAddReplaceWith")
         @Deprecated(message = "state will always be \"scening\"", level = DeprecationLevel.WARNING)
@@ -104,15 +132,14 @@ class Scene(kHassInstance: KHomeAssistant) : Domain<Scene.Entity>, KHomeAssistan
                 super.state = value
             }
 
+        override val entity_id: List<String> by attrsDelegate(listOf())
+
         /** All entities that are affected by this scene (as [DefaultEntity]s) */
-        val entity_id: List<DefaultEntity>
-            get() = rawAttributes["entity_id"]!!
-                .jsonArray
-                .content
-                .map {
-                    val (domain, name) = it.content.split(".")
-                    Domain(domain)[name]
-                }
+        val entityIds: List<DefaultEntity>
+            get() = entity_id.map {
+                val (domain, name) = it.split(".")
+                kHassInstance.Domain(domain)[name]
+            }
 
         /** Activate this scene.
          * @param transition Transition duration it takes to bring devices to the state defined in the scene. */
@@ -129,6 +156,7 @@ class Scene(kHassInstance: KHomeAssistant) : Domain<Scene.Entity>, KHomeAssistan
 
     }
 }
+
 
 val KHomeAssistant.Scene: Scene
     get() = Scene(this)

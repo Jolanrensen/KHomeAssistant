@@ -6,17 +6,17 @@ import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryOccupancySensorS
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.BinaryOccupancySensorState.CLEAR
 import nl.jolanrensen.kHomeAssistant.entities.onStateChangedTo
 
-class OccupancyBinarySensor(kHassInstance: KHomeAssistant) :
+class OccupancyBinarySensor(override val kHassInstance: KHomeAssistant) :
     AbstractBinarySensor<BinaryOccupancySensorState, OccupancyBinarySensor.Entity>(kHassInstance) {
 
     /** Making sure OccupancySensor acts as a singleton. */
     override fun equals(other: Any?) = other is OccupancyBinarySensor
     override fun hashCode(): Int = domainName.hashCode() + "occupancy".hashCode()
 
-    override fun Entity(name: String): Entity = Entity(kHassInstance = this, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
-        kHassInstance: KHomeAssistant,
+        override val kHassInstance: KHomeAssistant,
         override val name: String
     ) : AbstractBinarySensorEntity<BinaryOccupancySensorState>(
         kHassInstance = kHassInstance,

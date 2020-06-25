@@ -8,7 +8,7 @@ import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
 
-open class ToggleEntity<AttrsType: HassAttributes>(
+open class ToggleEntity<AttrsType : HassAttributes>(
     kHassInstance: KHomeAssistant,
     override val name: String,
     override val domain: Domain<Entity<OnOff, AttrsType>>
@@ -89,17 +89,30 @@ open class ToggleEntity<AttrsType: HassAttributes>(
         get() = state == UNAVAILABLE
 }
 
-fun <A : HassAttributes, E : ToggleEntity<A>> E.onTurnOn(callback: suspend E.() -> Unit) =
+fun <H : HassAttributes, E : ToggleEntity<H>> E.onTurnOn(callback: suspend E.() -> Unit) =
     onStateChangedTo(ON, callback)
 
-fun <A : HassAttributes, E : ToggleEntity<A>> E.onTurnOff(callback: suspend E.() -> Unit) =
+fun <H : HassAttributes, E : ToggleEntity<H>> E.onTurnOff(callback: suspend E.() -> Unit) =
     onStateChangedTo(OFF, callback)
 
-fun <A : HassAttributes, E : ToggleEntity<A>> E.onUnavailable(callback: suspend E.() -> Unit) =
+fun <H : HassAttributes, E : ToggleEntity<H>> E.onUnavailable(callback: suspend E.() -> Unit) =
     onStateChangedTo(UNAVAILABLE, callback)
 
-suspend inline fun <E : ToggleEntity<*>> Iterable<E>.turnOn(async: Boolean = false) = this { turnOn(async) }
-suspend inline fun <E : ToggleEntity<*>> Iterable<E>.turnOff(async: Boolean = false) = this { turnOff(async) }
-suspend inline fun <E : ToggleEntity<*>> Iterable<E>.toggle(async: Boolean = false) = this { toggle(async) }
-suspend inline fun <E : ToggleEntity<*>> Iterable<E>.switchTo(state: OnOff, async: Boolean = false) = this { switchTo(state, async) }
-suspend inline fun <E : ToggleEntity<*>> Iterable<E>.switchTo(state: Boolean, async: Boolean = false) = this { switchTo(state, async) }
+suspend inline fun <H : HassAttributes, E : ToggleEntity<H>> Iterable<E>.turnOn(async: Boolean = false) =
+    this { turnOn(async) }
+
+suspend inline fun <H : HassAttributes, E : ToggleEntity<H>> Iterable<E>.turnOff(async: Boolean = false) =
+    this { turnOff(async) }
+
+suspend inline fun <H : HassAttributes, E : ToggleEntity<H>> Iterable<E>.toggle(async: Boolean = false) =
+    this { toggle(async) }
+
+suspend inline fun <H : HassAttributes, E : ToggleEntity<H>> Iterable<E>.switchTo(
+    state: OnOff,
+    async: Boolean = false
+) = this { switchTo(state, async) }
+
+suspend inline fun <H : HassAttributes, E : ToggleEntity<H>> Iterable<E>.switchTo(
+    state: Boolean,
+    async: Boolean = false
+) = this { switchTo(state, async) }

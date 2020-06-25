@@ -9,7 +9,7 @@ import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 /**
  * https://www.home-assistant.io/docs/mqtt/service/
  */
-class Mqtt(kHassInstance: KHomeAssistant) : Domain<Nothing>, KHomeAssistant by kHassInstance {
+class Mqtt(override val kHassInstance: KHomeAssistant) : Domain<Nothing> {
     override val domainName = "mqtt"
 
     /** Making sure Mqtt acts as a singleton. */
