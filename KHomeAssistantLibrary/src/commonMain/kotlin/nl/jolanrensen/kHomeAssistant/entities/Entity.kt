@@ -14,12 +14,13 @@ import nl.jolanrensen.kHomeAssistant.messages.Context
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import nl.jolanrensen.kHomeAssistant.toJson
 import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty0
 import kotlin.reflect.KProperty1
 
 typealias DefaultEntity = Entity<String, HassAttributes>
 
 /** Type returned when using myEntity::myAttribute */
-typealias Attribute<A> = KProperty<A>
+typealias Attribute<A> = KProperty0<A>
 
 /** Type returned when using SomeDomain.Entity::myAttribute */
 typealias NonSpecificAttribute<E, A> = KProperty1<E, A>
@@ -36,6 +37,8 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
     init {
         this.checkEntityExists()
     }
+
+//    private var dont
 
     private var entityExists = false
 
@@ -75,7 +78,7 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
     /** State of the entity. */
     open var state: StateType
         get() = kHassInstance.getState(this)
-//        @Deprecated(
+        //        @Deprecated(
 //            level = DeprecationLevel.WARNING,
 //            message = "Uses Scene.apply, so it isn't guaranteed to work. Use functions inside a domain to be more certain."
 //        )
@@ -117,6 +120,8 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
             (alternativeAttributes ?: rawAttributes)[property.name]
                 .let { it ?: throw IllegalArgumentException("Couldn't find attribute ${property.name}") }
                 .cast(property.returnType)
+
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) = setValue(property, value)
     }
 
     /** Makes delegated attributes possible for entities.
@@ -134,6 +139,15 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
                     default
                 }
             }
+
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) = setValue(property, value)
+    }
+
+    /**
+     * Can be overridden
+     * */
+    open fun <V : Any?> setValue(property: KProperty<*>, value: V) {
+        TODO()
     }
 
     // Default attributes
@@ -202,12 +216,12 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
     (hassAttributes + additionalToStringAttributes)
         .filter {
             try {
-                it.call(this)
+                it.get()
             } catch (e: Exception) {
                 null
             } != null
         }
-        .map { "\n    ${it.name} = ${it.call(this)}" }
+        .map { "\n    ${it.name} = ${it.get()}" }
         .toString()
         .run { subSequence(1, length - 1) }
     }\n}"
@@ -239,7 +253,7 @@ interface AttributesDelegate<V : Any?> {
     operator fun getValue(thisRef: Any?, property: KProperty<*>): V
 
     /** Makes delegated attributes possible for entities. Uses Scene.apply to try and set the value of the attribute. */
-//    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: V) {
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: V)
 //        if (onState == null)
 //            throw IllegalArgumentException("onState is needed to attempt to use Scene.apply to set the value of an attribute.")
 //
@@ -257,7 +271,7 @@ interface AttributesDelegate<V : Any?> {
 //                attributes = json { property.name to jsonValue }
 //            ))
 //        }
-//    }
+
 }
 
 /**
@@ -288,16 +302,37 @@ inline operator fun <A : HassAttributes, S : Any, E : Entity<S, A>> E.invoke(cal
 inline operator fun <A : HassAttributes, S : Any, E : Entity<S, A>> Iterable<E>.invoke(callback: E.() -> Unit): Iterable<E> =
     apply { forEach(callback) }
 
-inline fun <reified A : HassAttributes> getHassAttributes(): Array<Attribute<*>> =
-    A::class.members.filter { it.isAbstract }.filterIsInstance<KProperty<*>>().toTypedArray()
+/** */
+fun <T : Any?> KProperty<T>.toKProperty0(instance: Any?): KProperty0<T> =
+    object : KProperty0<T>, KProperty<T> by this {
+        override fun get(): T = call(instance)
+        override fun getDelegate(): Any? = error("")
+        override fun invoke(): T = get()
+        override val getter: KProperty0.Getter<T> =
+            object : KProperty0.Getter<T>, KProperty.Getter<T> by this@toKProperty0.getter {
+                override fun invoke(): T = get()
+            }
+    }
 
-inline fun <reified A : HassAttributes> getHassAttributesHelpers(): Array<Attribute<*>> =
-    A::class.members.filter { !it.isAbstract }.filterIsInstance<KProperty<*>>().toTypedArray()
+/**  */
+inline fun <reified A : HassAttributes> A.getHassAttributes(): Array<Attribute<*>> =
+    A::class.members
+        .filter { it.isAbstract }
+        .filterIsInstance<KProperty<*>>()
+        .map { it.toKProperty0(this@getHassAttributes) }
+        .toTypedArray()
 
-private val test = "".toJson()
+inline fun <reified A : HassAttributes> A.getHassAttributesHelpers(): Array<Attribute<*>> =
+    A::class.members
+        .filter { !it.isAbstract }
+        .filterIsInstance<KProperty<*>>()
+        .map { it.toKProperty0(this@getHassAttributesHelpers) }
+        .toTypedArray()
 
-inline fun <reified A : HassAttributes> A.convertHassAttrsToJson(): JsonObject = JsonObject(
-    getHassAttributes<A>().map<Attribute<*>, Pair<String, JsonElement>> {
-        it.name to it.call(this).toJson()
-    }.toMap()
-)
+
+inline fun <reified A : HassAttributes> A.convertHassAttrsToJson(): JsonObject =
+    JsonObject(
+        getHassAttributes()
+            .map { it.name to it.get().toJson() }
+            .toMap()
+    )

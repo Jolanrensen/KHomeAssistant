@@ -102,10 +102,10 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChang
 
             // get the old attribute value by temporarily setting the old attributes as alternative in the delegate
             alternativeAttributes = oldState.attributes
-            val oldAttributeValue = attribute.call(this)
+            val oldAttributeValue = attribute.get()
             alternativeAttributes = null
 
-            val newAttributeValue = attribute.call(this)
+            val newAttributeValue = attribute.get()
 
             if (oldAttributeValue != newAttributeValue)
                 callback()
@@ -173,7 +173,7 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChang
     newAttributeValue: A,
     callback: suspend E.() -> Unit
 ): E = onAttributeChanged(attribute) {
-    if (attribute.call(this) == newAttributeValue)
+    if (attribute.get() == newAttributeValue)
         callback()
 }
 
@@ -239,7 +239,7 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChang
     newAttributeValue: A,
     callback: suspend E.() -> Unit
 ): E = onAttributeChanged(attribute) {
-    if (attribute.call(this) != newAttributeValue)
+    if (attribute.get() != newAttributeValue)
         callback()
 }
 
@@ -500,7 +500,7 @@ suspend fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.suspendU
     timeout: TimeSpan = 2.seconds
 ) {
     checkEntityExists()
-    if (condition(attribute.call(this))) return
+    if (condition(attribute.get())) return
 
     val continueChannel = Channel<Unit>()
 
@@ -508,7 +508,7 @@ suspend fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.suspendU
     var task: Task? = null
 
     stateListener = StateListener({ _, _ ->
-        if (condition(attribute.call(this))) {
+        if (condition(attribute.get())) {
             kHassInstance.stateListeners[entityID]?.remove(stateListener)
             task?.cancel()
             continueChannel.send(Unit)

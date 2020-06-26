@@ -48,7 +48,7 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
         println(sun)
 
         println(denon_avrx2200w {
-            supportedFeatures
+            volume_level = .37f
         })
 
 

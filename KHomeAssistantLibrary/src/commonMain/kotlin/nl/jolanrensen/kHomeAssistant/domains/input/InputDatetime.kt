@@ -151,8 +151,7 @@ class InputDatetime(override val kHassInstance: KHomeAssistant) : Domain<InputDa
         override fun stateToString(state: State) = state.value
 
         /** Some attributes can be set using the set_datetime command. For those, we define a setter-companion to getValue. */
-        operator fun <V : Any?> AttributesDelegate<V>.setValue(
-            thisRef: Entity?,
+        override fun <V : Any?> setValue(
             property: KProperty<*>,
             value: V
         ) {

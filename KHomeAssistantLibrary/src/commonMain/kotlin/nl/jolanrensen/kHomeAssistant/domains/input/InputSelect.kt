@@ -62,8 +62,7 @@ class InputSelect(override val kHassInstance: KHomeAssistant) : Domain<InputSele
 
         /** Some attributes are writable. */
         @Suppress("UNCHECKED_CAST")
-        operator fun <V : Any?> AttributesDelegate<V>.setValue(
-            thisRef: Entity?,
+        override fun <V : Any?> setValue(
             property: KProperty<*>,
             value: V
         ) {
