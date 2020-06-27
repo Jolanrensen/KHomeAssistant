@@ -14,7 +14,6 @@ import nl.jolanrensen.kHomeAssistant.domains.Light.SupportedFeatures.*
 import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.helper.*
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
-import kotlin.reflect.KProperty
 
 
 /**
@@ -179,11 +178,11 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
         /** Some attributes can be set using the turn_on command. For those, we define a setter-companion to getValue. */
         @Suppress("UNCHECKED_CAST")
         override fun <V : Any?> setValue(
-            property: KProperty<*>,
+            propertyName: String,
             value: V
         ) {
             runBlocking {
-                when (property.name) {
+                when (propertyName) {
                     ::brightness.name -> {
                         turnOn(brightness = value as Int)
                         suspendUntilAttributeChangedTo(::brightness, value)
@@ -204,6 +203,15 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
                         turnOn(white_value = value as Int)
                         suspendUntilAttributeChangedTo(::white_value, value)
                     }
+                    ::profile.name -> turnOn(profile = value as String)
+                    ::color_temp.name -> turnOn(color_temp = value as Int)
+                    ::kelvin.name -> turnOn(kelvin = value as Int)
+                    ::color_name.name -> turnOn(color_name = value as String)
+                    ::brightness_pct.name -> turnOn(brightness_pct = value as Float)
+                    ::brightness_step.name -> turnOn(brightness_step = value as Float)
+                    ::brightness_step_pct.name -> turnOn(brightness_step_pct = value as Float)
+                    ::flash.name -> turnOn(flash = Flash.values().find { it.value == value as String }!!)
+                    ::effect.name -> turnOn(effect = value as String)
                 }
                 Unit
             }
@@ -213,6 +221,7 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
         override val min_mireds: Int by attrsDelegate()
         override val max_mireds: Int by attrsDelegate()
         override val effect_list: List<String> by attrsDelegate(listOf())
+
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("supportedFeatures"))
         override val supported_features: Int by attrsDelegate(0)
         override var brightness: Int by attrsDelegate()
@@ -223,76 +232,40 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
         override var profile: String
             @Deprecated("'profile' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'profile' is write only")
-            set(value) {
-                runBlocking {
-                    turnOn(profile = value)
-                }
-            }
+            set(value) = attrsDelegate<String>().setValue(this, ::profile, value)
         override var color_temp: Int
             @Deprecated("'color_temp' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'color_temp' is write only")
-            set(value) {
-                runBlocking {
-                    turnOn(color_temp = value)
-                }
-            }
+            set(value) = attrsDelegate<Int>().setValue(this, ::color_temp, value)
         override var kelvin: Int
             @Deprecated("'kelvin' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'kelvin' is write only")
-            set(value) {
-                runBlocking {
-                    turnOn(kelvin = value)
-                }
-            }
+            set(value) = attrsDelegate<Int>().setValue(this, ::kelvin, value)
         override var color_name: String
             @Deprecated("'color_name' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'color_name' is write only")
-            set(value) {
-                runBlocking {
-                    turnOn(color_name = value)
-                }
-            }
+            set(value) = attrsDelegate<String>().setValue(this, ::color_name, value)
         override var brightness_pct: Float
             @Deprecated("'brightness_pct' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_pct' is write only")
-            set(value) {
-                runBlocking {
-                    turnOn(brightness_pct = value)
-                }
-            }
+            set(value) = attrsDelegate<Float>().setValue(this, ::brightness_pct, value)
         override var brightness_step: Float
             @Deprecated("'brightness_step' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_step' is write only")
-            set(value) {
-                runBlocking {
-                    turnOn(brightness_step = value)
-                }
-            }
+            set(value) = attrsDelegate<Float>().setValue(this, ::brightness_step, value)
         override var brightness_step_pct: Float
             @Deprecated("'brightness_step_pct' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_step_pct' is write only")
-            set(value) {
-                runBlocking {
-                    turnOn(brightness_step_pct = value)
-                }
-            }
+            set(value) = attrsDelegate<Float>().setValue(this, ::brightness_step_pct, value)
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("flash_"))
         override var flash: String
             @Deprecated("'flash' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'flash' is write only")
-            set(value) {
-                flash_ = Flash.values().find { it.value == value }!!
-            }
+            set(value) = attrsDelegate<String>().setValue(this, ::flash, value)
         override var effect: String
             @Deprecated("'effect' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'effect' is write only")
-            set(value) {
-                runBlocking {
-                    turnOn(effect = value)
-                }
-            }
-
-
+            set(value) = attrsDelegate<String>().setValue(this, ::effect, value)
 
 
         private fun checkIfSupported(supportedFeature: SupportedFeatures) {

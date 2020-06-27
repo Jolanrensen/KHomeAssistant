@@ -63,11 +63,11 @@ class InputSelect(override val kHassInstance: KHomeAssistant) : Domain<InputSele
         /** Some attributes are writable. */
         @Suppress("UNCHECKED_CAST")
         override fun <V : Any?> setValue(
-            property: KProperty<*>,
+            propertyName: String,
             value: V
         ) {
             runBlocking {
-                when (property.name) {
+                when (propertyName) {
                     ::options.name -> {
                         setOptions(value as List<String>)
                     }

@@ -4,15 +4,12 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.json
-import nl.jolanrensen.kHomeAssistant.KHomeAssistant
+import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.SceneEntityState
-import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.domains.Scene
 import nl.jolanrensen.kHomeAssistant.messages.Context
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
-import nl.jolanrensen.kHomeAssistant.toJson
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
 import kotlin.reflect.KProperty1
@@ -38,12 +35,18 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
         this.checkEntityExists()
     }
 
-//    private var dont
+    /** If true, attribute changes will be saved to [json] instead of being sent to Home Assistant.
+     * This is useful for [Scene]. */
+    var saveToJson = false
+
+    /** Only gets used to store hass attributes when [saveToJson] is true. */
+    var json: JsonObject? = null
 
     private var entityExists = false
 
     @Suppress("UNNECESSARY_SAFE_CALL")
     open fun checkEntityExists() {
+        @Suppress("SimplifyBooleanWithConstants")
         if (entityExists || !(kHassInstance?.loadedInitialStates == true)) return
         kHassInstance.launch {
             if (entityID !in kHassInstance.entityIds)
@@ -121,7 +124,11 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
                 .let { it ?: throw IllegalArgumentException("Couldn't find attribute ${property.name}") }
                 .cast(property.returnType)
 
-        override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) = setValue(property, value)
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) =
+            if (saveToJson) {
+                json = json ?: json { }
+                json = json!! + json { property.name to value.toJson() }
+            } else setValue(property.name, value)
     }
 
     /** Makes delegated attributes possible for entities.
@@ -140,15 +147,21 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
                 }
             }
 
-        override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) = setValue(property, value)
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) =
+            if (saveToJson) {
+                json = json ?: json { }
+                json = json!! + json { property.name to value.toJson() }
+            } else setValue(property.name, value)
     }
 
     /**
      * Can be overridden
      * */
-    open fun <V : Any?> setValue(property: KProperty<*>, value: V) {
+    open fun <V : Any?> setValue(propertyName: String, value: V) {
         TODO()
     }
+
+    fun clone(): Entity<StateType, AttrsType> = domain.Entity(name) as Entity<StateType, AttrsType>
 
     // Default attributes
 
@@ -177,6 +190,7 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
         data: JsonObject = json { },
         doEntityCheck: Boolean = true
     ): ResultMessage {
+        if (saveToJson) error("This is a copy of the entity disconnected from Home Assistant. You can only set attributes.")
         if (doEntityCheck) checkEntityExists()
         return kHassInstance.callService(
             entity = this,
@@ -191,6 +205,7 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
         data: JsonObject = json { },
         doEntityCheck: Boolean = true
     ): ResultMessage {
+        if (saveToJson) error("This is a copy of the entity disconnected from Home Assistant. You can only set attributes.")
         if (doEntityCheck) checkEntityExists()
         return kHassInstance.callService(
             entity = this,
@@ -235,6 +250,8 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
 
         if (name != other.name) return false
         if (domain != other.domain) return false
+        if (saveToJson != other.saveToJson) return false
+        if (json != other.json) return false
 
         return true
     }
@@ -243,9 +260,10 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
     override fun hashCode(): Int {
         var result = name.hashCode()
         result = 31 * result + domain.hashCode()
+        result = 31 * result + saveToJson.hashCode()
+        result = 31 * result + (json?.hashCode() ?: 0)
         return result
     }
-
 }
 
 interface AttributesDelegate<V : Any?> {
@@ -330,9 +348,9 @@ inline fun <reified A : HassAttributes> A.getHassAttributesHelpers(): Array<Attr
         .toTypedArray()
 
 
-inline fun <reified A : HassAttributes> A.convertHassAttrsToJson(): JsonObject =
-    JsonObject(
-        getHassAttributes()
-            .map { it.name to it.get().toJson() }
-            .toMap()
-    )
+//inline fun <reified A : HassAttributes> A.convertHassAttrsToJson(): JsonObject =
+//    JsonObject(
+//        getHassAttributes()
+//            .map { it.name to it.get().toJson() }
+//            .toMap()
+//    )

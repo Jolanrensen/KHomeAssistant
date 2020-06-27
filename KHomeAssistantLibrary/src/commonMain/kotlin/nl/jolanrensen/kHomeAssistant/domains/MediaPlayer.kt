@@ -225,11 +225,11 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
         /** Some attributes can be set using service calls. For those, we define a setter-companion to getValue. */
         @Suppress("UNCHECKED_CAST")
         override fun <V : Any?> setValue(
-            property: KProperty<*>,
+            propertyName: String,
             value: V
         ) {
             runBlocking {
-                when (property.name) {
+                when (propertyName) {
                     ::media_track.name -> { // TODO check
                         value as Int
                         while (media_track < value) mediaNextTrack()

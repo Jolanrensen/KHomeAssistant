@@ -152,11 +152,11 @@ class InputDatetime(override val kHassInstance: KHomeAssistant) : Domain<InputDa
 
         /** Some attributes can be set using the set_datetime command. For those, we define a setter-companion to getValue. */
         override fun <V : Any?> setValue(
-            property: KProperty<*>,
+            propertyName: String,
             value: V
         ) {
             runBlocking {
-                when (property.name) {
+                when (propertyName) {
                     ::year.name -> try {
                         setDate(localDate = Date(year = value as Int, month = month, day = day))
                     } catch (e: Exception) {

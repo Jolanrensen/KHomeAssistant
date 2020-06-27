@@ -30,7 +30,7 @@ class Scene(override val kHassInstance: KHomeAssistant) : Domain<Scene.Entity> {
      * @param transition smoothen the transition to the scene.
      */
     suspend fun apply(
-        data: SceneEntityState<out Any, out BaseHassAttributes>,
+        data: SceneEntityState<*, *, *>,
         transition: TimeSpan? = null
     ): ResultMessage =
         apply(listOf(data), transition)
@@ -41,7 +41,7 @@ class Scene(override val kHassInstance: KHomeAssistant) : Domain<Scene.Entity> {
      * @param transition smoothen the transition to the scene.
      */
     suspend fun apply(
-        data: Iterable<SceneEntityState<out Any, out BaseHassAttributes>>,
+        data: Iterable<SceneEntityState<*, *, *>>,
         transition: TimeSpan? = null
     ): ResultMessage =
         callService(
@@ -63,33 +63,36 @@ class Scene(override val kHassInstance: KHomeAssistant) : Domain<Scene.Entity> {
      * @param snapshotEntities entities here will have their current state and attributes copied over to the scene. */
     suspend fun create(
         sceneId: String,
-        data: Iterable<SceneEntityState<out Any, out BaseHassAttributes>>,
+        data: Iterable<SceneEntityState<*, *, *>>,
         snapshotEntities: Iterable<BaseEntity<*, *>>? = null
-    ): ResultMessage =
-        callService(
-            serviceName = "create",
-            data = json {
-                "scene_id" to sceneId.toLowerCase().replace(" ", "_")
-                "entities" to getEntitiesObject(data)
+    ): ResultMessage = callService(
+        serviceName = "create",
+        data = json {
+            "scene_id" to sceneId.toLowerCase().replace(" ", "_")
+            "entities" to getEntitiesObject(data)
 
-                snapshotEntities?.let {
-                    "snapshot_entities" to JsonArray(it.map { JsonPrimitive(it.entityID) })
+            snapshotEntities?.let {
+                "snapshot_entities" to JsonArray(it.map { JsonPrimitive(it.entityID) })
+            }
+
+        }
+    )
+
+    @Suppress("UNCHECKED_CAST")
+    private fun getEntitiesObject(data: Iterable<SceneEntityState<*, *, *>>): JsonObject =
+        json {
+            for (sceneEntityState in data) {
+                sceneEntityState as SceneEntityState<Any, BaseHassAttributes, BaseEntity<Any, BaseHassAttributes>>
+                val entityClone = sceneEntityState.entity.clone().apply {
+                    saveToJson = true
                 }
+                sceneEntityState.attributes.invoke(entityClone)
+                sceneEntityState.entity.entityID to (json {
+                    "state" to sceneEntityState.entity.stateToString(sceneEntityState.state)
+                } + (entityClone.json ?: json { })) + sceneEntityState.additionalAttributes
 
             }
-        )
-
-    private fun getEntitiesObject(data: Iterable<SceneEntityState<out Any, out BaseHassAttributes>>): JsonObject = TODO()
-//        json {
-//            for (sceneEntityState in data) {
-//                @Suppress("UNCHECKED_CAST")
-//                sceneEntityState as SceneEntityState<Any, out BaseHassAttributes>
-//                sceneEntityState.entity.entityID to json {
-//                    "state" to sceneEntityState.entity.stateToString(sceneEntityState.state)
-//                } + sceneEntityState.attributes.convertHassAttrsToJson() + sceneEntityState.additionalAttributes
-//
-//            }
-//        }
+        }
 
     override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
@@ -98,19 +101,6 @@ class Scene(override val kHassInstance: KHomeAssistant) : Domain<Scene.Entity> {
 
         /** All entities that are affected by this scene (as [DefaultEntity]s) */
         val entity_id: List<String>
-
-
-        // Helpers
-//        /** All entities that are affected by this scene (as [DefaultEntity]s)
-//         * example from automation: TODO?
-//         * ```
-//         * val entities: List<DefaultEntity> = sceneEntity.entityIds.map { it() }
-//         * ```*/
-//        val entityIds: List<KHomeAssistant.() -> DefaultEntity>
-//            get() = entity_id.map {
-//                val (domain, name) = it.split(".")
-//                ({ Domain(domain)[name] })
-//            }
     }
 
     class Entity(

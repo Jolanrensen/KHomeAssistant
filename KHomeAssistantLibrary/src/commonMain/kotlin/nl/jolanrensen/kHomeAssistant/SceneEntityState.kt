@@ -2,6 +2,7 @@ package nl.jolanrensen.kHomeAssistant
 
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.json
+import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
 import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.HassAttributes
 
@@ -28,9 +29,9 @@ import nl.jolanrensen.kHomeAssistant.entities.HassAttributes
  * @param state the state of the [entity] in the scene
  * @param attributes the attributes for the [entity] in the scene (will not be checked)
  */
-class SceneEntityState<StateType : Any, AttrsType : HassAttributes>(
-    val entity: Entity<StateType, AttrsType>,
+class SceneEntityState<StateType : Any, AttrsType : HassAttributes, Entity : BaseEntity<StateType, AttrsType>>(
+    val entity: Entity,
     val state: StateType,
-    val attributes: AttrsType.() -> Unit = {},
+    val attributes: Entity.() -> Unit = {},
     val additionalAttributes: JsonObject = json {  }
 )

@@ -3,7 +3,6 @@ package nl.jolanrensen.kHomeAssistant
 import kotlinx.serialization.json.*
 import kotlinx.serialization.json.JsonNull.jsonNull
 import nl.jolanrensen.kHomeAssistant.entities.HassAttributes
-import nl.jolanrensen.kHomeAssistant.entities.convertHassAttrsToJson
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -116,7 +115,6 @@ fun Any?.toJson(): JsonElement = this?.let {
                 .mapValues { it.toJson() }
         )
 
-        is HassAttributes -> it.convertHassAttrsToJson()
         else -> throw IllegalArgumentException("Couldn't cast $this to json")
     }
 } ?: jsonNull
