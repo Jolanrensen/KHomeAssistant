@@ -1,6 +1,8 @@
 package nl.jolanrensen.kHomeAssistant.core
 
 import com.soywiz.klock.DateTime
+import com.soywiz.klock.parse
+import com.soywiz.klock.parseUtc
 import io.ktor.client.features.websocket.DefaultClientWebSocketSession
 import io.ktor.client.features.websocket.ws
 import io.ktor.client.features.websocket.wss
@@ -19,9 +21,11 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
+import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
+import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT
+import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT_SUN
 import nl.jolanrensen.kHomeAssistant.messages.*
 import kotlin.jvm.Volatile
 import kotlin.time.ExperimentalTime
@@ -78,7 +82,7 @@ class KHomeAssistantInstance(
 
     /** The cache for the state and attributes of all entities in Home Assistant. */
     @Volatile
-    private var rawEntityData: HashMap<String, StateResult> = hashMapOf()
+            /*private TODO*/ var rawEntityData: HashMap<String, StateResult> = hashMapOf()
 
     /** Returns all the raw entity IDs known in Home Assistant. */
     override val entityIds: Set<String>
@@ -215,8 +219,6 @@ class KHomeAssistantInstance(
 
         // initialize all user specified automations
         initializeAutomations()
-
-        // TODO maybe wait for the supervisor if possible to make sure all launches are done when running without listeners
 
         // cancel if there aren't any listeners and the automations are initialized
         println("All automations are initialized")
@@ -377,7 +379,6 @@ class KHomeAssistantInstance(
         val automationInitialisations = hashSetOf<Job>()
         for (it in automations) this@KHomeAssistantInstance.launch {
             val inner = launch {
-//                it.kHassInstance = this@KHomeAssistantInstance
                 it.initialize()
             }
             try {
@@ -439,14 +440,12 @@ class KHomeAssistantInstance(
         serviceDomain: Domain<*>,
         serviceName: String,
         data: JsonObject
-    ) =
-        callService(
-            serviceDomain = serviceDomain.domainName,
-            serviceName = serviceName,
-            entityID = entity.entityID,
-            data = data
-        )
-
+    ): ResultMessage = callService(
+        serviceDomain = serviceDomain.domainName,
+        serviceName = serviceName,
+        entityID = entity.entityID,
+        data = data
+    )
 
     /**
      * Calls the given service on Home Assistant.
@@ -455,7 +454,7 @@ class KHomeAssistantInstance(
      * @param data the optional [JsonObject] or [Map]<[String], [JsonElement]> containing the extra data for the service
      * @return the result in form of a [ResultMessage]
      * */
-    override suspend fun callService(serviceDomain: Domain<*>, serviceName: String, data: JsonObject) =
+    override suspend fun callService(serviceDomain: Domain<*>, serviceName: String, data: JsonObject): ResultMessage =
         callService(
             serviceDomain = serviceDomain.domainName,
             serviceName = serviceName,
@@ -469,7 +468,7 @@ class KHomeAssistantInstance(
      * @param data the optional [JsonObject] or [Map]<[String], [JsonElement]> containing the extra data for the service
      * @return the result in form of a [ResultMessage]
      * */
-    override suspend fun callService(entity: Entity<*, *>, serviceName: String, data: JsonObject) =
+    override suspend fun callService(entity: Entity<*, *>, serviceName: String, data: JsonObject): ResultMessage =
         callService(
             serviceDomain = entity.domain.domainName,
             entityID = entity.entityID,
@@ -490,18 +489,17 @@ class KHomeAssistantInstance(
         serviceName: String,
         entityID: String?,
         data: JsonObject
-    ): ResultMessage =
-        sendMessage<CallServiceMessage, ResultMessageBase>(
-            CallServiceMessage(
-                domain = serviceDomain,
-                service = serviceName,
-                service_data = JsonObject(
-                    entityID?.let {
-                        data + ("entity_id" to JsonPrimitive(it))
-                    } ?: data
-                )
-            ).also { debugPrintln(it) }
+    ): ResultMessage = sendMessage<CallServiceMessage, ResultMessageBase>(
+        CallServiceMessage(
+            domain = serviceDomain,
+            service = serviceName,
+            service_data = JsonObject(
+                entityID?.let {
+                    data + ("entity_id" to JsonPrimitive(it))
+                } ?: data
+            )
         ).also { debugPrintln(it) }
+    ).also { debugPrintln(it) }
 
     /**
      * Return the raw attributes of the given entity from Home Assistant.
@@ -546,10 +544,45 @@ class KHomeAssistantInstance(
         }
     }
 
+    /**
+     * Return the context IDs for given [entity].
+     * @param entity the entity to get the context for.
+     * @return a [Context] instance.
+     */
+    override fun getContext(entity: Entity<*, *>): Context = try {
+        if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
+        rawEntityData[entity.entityID]!!.context
+    } catch (e: Exception) {
+        throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.", e)
+    }
+
+    /**
+     * Return the last change time for the given [entity]
+     * @param entity the entity to get the datetime for.
+     * @return a [DateTime] instance
+     */
+    override fun getLastChanged(entity: Entity<*, *>): DateTime = try {
+        if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
+        HASS_DATE_FORMAT.parseUtc(rawEntityData[entity.entityID]!!.last_changed)
+    } catch (e: Exception) {
+        throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.", e)
+    }
+
+    /**
+     * Return the last update time for the given [entity]
+     * @param entity the entity to get the datetime for.
+     * @return a [DateTime] instance
+     */
+    override fun getLastUpdated(entity: Entity<*, *>): DateTime = try {
+        if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
+        HASS_DATE_FORMAT.parseUtc(rawEntityData[entity.entityID]!!.last_updated)
+    } catch (e: Exception) {
+        throw Exception("Error parsing ${rawEntityData[entity.entityID]!!.last_updated} using ${HASS_DATE_FORMAT}", e)
+//        throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.", e)
+    }
+
     /** println's only executed if [debug] = true */
     override fun debugPrintln(message: Any?) {
         if (debug) println("DEBUG: $message")
     }
-
-//    suspend fun getMediaPlayerThumbnail(mediaPlayer: MediaPlayer.Entity): Array
 }

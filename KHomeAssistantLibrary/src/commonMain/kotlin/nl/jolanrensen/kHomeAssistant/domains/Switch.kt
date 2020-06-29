@@ -13,11 +13,11 @@ class Switch(override val kHassInstance: KHomeAssistant) : Domain<Switch.Entity>
     override val domainName = "switch"
 
     /** Making sure Light acts as a singleton. */
-    override fun equals(other: Any?) = other is Switch
+    override fun equals(other: Any?): Boolean = other is Switch
     override fun hashCode(): Int = domainName.hashCode()
 
     /** Constructor of Switch.Entity with right context */
-    override fun Entity(name: String) = Entity(kHassInstance = kHassInstance, name = name)
+    override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
     class Entity(
         override val kHassInstance: KHomeAssistant,

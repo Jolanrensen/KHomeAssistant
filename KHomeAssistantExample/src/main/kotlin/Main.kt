@@ -1,15 +1,12 @@
-import com.soywiz.korim.color.Colors
-import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.SceneEntityState
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
-import nl.jolanrensen.kHomeAssistant.domains.*
-import nl.jolanrensen.kHomeAssistant.domains.Light.Flash.SHORT
+import nl.jolanrensen.kHomeAssistant.domains.Light
+import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
+import nl.jolanrensen.kHomeAssistant.domains.Switch
+import nl.jolanrensen.kHomeAssistant.domains.getValue
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
-import nl.jolanrensen.kHomeAssistant.domains.input.InputText
 import nl.jolanrensen.kHomeAssistant.entities.invoke
 import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
@@ -49,40 +46,35 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
     val shield_cast by MediaPlayer
 
     override suspend fun initialize() {
-
-        println(sun)
-
-//        println(denon_avrx2200w {
-//            volume_level = .37f
-//        })
-
-
-
-
-        println(
-            Scene.create(
-                sceneId = "Test scene",
-                data = listOf(
-                    SceneEntityState(
-                        entity = Light["wall_lamp"],
-                        state = OnOff.ON
-                    ),
-                    SceneEntityState(
-                        entity = Light["batik"],
-                        state = OnOff.ON,
-                        attributes = {
-                            color = Colors.RED
-                            brightness_pct = 100f
-                            white_value = 255
-                            flash_ = SHORT
-                        },
-                        additionalAttributes = json {
-
-                        }
-                    )
-                )
-            )
-        )
+        println(instance.rawEntityData["light.wall_lamp"])
+        println(instance.rawEntityData["sun.sun"])
+        Light["wall_lamp"] {
+            println("last updated: $lastUpdated, last changed: $lastChanged")
+        }
+//        println(
+//            Scene.create(
+//                sceneId = "Test scene",
+//                data = listOf(
+//                    SceneEntityState(
+//                        entity = Light["wall_lamp"],
+//                        state = OnOff.ON
+//                    ),
+//                    SceneEntityState(
+//                        entity = Light["batik"],
+//                        state = OnOff.ON,
+//                        attributes = {
+//                            color = Colors.RED
+//                            brightness_pct = 100f
+//                            white_value = 255
+//                            flash_ = SHORT
+//                        },
+//                        additionalAttributes = json {
+//
+//                        }
+//                    )
+//                )
+//            )
+//        )
 
 //        println(test)
 //        println(test2)

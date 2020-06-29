@@ -1,5 +1,7 @@
 package nl.jolanrensen.kHomeAssistant
 
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.DateTimeTz
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -10,6 +12,7 @@ import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
+import nl.jolanrensen.kHomeAssistant.messages.Context
 import nl.jolanrensen.kHomeAssistant.messages.Event
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
@@ -102,6 +105,28 @@ interface KHomeAssistant : CoroutineScope {
      * @throws Exception if the state cannot be parsed using `[entity].parseStateValue()`
      */
     fun <StateType : Any, EntityType : Entity<StateType, *>> getState(entity: EntityType): StateType
+
+    /**
+     * Return the context IDs for given [entity].
+     * @param entity the entity to get the context for.
+     * @return a [Context] instance.
+     */
+    fun getContext(entity: Entity<*, *>): Context
+
+    /**
+     * Return the last change time for the given [entity]
+     * @param entity the entity to get the datetime for.
+     * @return a [DateTime] instance
+     */
+    fun getLastChanged(entity: Entity<*, *>): DateTime
+
+    /**
+     * Return the last update time for the given [entity]
+     * @param entity the entity to get the datetime for.
+     * @return a [DateTime] instance
+     */
+    fun getLastUpdated(entity: Entity<*, *>): DateTime
+
 
     /** println's only executed if [debug] = true */
     fun debugPrintln(message: Any?)

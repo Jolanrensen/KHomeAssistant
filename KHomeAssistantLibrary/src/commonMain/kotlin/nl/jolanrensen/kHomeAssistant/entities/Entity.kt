@@ -1,5 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.DateTimeTz
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -92,7 +94,6 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
                 suspendUntilStateChangedTo(value)
             }
         }
-    // set() TODO?
 
 //    suspend fun setState(s: StateType): Unit = TODO()
 
@@ -161,6 +162,7 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
         TODO()
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun clone(): Entity<StateType, AttrsType> = domain.Entity(name) as Entity<StateType, AttrsType>
 
     // Default attributes
@@ -175,10 +177,26 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
     override val initial_state: String by attrsDelegate()
     override val id: String by attrsDelegate()
 
+    /**
+     * Return the last change local time for this entity.
+     * @return a [DateTimeTz] instance
+     */
+    val lastChanged: DateTimeTz
+        get() = kHassInstance.getLastChanged(this).local
 
-    suspend fun getLastChanged(): String = TODO("last_changed uit State")
-    suspend fun getLastUpdated(): String = TODO("last_updated uit State")
-    suspend fun getContext(): Context = TODO("context uit State")
+    /**
+     * Return the last update local time for this entity.
+     * @return a [DateTimeTz] instance
+     */
+    val lastUpdated: DateTimeTz
+        get() = kHassInstance.getLastUpdated(this).local
+
+    /**
+     * Return the context IDs for this entity.
+     * @return a [Context] instance.
+     */
+    val context: Context
+        get() = kHassInstance.getContext(this)
 
     /** Request the update of an entity, rather than waiting for the next scheduled update, for example Google travel time sensor, a template sensor, or a light */
     suspend inline fun updateEntity() = callService("update_entity")
@@ -200,6 +218,7 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
         )
     }
 
+    /** Call a service with this entity */
     suspend fun callService(
         serviceName: String,
         data: JsonObject = json { },
@@ -272,24 +291,6 @@ interface AttributesDelegate<V : Any?> {
 
     /** Makes delegated attributes possible for entities. Uses Scene.apply to try and set the value of the attribute. */
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: V)
-//        if (onState == null)
-//            throw IllegalArgumentException("onState is needed to attempt to use Scene.apply to set the value of an attribute.")
-//
-//        val jsonValue = when (value) {
-//            is Number, is Number? -> JsonPrimitive(value as Number?)
-//            is Boolean, is Boolean? -> JsonPrimitive(value as Boolean?)
-//            is String, is String? -> JsonPrimitive(value as String?)
-//
-//            else -> throw IllegalArgumentException("value must be a number, string or boolean, else it can't be turned into a JsonPrimitive")
-//        }
-//        runBlocking {
-//            entity.Scene.apply(SceneEntityState(
-//                entity = entity,
-//                state = onState,
-//                attributes = json { property.name to jsonValue }
-//            ))
-//        }
-
 }
 
 /**
@@ -320,17 +321,6 @@ inline operator fun <A : HassAttributes, S : Any, E : Entity<S, A>> E.invoke(cal
 inline operator fun <A : HassAttributes, S : Any, E : Entity<S, A>> Iterable<E>.invoke(callback: E.() -> Unit): Iterable<E> =
     apply { forEach(callback) }
 
-/** */
-fun <T : Any?> KProperty<T>.toKProperty0(instance: Any?): KProperty0<T> =
-    object : KProperty0<T>, KProperty<T> by this {
-        override fun get(): T = call(instance)
-        override fun getDelegate(): Any? = error("")
-        override fun invoke(): T = get()
-        override val getter: KProperty0.Getter<T> =
-            object : KProperty0.Getter<T>, KProperty.Getter<T> by this@toKProperty0.getter {
-                override fun invoke(): T = get()
-            }
-    }
 
 /**  */
 inline fun <reified A : HassAttributes> A.getHassAttributes(): Array<Attribute<*>> =

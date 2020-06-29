@@ -16,8 +16,8 @@ data class StateResult(
     val entity_id: String,
     var state: String,
     var attributes: JsonObject,
-    val last_changed: String, // TODO change to datetime
-    val last_updated: String, // TODO change to datetime
+    val last_changed: String,
+    val last_updated: String,
     val context: Context
 ) {
     companion object {
