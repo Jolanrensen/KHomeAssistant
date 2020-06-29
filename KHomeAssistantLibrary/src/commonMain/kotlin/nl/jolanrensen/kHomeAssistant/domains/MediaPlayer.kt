@@ -4,10 +4,10 @@ import com.soywiz.klock.DateTimeTz
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.parseUtc
 import com.soywiz.klock.seconds
+import com.soywiz.korim.bitmap.NativeImage
 import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.cast
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaContentType.*
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaPlayerState.*
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.SupportedFeatures.*
@@ -16,7 +16,6 @@ import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT
 import nl.jolanrensen.kHomeAssistant.helper.UnsupportedFeatureException
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 import kotlin.math.max
-import kotlin.reflect.KProperty
 
 /**
  * https://www.home-assistant.io/integrations/media_player/
@@ -248,8 +247,10 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
 
         override val media_content_type: String by attrsDelegate()
         override val media_content_id: String by attrsDelegate()
+
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("mediaDuration"))
         override val media_duration: Float by attrsDelegate()
+
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("mediaPositionUpdatedAt"))
         override val media_position_updated_at: String by attrsDelegate()
         override val media_image_url: String by attrsDelegate()
@@ -268,11 +269,13 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
         override val app_name: String by attrsDelegate()
         override val source_list: List<String> by attrsDelegate(listOf())
         override val sound_mode_list: List<String> by attrsDelegate(listOf())
+
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("supportedFeatures"))
         override val supported_features: Int by attrsDelegate(0)
         override var media_track: Int by attrsDelegate()
         override var volume_level: Float by attrsDelegate()
         override var is_volume_muted: Boolean by attrsDelegate()
+
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("mediaPosition"))
         override var media_position: Float by attrsDelegate()
         override var source: String by attrsDelegate()
@@ -577,6 +580,12 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
             if (!async) suspendUntilAttributeChangedTo(::shuffle, shuffle)
             return result
         }
+
+        /**
+         * Fetch a thumbnail picture for this media player.
+         */
+        suspend fun getMediaPlayerThumbnail(): NativeImage? = kHassInstance.getMediaPlayerThumbnail(this)
+
     }
 }
 

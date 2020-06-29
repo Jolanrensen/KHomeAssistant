@@ -2,6 +2,7 @@ package nl.jolanrensen.kHomeAssistant
 
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.DateTimeTz
+import com.soywiz.korim.bitmap.NativeImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -9,11 +10,13 @@ import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.core.StateListener
 import nl.jolanrensen.kHomeAssistant.domains.Domain
+import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
 import nl.jolanrensen.kHomeAssistant.messages.Context
 import nl.jolanrensen.kHomeAssistant.messages.Event
+import nl.jolanrensen.kHomeAssistant.messages.HassConfig
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
 interface KHomeAssistant : CoroutineScope {
@@ -37,6 +40,12 @@ interface KHomeAssistant : CoroutineScope {
 
     /** All the state/attribute listeners. `stateListeners["entity_id"] =` set of listeners for this entity_id */
     val stateListeners: HashMap<String, HashSet<StateListener>>
+
+    /** If enabled, debug messages will be printed. */
+    val debug: Boolean
+
+    /** Performs a ping/pong to see if the Home Assistant is still connected. */
+    suspend fun connectionIsAlive(): Boolean
 
     /**
      * Calls the given service on Home Assistant.
@@ -127,8 +136,27 @@ interface KHomeAssistant : CoroutineScope {
      */
     fun getLastUpdated(entity: Entity<*, *>): DateTime
 
+    /**
+     * This will get a dump of the current config in Home Assistant.
+     */
+    suspend fun getConfig(): HassConfig
 
-    /** println's only executed if [debug] = true */
+    /**
+     * This will get a dump of the current services in Home Assistant.
+     */
+    suspend fun getServices(): JsonObject
+
+    /**
+     * Fetch a thumbnail picture for a media player.
+     */
+    suspend fun getMediaPlayerThumbnail(mediaPlayer: MediaPlayer.Entity): NativeImage?
+
+    /**
+     * This will get a dump of the current registered panels in Home Assistant.
+     */
+    suspend fun getPanels(): JsonObject
+
+    /** println's only executed if `[debug] == true` */
     fun debugPrintln(message: Any?)
 }
 

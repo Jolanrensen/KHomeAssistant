@@ -1,8 +1,14 @@
 package nl.jolanrensen.kHomeAssistant.core
 
 import com.soywiz.klock.DateTime
-import com.soywiz.klock.parse
 import com.soywiz.klock.parseUtc
+import com.soywiz.kmem.read
+import com.soywiz.korim.bitmap.Bitmap
+import com.soywiz.korim.bitmap.NativeImage
+import com.soywiz.korim.format.ImageData
+import com.soywiz.korim.format.ImageDecodingProps
+import com.soywiz.korim.format.decodeImageBytes
+import com.soywiz.korio.util.encoding.Base64
 import io.ktor.client.features.websocket.DefaultClientWebSocketSession
 import io.ktor.client.features.websocket.ws
 import io.ktor.client.features.websocket.wss
@@ -21,11 +27,11 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.domains.Domain
+import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.entities.DefaultEntity
 import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
 import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT
-import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT_SUN
 import nl.jolanrensen.kHomeAssistant.messages.*
 import kotlin.jvm.Volatile
 import kotlin.time.ExperimentalTime
@@ -59,7 +65,7 @@ class KHomeAssistantInstance(
     val secure: Boolean = false,
 
     /** If enabled, debug messages will be printed. */
-    val debug: Boolean = false
+    override val debug: Boolean = false
 ) : KHomeAssistant {
 
     override var loadedInitialStates: Boolean = false
@@ -278,7 +284,7 @@ class KHomeAssistantInstance(
                     val id = messageBase.id
 
                     when (messageBase.type) {
-                        "result" -> responseAwaiters[id]?.send(json)?.run { responseAwaiters.remove(id) }
+                        "result", "pong" -> responseAwaiters[id]?.send(json)?.run { responseAwaiters.remove(id) }
                         "event" -> {
                             val eventMessage: EventMessage = fromJson(json)
                             val event = eventMessage.event
@@ -553,7 +559,10 @@ class KHomeAssistantInstance(
         if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
         rawEntityData[entity.entityID]!!.context
     } catch (e: Exception) {
-        throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.", e)
+        throw EntityNotInHassException(
+            "The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.",
+            e
+        )
     }
 
     /**
@@ -565,7 +574,10 @@ class KHomeAssistantInstance(
         if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
         HASS_DATE_FORMAT.parseUtc(rawEntityData[entity.entityID]!!.last_changed)
     } catch (e: Exception) {
-        throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.", e)
+        throw EntityNotInHassException(
+            "The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.",
+            e
+        )
     }
 
     /**
@@ -577,8 +589,53 @@ class KHomeAssistantInstance(
         if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
         HASS_DATE_FORMAT.parseUtc(rawEntityData[entity.entityID]!!.last_updated)
     } catch (e: Exception) {
-        throw Exception("Error parsing ${rawEntityData[entity.entityID]!!.last_updated} using ${HASS_DATE_FORMAT}", e)
-//        throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.", e)
+        throw EntityNotInHassException(
+            "The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.",
+            e
+        )
+    }
+
+    /**
+     * This will get a dump of the current config in Home Assistant.
+     */
+    override suspend fun getConfig(): HassConfig = sendMessage<GetConfig, GetConfigResult>(
+        GetConfig()
+    ).result
+
+    /**
+     * This will get a dump of the current services in Home Assistant.
+     */
+    override suspend fun getServices(): JsonObject = sendMessage<MessageBase, ResultMessageBase>(
+        MessageBase(type = "get_services")
+    ).result!!
+
+    /**
+     * This will get a dump of the current registered panels in Home Assistant.
+     */
+    override suspend fun getPanels(): JsonObject = sendMessage<MessageBase, ResultMessageBase>(
+        MessageBase(type = "get_panels")
+    ).result!!
+
+    /**
+     * Fetch a thumbnail picture for a media player.
+     * @param mediaPlayer the media player entity to get the thumbnail for.
+     * @return [NativeImage] that can be converted (on JVM) to AWT with `.toAwt()`.
+     */
+    override suspend fun getMediaPlayerThumbnail(mediaPlayer: MediaPlayer.Entity): NativeImage? =
+        sendMessage<GetMediaPlayerThumbnail, GetMediaPlayerThumbnailResult>(
+            GetMediaPlayerThumbnail(entity_id = mediaPlayer.entityID)
+        ).result?.let {
+            decodeImageBytes(Base64.decode(it.content))
+        }
+
+    override suspend fun connectionIsAlive(): Boolean = try {
+        sendMessage<Ping, Pong>(Ping()).apply {
+            println(this)
+        }
+        true
+    } catch (e: Exception) {
+        println(e)
+        false
     }
 
     /** println's only executed if [debug] = true */

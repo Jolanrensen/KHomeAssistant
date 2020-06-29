@@ -1,3 +1,4 @@
+import com.soywiz.korim.awt.toAwt
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
@@ -51,6 +52,11 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
         Light["wall_lamp"] {
             println("last updated: $lastUpdated, last changed: $lastChanged")
         }
+
+        connectionIsAlive()
+        println(
+            shield_cast.getMediaPlayerThumbnail()?.toAwt()
+        )
 //        println(
 //            Scene.create(
 //                sceneId = "Test scene",
