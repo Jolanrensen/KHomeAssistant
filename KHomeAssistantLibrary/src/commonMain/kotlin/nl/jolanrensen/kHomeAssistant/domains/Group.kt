@@ -242,14 +242,14 @@ class Group(override val kHassInstance: KHomeAssistant) : Domain<Group.Entity> {
 
         /** Turns on the group using the [HomeAssistant] domain. */
         override suspend fun turnOn(async: Boolean): ResultMessage {
-            val result = callService(kHassInstance.HomeAssistant, "turn_on")
+            val result = callService(serviceName = "turn_on", serviceDomain = kHassInstance.HomeAssistant)
             if (!async) suspendUntilStateChangedTo(ON)
             return result
         }
 
         /** Turns off the group using the [HomeAssistant] domain. */
         override suspend fun turnOff(async: Boolean): ResultMessage {
-            val result = callService(kHassInstance.HomeAssistant, "turn_off")
+            val result = callService(serviceName = "turn_off", serviceDomain = kHassInstance.HomeAssistant)
             if (!async) suspendUntilStateChangedTo(OFF)
             return result
         }
@@ -257,7 +257,7 @@ class Group(override val kHassInstance: KHomeAssistant) : Domain<Group.Entity> {
         /** Toggles the group using the [HomeAssistant] domain. */
         override suspend fun toggle(async: Boolean): ResultMessage {
             val oldState = state
-            val result = callService(kHassInstance.HomeAssistant, "toggle")
+            val result = callService(serviceName = "toggle", serviceDomain = kHassInstance.HomeAssistant)
             if (!async) suspendUntilStateChangedTo(
                 when (oldState) { // TODO
                     ON -> OFF
@@ -268,6 +268,22 @@ class Group(override val kHassInstance: KHomeAssistant) : Domain<Group.Entity> {
             return result
         }
 
+        /**
+         * Control a group as if it were a certain type of entity, for example a Light.
+         *
+         * Example:
+         * ```
+         * Group["living_room_lights"].useAs(Light) {
+         *     color = Colors.RED
+         *     white_value = 100
+         * }
+         * ```
+         */
+        suspend fun <E : BaseEntity<*, *>, D : Domain<E>> useAs(domain: D, callback: suspend E.() -> Unit = {}): E =
+            domain.Entity(name) {
+                fakeDomain = kHassInstance.Group
+                callback()
+            }
     }
 }
 

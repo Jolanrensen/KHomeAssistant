@@ -1,6 +1,5 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
-import com.soywiz.klock.DateTime
 import com.soywiz.klock.DateTimeTz
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
@@ -37,6 +36,9 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
         this.checkEntityExists()
     }
 
+    // is only ever overwritten using [Group]
+    internal var fakeDomain: Domain<*>? = null
+
     /** If true, attribute changes will be saved to [json] instead of being sent to Home Assistant.
      * This is useful for [Scene]. */
     var saveToJson = false
@@ -66,14 +68,14 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
     open fun stringToState(stateValue: String): StateType? = try {
         stateValue as StateType
     } catch (e: Exception) {
-        throw Exception("Did you forget to override parseStateValue() for ${domain.domainName}?")
+        throw Exception("Did you forget to override parseStateValue() for ${(fakeDomain ?: domain).domainName}?")
     }
 
     /** This method returns the state for this entity in the original String format */
     open fun stateToString(state: StateType): String? = try {
         state as String
     } catch (e: Exception) {
-        throw Exception("Did you forget to override getStateValue() for ${domain.domainName}?")
+        throw Exception("Did you forget to override getStateValue() for ${(fakeDomain ?: domain).domainName}?")
     }
 
     /** State as String as defined in Home Assistant. */
@@ -83,10 +85,7 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
     /** State of the entity. */
     open var state: StateType
         get() = kHassInstance.getState(this)
-        //        @Deprecated(
-//            level = DeprecationLevel.WARNING,
-//            message = "Uses Scene.apply, so it isn't guaranteed to work. Use functions inside a domain to be more certain."
-//        )
+        // TODO
         set(value) {
             println("Attempting to set state of $entityID using Scene.apply")
             runBlocking {
@@ -164,7 +163,7 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun clone(): Entity<StateType, AttrsType> = domain.Entity(name) as Entity<StateType, AttrsType>
+    fun clone(): Entity<StateType, AttrsType> = (fakeDomain ?: domain).Entity(name) as Entity<StateType, AttrsType>
 
     // Default attributes
 
@@ -202,15 +201,16 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
     /** Request the update of an entity, rather than waiting for the next scheduled update, for example Google travel time sensor, a template sensor, or a light */
     suspend inline fun updateEntity() = callService("update_entity")
 
-    /** Call a service with this entity using a different serviceDomain */
+    /** Call a service with this entity. */
     suspend fun callService(
-        serviceDomain: Domain<*>,
         serviceName: String,
+        serviceDomain: Domain<*> = domain, // we need the real domain here
         data: JsonObject = json { },
         doEntityCheck: Boolean = true
     ): ResultMessage {
         if (saveToJson) error("This is a copy of the entity disconnected from Home Assistant. You can only set attributes.")
         if (doEntityCheck) checkEntityExists()
+
         return kHassInstance.callService(
             entity = this,
             serviceDomain = serviceDomain,
@@ -219,24 +219,9 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
         )
     }
 
-    /** Call a service with this entity */
-    suspend fun callService(
-        serviceName: String,
-        data: JsonObject = json { },
-        doEntityCheck: Boolean = true
-    ): ResultMessage {
-        if (saveToJson) error("This is a copy of the entity disconnected from Home Assistant. You can only set attributes.")
-        if (doEntityCheck) checkEntityExists()
-        return kHassInstance.callService(
-            entity = this,
-            serviceName = serviceName,
-            data = data
-        )
-    }
-
     /** Shortcut to name of domain for this entity. */
     val domainName: String
-        get() = domain.domainName
+        get() = (fakeDomain ?: domain).domainName
 
     /** Entity ID as defined in Home Assistant.
      * Like "light.light_name". */
@@ -247,7 +232,7 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
 
     /** Get printable String for this entity.
      * Also prints [additionalToStringAttributes]. */
-    override fun toString(): String = "${domain::class.simpleName} ($domainName) Entity($name) {${
+    override fun toString(): String = "${(fakeDomain ?: domain)::class.simpleName} ($domainName) Entity($name) {${
     (hassAttributes + additionalToStringAttributes)
         .filter {
             try {

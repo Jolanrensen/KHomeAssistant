@@ -1,10 +1,13 @@
+import com.soywiz.korim.color.Colors
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.domains.*
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
-import nl.jolanrensen.kHomeAssistant.entities.*
+import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
+import nl.jolanrensen.kHomeAssistant.entities.turnOff
+import nl.jolanrensen.kHomeAssistant.entities.turnOn
 
 
 class BedroomLights(kHass: KHomeAssistant) : Automation(kHass) {
@@ -20,10 +23,8 @@ class BedroomLights(kHass: KHomeAssistant) : Automation(kHass) {
         val allLights = listOf(bed, bedroomLamp, globe, pisa)
 
         Switch.Entity("bedroom_switch").onTurnOn {
-            if (allLights.any { it.isOn })
-                allLights.turnOff()
-            else
-                allLights.turnOn()
+            if (allLights.any { it.isOn }) allLights.turnOff()
+            else allLights.turnOn()
 
             this.turnOff()
         }
@@ -57,13 +58,9 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
 //        }
 
 
-        Group["another_test_group"] {
-
-            onEntityRemoved {
-                println("removed!")
-            }
-
-            remove()
+        Group["living_room_lights"].useAs(Light) {
+            color = Colors.RED
+            white_value = 100
         }
 
 
