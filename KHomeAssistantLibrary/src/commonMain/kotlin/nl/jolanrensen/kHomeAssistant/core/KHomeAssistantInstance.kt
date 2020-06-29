@@ -2,11 +2,7 @@ package nl.jolanrensen.kHomeAssistant.core
 
 import com.soywiz.klock.DateTime
 import com.soywiz.klock.parseUtc
-import com.soywiz.kmem.read
-import com.soywiz.korim.bitmap.Bitmap
 import com.soywiz.korim.bitmap.NativeImage
-import com.soywiz.korim.format.ImageData
-import com.soywiz.korim.format.ImageDecodingProps
 import com.soywiz.korim.format.decodeImageBytes
 import com.soywiz.korio.util.encoding.Base64
 import io.ktor.client.features.websocket.DefaultClientWebSocketSession
@@ -88,7 +84,7 @@ class KHomeAssistantInstance(
 
     /** The cache for the state and attributes of all entities in Home Assistant. */
     @Volatile
-            /*private TODO*/ var rawEntityData: HashMap<String, StateResult> = hashMapOf()
+    private var rawEntityData: HashMap<String, StateResult> = hashMapOf()
 
     /** Returns all the raw entity IDs known in Home Assistant. */
     override val entityIds: Set<String>
@@ -297,9 +293,13 @@ class KHomeAssistantInstance(
                                     val oldState = eventDataStateChanged.old_state
                                     val newState = eventDataStateChanged.new_state
 
-                                    rawEntityData[entityID]!!.apply {
-                                        state = newState.state
-                                        attributes = newState.attributes
+                                    when {
+                                        newState == null -> rawEntityData.remove(entityID)
+                                        oldState == null -> rawEntityData[entityID] = newState
+                                        else -> rawEntityData[entityID]!!.apply {
+                                            state = newState.state
+                                            attributes = newState.attributes
+                                        }
                                     }
 
                                     stateListeners[entityID]?.forEach {
@@ -357,7 +357,7 @@ class KHomeAssistantInstance(
     }
 
     /** Update [rawEntityData] from Home Assistant. */
-    private suspend fun updateCache() {
+    suspend fun updateCache() {
         val response: FetchStateResponse = sendMessage(FetchStateMessage())
         val newCache = hashMapOf<String, StateResult>()
         response.result!!.forEach {

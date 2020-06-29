@@ -9,7 +9,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
-import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.Light.SupportedFeatures.*
 import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.helper.*
@@ -17,7 +16,6 @@ import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
 
 /**
- *
  * https://www.home-assistant.io/integrations/light/
  * */
 class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
@@ -177,43 +175,40 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
 
         /** Some attributes can be set using the turn_on command. For those, we define a setter-companion to getValue. */
         @Suppress("UNCHECKED_CAST")
-        override fun <V : Any?> setValue(
+        override suspend fun <V : Any?> setValue(
             propertyName: String,
             value: V
         ) {
-            runBlocking {
-                when (propertyName) {
-                    ::brightness.name -> {
-                        turnOn(brightness = value as Int)
-                        suspendUntilAttributeChangedTo(::brightness, value)
-                    }
-                    ::hs_color.name -> {
-                        turnOn(hs_color = value as HSColor)
-                        suspendUntilAttributeChangedTo(::hs_color, value)
-                    }
-                    ::rgb_color.name -> {
-                        turnOn(rgb_color = value as RGBColor)
-                        suspendUntilAttributeChangedTo(::rgb_color, value)
-                    }
-                    ::xy_color.name -> {
-                        turnOn(xy_color = value as XYColor)
-                        suspendUntilAttributeChangedTo(::xy_color, value)
-                    }
-                    ::white_value.name -> {
-                        turnOn(white_value = value as Int)
-                        suspendUntilAttributeChangedTo(::white_value, value)
-                    }
-                    ::profile.name -> turnOn(profile = value as String)
-                    ::color_temp.name -> turnOn(color_temp = value as Int)
-                    ::kelvin.name -> turnOn(kelvin = value as Int)
-                    ::color_name.name -> turnOn(color_name = value as String)
-                    ::brightness_pct.name -> turnOn(brightness_pct = value as Float)
-                    ::brightness_step.name -> turnOn(brightness_step = value as Float)
-                    ::brightness_step_pct.name -> turnOn(brightness_step_pct = value as Float)
-                    ::flash.name -> turnOn(flash = Flash.values().find { it.value == value as String }!!)
-                    ::effect.name -> turnOn(effect = value as String)
+            when (propertyName) {
+                ::brightness.name -> {
+                    turnOn(brightness = value as Int)
+                    suspendUntilAttributeChangedTo(::brightness, value)
                 }
-                Unit
+                ::hs_color.name -> {
+                    turnOn(hs_color = value as HSColor)
+                    suspendUntilAttributeChangedTo(::hs_color, value)
+                }
+                ::rgb_color.name -> {
+                    turnOn(rgb_color = value as RGBColor)
+                    suspendUntilAttributeChangedTo(::rgb_color, value)
+                }
+                ::xy_color.name -> {
+                    turnOn(xy_color = value as XYColor)
+                    suspendUntilAttributeChangedTo(::xy_color, value)
+                }
+                ::white_value.name -> {
+                    turnOn(white_value = value as Int)
+                    suspendUntilAttributeChangedTo(::white_value, value)
+                }
+                ::profile.name -> turnOn(profile = value as String)
+                ::color_temp.name -> turnOn(color_temp = value as Int)
+                ::kelvin.name -> turnOn(kelvin = value as Int)
+                ::color_name.name -> turnOn(color_name = value as String)
+                ::brightness_pct.name -> turnOn(brightness_pct = value as Float)
+                ::brightness_step.name -> turnOn(brightness_step = value as Float)
+                ::brightness_step_pct.name -> turnOn(brightness_step_pct = value as Float)
+                ::flash.name -> turnOn(flash = Flash.values().find { it.value == value as String }!!)
+                ::effect.name -> turnOn(effect = value as String)
             }
         }
 
@@ -257,6 +252,7 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
             @Deprecated("'brightness_step_pct' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'brightness_step_pct' is write only")
             set(value) = attrsDelegate<Float>().setValue(this, ::brightness_step_pct, value)
+
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("flash_"))
         override var flash: String
             @Deprecated("'flash' is write only", level = DeprecationLevel.ERROR)

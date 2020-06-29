@@ -1,17 +1,10 @@
-import com.soywiz.korim.awt.toAwt
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
-import nl.jolanrensen.kHomeAssistant.domains.Light
-import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
-import nl.jolanrensen.kHomeAssistant.domains.Switch
-import nl.jolanrensen.kHomeAssistant.domains.getValue
+import nl.jolanrensen.kHomeAssistant.domains.*
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
-import nl.jolanrensen.kHomeAssistant.entities.invoke
-import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
-import nl.jolanrensen.kHomeAssistant.entities.turnOff
-import nl.jolanrensen.kHomeAssistant.entities.turnOn
+import nl.jolanrensen.kHomeAssistant.entities.*
 
 
 class BedroomLights(kHass: KHomeAssistant) : Automation(kHass) {
@@ -47,16 +40,33 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
     val shield_cast by MediaPlayer
 
     override suspend fun initialize() {
-        println(instance.rawEntityData["light.wall_lamp"])
-        println(instance.rawEntityData["sun.sun"])
-        Light["wall_lamp"] {
-            println("last updated: $lastUpdated, last changed: $lastChanged")
+//        println(instance.rawEntityData["light.wall_lamp"])
+//        println(instance.rawEntityData["sun.sun"])
+//        Light["wall_lamp"] {
+//            println("last updated: $lastUpdated, last changed: $lastChanged")
+//        }
+
+//        connectionIsAlive()
+//        Group.create(
+//            groupName = "another_test_group",
+//            entities = listOf(Light["table_lamp"], Light["piano"]),
+//            all = true
+//        )
+//        Group["another_test_group"] {
+//            toggle()
+//        }
+
+
+        Group["another_test_group"] {
+
+            onEntityRemoved {
+                println("removed!")
+            }
+
+            remove()
         }
 
-        connectionIsAlive()
-        println(
-            shield_cast.getMediaPlayerThumbnail()?.toAwt()
-        )
+
 //        println(
 //            Scene.create(
 //                sceneId = "Test scene",

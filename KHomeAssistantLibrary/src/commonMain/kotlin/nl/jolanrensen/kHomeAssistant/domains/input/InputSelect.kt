@@ -8,7 +8,6 @@ import nl.jolanrensen.kHomeAssistant.contentEquals
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
-import kotlin.reflect.KProperty
 
 // TODO
 
@@ -62,17 +61,14 @@ class InputSelect(override val kHassInstance: KHomeAssistant) : Domain<InputSele
 
         /** Some attributes are writable. */
         @Suppress("UNCHECKED_CAST")
-        override fun <V : Any?> setValue(
+        override suspend fun <V : Any?> setValue(
             propertyName: String,
             value: V
         ) {
-            runBlocking {
-                when (propertyName) {
-                    ::options.name -> {
-                        setOptions(value as List<String>)
-                    }
+            when (propertyName) {
+                ::options.name -> {
+                    setOptions(value as List<String>)
                 }
-                Unit
             }
         }
 

@@ -129,7 +129,7 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
             if (saveToJson) {
                 json = json ?: json { }
                 json = json!! + json { property.name to value.toJson() }
-            } else setValue(property.name, value)
+            } else runBlocking { setValue(property.name, value) }
     }
 
     /** Makes delegated attributes possible for entities.
@@ -152,13 +152,14 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
             if (saveToJson) {
                 json = json ?: json { }
                 json = json!! + json { property.name to value.toJson() }
-            } else setValue(property.name, value)
+            } else runBlocking { setValue(property.name, value) }
     }
 
     /**
      * Can be overridden
      * */
-    open fun <V : Any?> setValue(propertyName: String, value: V) {
+    @Suppress("UNCHECKED_CAST")
+    open suspend fun <V : Any?> setValue(propertyName: String, value: V) {
         TODO()
     }
 

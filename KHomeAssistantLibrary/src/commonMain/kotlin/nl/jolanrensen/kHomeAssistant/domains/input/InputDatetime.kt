@@ -151,44 +151,41 @@ class InputDatetime(override val kHassInstance: KHomeAssistant) : Domain<InputDa
         override fun stateToString(state: State) = state.value
 
         /** Some attributes can be set using the set_datetime command. For those, we define a setter-companion to getValue. */
-        override fun <V : Any?> setValue(
+        override suspend fun <V : Any?> setValue(
             propertyName: String,
             value: V
         ) {
-            runBlocking {
-                when (propertyName) {
-                    ::year.name -> try {
-                        setDate(localDate = Date(year = value as Int, month = month, day = day))
-                    } catch (e: Exception) {
-                        throw Exception("Can't set year, $name has no date.", e)
-                    }
-                    ::month.name -> try {
-                        setDate(localDate = Date(year = year, month = value as Int, day = day))
-                    } catch (e: Exception) {
-                        throw Exception("Can't set month, $name has no date.", e)
-                    }
-                    ::day.name -> try {
-                        setDate(localDate = Date(year = year, month = month, day = value as Int))
-                    } catch (e: Exception) {
-                        throw Exception("Can't set day, $name has no date.", e)
-                    }
-                    ::hour.name -> try {
-                        setTime(localTime = Time(hour = value as Int, minute = minute, second = second))
-                    } catch (e: Exception) {
-                        throw Exception("Can't set hour, $name has no time.", e)
-                    }
-                    ::minute.name -> try {
-                        setTime(localTime = Time(hour = hour, minute = value as Int, second = second))
-                    } catch (e: Exception) {
-                        throw Exception("Can't set minute, $name has no time.", e)
-                    }
-                    ::second.name -> try {
-                        setTime(localTime = Time(hour = hour, minute = minute, second = value as Int))
-                    } catch (e: Exception) {
-                        throw Exception("Can't set second, $name has no time.", e)
-                    }
+            when (propertyName) {
+                ::year.name -> try {
+                    setDate(localDate = Date(year = value as Int, month = month, day = day))
+                } catch (e: Exception) {
+                    throw Exception("Can't set year, $name has no date.", e)
                 }
-                Unit
+                ::month.name -> try {
+                    setDate(localDate = Date(year = year, month = value as Int, day = day))
+                } catch (e: Exception) {
+                    throw Exception("Can't set month, $name has no date.", e)
+                }
+                ::day.name -> try {
+                    setDate(localDate = Date(year = year, month = month, day = value as Int))
+                } catch (e: Exception) {
+                    throw Exception("Can't set day, $name has no date.", e)
+                }
+                ::hour.name -> try {
+                    setTime(localTime = Time(hour = value as Int, minute = minute, second = second))
+                } catch (e: Exception) {
+                    throw Exception("Can't set hour, $name has no time.", e)
+                }
+                ::minute.name -> try {
+                    setTime(localTime = Time(hour = hour, minute = value as Int, second = second))
+                } catch (e: Exception) {
+                    throw Exception("Can't set minute, $name has no time.", e)
+                }
+                ::second.name -> try {
+                    setTime(localTime = Time(hour = hour, minute = minute, second = value as Int))
+                } catch (e: Exception) {
+                    throw Exception("Can't set second, $name has no time.", e)
+                }
             }
         }
 

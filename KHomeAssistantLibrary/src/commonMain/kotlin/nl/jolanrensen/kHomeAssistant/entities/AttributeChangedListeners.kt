@@ -4,6 +4,7 @@ import com.soywiz.klock.DateTimeTz
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.seconds
 import kotlinx.coroutines.channels.Channel
+import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.Task
 import nl.jolanrensen.kHomeAssistant.core.StateListener
 import nl.jolanrensen.kHomeAssistant.runAt
@@ -28,7 +29,7 @@ fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributesChanged(
     kHassInstance.stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add(StateListener({ oldState, newState ->
-            if (oldState.attributes != newState.attributes)
+            if (oldState?.attributes != newState?.attributes)
                 callback()
 
         }))
@@ -58,7 +59,7 @@ fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributeChanged(
     kHassInstance.stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add(StateListener({ oldState, newState ->
-            if (oldState.attributes[attribute] != newState.attributes[attribute])
+            if (oldState?.attributes?.get(attribute) != newState?.attributes?.get(attribute))
                 callback()
         }))
     return this
@@ -101,7 +102,7 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChang
         .add(StateListener({ oldState, _ ->
 
             // get the old attribute value by temporarily setting the old attributes as alternative in the delegate
-            alternativeAttributes = oldState.attributes
+            alternativeAttributes = oldState?.attributes ?: json {}
             val oldAttributeValue = attribute.get()
             alternativeAttributes = null
 
@@ -313,7 +314,7 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChang
         .add(StateListener({ oldState, _ ->
 
             // get the old attribute value by temporarily setting the old attributes as alternative in the delegate
-            alternativeAttributes = oldState.attributes
+            alternativeAttributes = oldState?.attributes ?: json {}
             val oldAttributeValue = attribute.get(this)
             alternativeAttributes = null
 

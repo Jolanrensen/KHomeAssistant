@@ -99,8 +99,17 @@ class Scene(override val kHassInstance: KHomeAssistant) : Domain<Scene.Entity> {
     interface HassAttributes : BaseHassAttributes {
         // Read only
 
-        /** All entities that are affected by this scene (as [DefaultEntity]s) */
+        /** All entities that are affected by this scene (as [DefaultEntity]s) @see [getEntities] or [Entity.entities]. */
         val entity_id: List<String>
+
+        // Helper
+
+        /** All entities that are affected by this scene (as [DefaultEntity]s) */
+        fun getEntities(kHassInstance: KHomeAssistant): List<DefaultEntity> =
+            entity_id.map {
+                val (domain, name) = it.split(".")
+                kHassInstance.Domain(domain)[name]
+            }
     }
 
     class Entity(
@@ -122,14 +131,12 @@ class Scene(override val kHassInstance: KHomeAssistant) : Domain<Scene.Entity> {
                 super.state = value
             }
 
+        @Deprecated("You can use the typed version", ReplaceWith("entities"))
         override val entity_id: List<String> by attrsDelegate(listOf())
 
         /** All entities that are affected by this scene (as [DefaultEntity]s) */
-        val entityIds: List<DefaultEntity>
-            get() = entity_id.map {
-                val (domain, name) = it.split(".")
-                kHassInstance.Domain(domain)[name]
-            }
+        val entities: List<DefaultEntity>
+            get() = getEntities(kHassInstance)
 
         /** Activate this scene.
          * @param transition Transition duration it takes to bring devices to the state defined in the scene. */

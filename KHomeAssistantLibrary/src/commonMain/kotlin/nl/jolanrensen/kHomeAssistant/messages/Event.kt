@@ -25,8 +25,8 @@ data class Event(
 @Serializable
 data class EventDataStateChanged(
         val entity_id: String,
-        val old_state: StateResult,
-        val new_state: StateResult
+        val old_state: StateResult? = null,
+        val new_state: StateResult? = null
 ) : JsonSerializable
 
 @Serializable

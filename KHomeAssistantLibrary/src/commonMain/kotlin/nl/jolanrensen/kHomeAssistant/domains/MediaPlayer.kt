@@ -223,25 +223,22 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
 
         /** Some attributes can be set using service calls. For those, we define a setter-companion to getValue. */
         @Suppress("UNCHECKED_CAST")
-        override fun <V : Any?> setValue(
+        override suspend fun <V : Any?> setValue(
             propertyName: String,
             value: V
         ) {
-            runBlocking {
-                when (propertyName) {
-                    ::media_track.name -> { // TODO check
-                        value as Int
-                        while (media_track < value) mediaNextTrack()
-                        while (media_track > value) mediaPreviousTrack()
-                    }
-                    ::volume_level.name -> volumeSet(value as Float)
-                    ::is_volume_muted.name -> volumeMute(value as Boolean)
-                    ::media_position.name -> mediaSeek((value as Float).seconds)
-                    ::source.name -> selectSource(value as String)
-                    ::sound_mode.name -> selectSoundMode(value as String)
-                    ::shuffle.name -> shuffleSet(value as Boolean)
+            when (propertyName) {
+                ::media_track.name -> { // TODO check
+                    value as Int
+                    while (media_track < value) mediaNextTrack()
+                    while (media_track > value) mediaPreviousTrack()
                 }
-                Unit
+                ::volume_level.name -> volumeSet(value as Float)
+                ::is_volume_muted.name -> volumeMute(value as Boolean)
+                ::media_position.name -> mediaSeek((value as Float).seconds)
+                ::source.name -> selectSource(value as String)
+                ::sound_mode.name -> selectSoundMode(value as String)
+                ::shuffle.name -> shuffleSet(value as Boolean)
             }
         }
 

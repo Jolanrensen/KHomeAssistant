@@ -26,28 +26,28 @@ open class ToggleEntity<AttrsType : HassAttributes>(
     }
 
     /** Turns on an entity (that supports being turned on), for example an automation, switch, etc */
-    suspend inline fun turnOn(async: Boolean = false): ResultMessage {
+    open suspend fun turnOn(async: Boolean = false): ResultMessage {
         val result = callService("turn_on")
         if (!async) suspendUntilStateChangedTo(ON)
         return result
     }
 
     /** Turns off an entity (that supports being turned off), for example an automation, switch, etc */
-    suspend inline fun turnOff(async: Boolean = false): ResultMessage {
+    open suspend fun turnOff(async: Boolean = false): ResultMessage {
         val result = callService("turn_off")
         if (!async) suspendUntilStateChangedTo(OFF)
         return result
     }
 
     /** Turns off an entity that is on, or turns on an entity that is off (that supports being turned on and off) */
-    suspend inline fun toggle(async: Boolean = false): ResultMessage {
+    open suspend fun toggle(async: Boolean = false): ResultMessage {
         val oldState = state
         val result = callService("toggle")
         if (!async) suspendUntilStateChangedTo(
             when (oldState) {
                 ON -> OFF
                 OFF -> ON
-                UNAVAILABLE -> ON
+                UNAVAILABLE, UNKNOWN -> ON
             }
         )
         return result
