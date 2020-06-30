@@ -17,3 +17,9 @@ allprojects {
         mavenCentral()    
     }
 }
+
+project(":KHomeAssistantExample") {
+    dependencies {
+//        implementation project(":KHomeAssistant-library")
+    }
+}
