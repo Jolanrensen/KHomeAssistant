@@ -1,24 +1,36 @@
 package examples
 
+import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.seconds
-import nl.jolanrensen.kHomeAssistant.Automation
-import nl.jolanrensen.kHomeAssistant.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.automation
+import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.domains.Light
+import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.MotionBinarySensor
 import nl.jolanrensen.kHomeAssistant.domains.sun
-import nl.jolanrensen.kHomeAssistant.runIn
+import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
 
-class MotionLights(kHass: KHomeAssistant) : Automation(kHass) {
+/**
+ * @param kHass the KHomeAssistant context to be passed to the super class (Automation).
+ * @param sensor the motion sensor to trigger the automation
+ * @param entityOn the entity to turn on for 60 seconds when the motion is detected. This can be any [ToggleEntity] like [Light] or [Switch].
+ * @param delay the time for [entityOn] to be on when motion is detected by [sensor].
+ */
+class MotionLights(
+    kHass: KHomeAssistant,
+    val sensor: MotionBinarySensor.Entity,
+    val entityOn: ToggleEntity<*>,
+    val delay: TimeSpan = 60.seconds
+) : Automation(kHass) {
 
-    private val driveLight = Light["drive"]
-    private val driveSensor = MotionBinarySensor["drive"]
+    var task: Task? = null
 
     override suspend fun initialize() {
-        driveSensor.onMotionDetected {
+        sensor.onMotionDetected {
             if (sun.isDown) {
-                driveLight.turnOn()
-                runIn(60.seconds) { driveLight.turnOff() }
+                entityOn.turnOn()
+
+                task?.cancel()
+                task = runIn(delay) { entityOn.turnOff() }
             }
         }
     }
