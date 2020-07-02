@@ -134,7 +134,34 @@ For instance, `Light` performs a `turnOn()` when the `state` is set to `ON` and 
 The IDE will tell you if it's possible to set the state like that or not.
 
 ###Attributes
-TODO
+Most entities in Home Assistant have their own attributes. This can range from the current brightness of a light or the volume level of the media player.
+Unlike AppDaemon, attributes are available directly as properties of an entity. This means you can get the volume of your stereo like:
+```kotlin
+val volume: Float = MediaPlayer["stereo"].volume_level
+```
+(If an entity does not have the attribute an exception will be thrown unless a default is set in the `attrsDelegate` in the entity class. 
+This means that if you're not sure your entity actually has the property you want, you must surround it with `try { ... } catch (e: Exception) { ... }`).
+
+Aside from this, KHomeAssistant also allows attributes to be writable. This means that
+```kotlin
+MediaPlayer["stereo"].volume_level = 0.3f
+```
+will under the hood call
+```kotlin
+MediaPlayer["stereo"].volumeSet(0.3f)
+```
+This allows for beautiful notations like:
+```kotlin
+MediaPlayer["stereo"].volume_level += 0.05f
+```
+
+Attributes in KHomeAssistant are cached and updated when state changes occur, meaning they should always be up to
+date. If the cache has not been updated in a while it will fully refresh it.
+
+
+###Listeners
+
+
 
 ###Scheduler
 TODO

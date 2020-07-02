@@ -1,5 +1,4 @@
 import com.soywiz.klock.minutes
-import com.soywiz.korim.color.Colors
 import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.OnOff.*
@@ -40,10 +39,14 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
     val shield_cast by MediaPlayer
 
     override suspend fun initialize() {
-        Group["living_room_lights"].useAs(Light) {
-            color = Colors.RED
-            white_value = 100
-        }
+        println(denon_avrx2200w)
+
+        denon_avrx2200w.volume_level
+
+//        Group["living_room_lights"].useAs(Light) {
+//            color = Colors.RED
+//            white_value = 100
+//        }
     }
 
 }
@@ -86,11 +89,14 @@ class OutsideLights(kHass: KHomeAssistant) : Automation(kHass) {
 
         val lightState: OnOff = Light[""].state
 
-when (lightState) {
-    ON -> { /* do something */ }
-    OFF -> { /* do something else */ }
-    UNKNOWN, UNAVAILABLE -> { /* notify or something */ }
-}
+        when (lightState) {
+            ON -> { /* do something */
+            }
+            OFF -> { /* do something else */
+            }
+            UNKNOWN, UNAVAILABLE -> { /* notify or something */
+            }
+        }
 
         callService(serviceDomain = "light", serviceName = "turn_on", entityID = "light.bedroom_lamp")
     }
