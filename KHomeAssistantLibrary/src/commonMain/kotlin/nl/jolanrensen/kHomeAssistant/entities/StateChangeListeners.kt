@@ -10,19 +10,14 @@ import nl.jolanrensen.kHomeAssistant.core.StateListener
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.runAt
 
-fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChangedToNot(
+fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChangedNotTo(
     newState: S?,
     callback: suspend E.() -> Unit
 ): E {
-    onStateChanged {
-        if (try {
-                state
-            } catch (e: Exception) {
-                null
-            } != newState
-        )
+    onStateChanged({ _, new ->
+        if (new != newState)
             callback()
-    }
+    })
     return this
 }
 
@@ -30,31 +25,56 @@ fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChangedTo(
     newState: S?,
     callback: suspend E.() -> Unit
 ): E {
-    onStateChanged {
-        if (try {
-                state
-            } catch (e: Exception) {
-                null
-            } == newState
-        )
+    onStateChanged({ _, new ->
+        if (new == newState)
             callback()
-    }
+    })
     return this
 }
 
+/**
+ * TODO
+ * @param callbackWith the block of code with values to execute when the state has changed. Don't provide [callbackWithout] in conjunction with this.
+ * @param callbackWithout the block of code to execute when the state has changed. Don't provide [callbackWith] in conjunction with this.
+ * example:
+ * ```
+ * myEntity.onStateChanged {
+ *     // do something
+ * }
+ * ```
+ * or
+ * ```
+ * myEntity.onStateChanged({ oldState, newState ->
+ *     // do something with oldState for example
+ * })
+ *
+ */
 fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChanged(
-    callback: suspend E.() -> Unit
+    callbackWith: (suspend E.(oldState: S?, newState: S?) -> Unit)? = null,
+    callbackWithout: (suspend E.() -> Unit)? = null
 ): E {
+    if (callbackWith != null && callbackWithout != null || callbackWith == null && callbackWithout == null)
+        throw IllegalArgumentException("Exactly one of callbackWith and callbackWithout need to be provided")
+
     checkEntityExists()
     kHassInstance
         .stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add(StateListener({ oldState, newState ->
-            if (oldState?.state != newState?.state)
-                callback()
+            if (oldState?.state != newState?.state) {
+                callbackWithout?.invoke(this)
+                callbackWith?.invoke(
+                    this,
+                    oldState?.state?.let { stringToState(it) },
+                    newState?.state?.let { stringToState(it) }
+                )
+            }
         }))
     return this
 }
+
+
+
 
 fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onEntityRemoved(
     callback: suspend E.() -> Unit

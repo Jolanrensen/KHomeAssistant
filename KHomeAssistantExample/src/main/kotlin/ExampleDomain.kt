@@ -151,7 +151,7 @@ class Example(override val kHassInstance: KHomeAssistant) : Domain<Example.Entit
 
         /** A listener for a state change is also possible. */
         fun otherExampleListener(callback: suspend Entity.() -> Unit): Entity =
-            onStateChangedToNot(ExampleState.STATE1, callback)
+            onStateChangedNotTo(ExampleState.STATE1, callback)
 
         /** Simple service calls can be defined like this */
         suspend fun exampleEntityServiceCall(): ResultMessage = callService(serviceName = "example")

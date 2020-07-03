@@ -7,23 +7,24 @@ import nl.jolanrensen.kHomeAssistant.domains.Notify
 import nl.jolanrensen.kHomeAssistant.domains.sensors.BatterySensor
 import nl.jolanrensen.kHomeAssistant.entities.onStateChanged
 
-class BatteryBelowThreshold(nameOfBatterySensor: String, private val threshold: Int, kHass: KHomeAssistant) : Automation(kHass) {
+class BatteryBelowThreshold(nameOfBatterySensor: String, private val threshold: Int, kHass: KHomeAssistant) :
+    Automation(kHass) {
 
     private var belowThreshold = false
     private val batterySensor: BatterySensor.Entity = BatterySensor[nameOfBatterySensor]
 
     override suspend fun initialize() {
-        batterySensor.onStateChanged(checkState)
+        batterySensor.onStateChanged { checkState(this) }
 
         // initial check
         checkState(batterySensor)
     }
 
-    private val checkState: suspend BatterySensor.Entity.() -> Unit = {
-        if (!belowThreshold && state < threshold) {
-            Notify.notify(message = "Battery sensor $name's percentage is below $threshold.")
+    private suspend fun checkState(sensor: BatterySensor.Entity) {
+        if (!belowThreshold && sensor.state < threshold) {
+            Notify.notify(message = "Battery sensor ${sensor.name}'s percentage is below $threshold.")
         }
-        belowThreshold = state < threshold
+        belowThreshold = sensor.state < threshold
     }
 }
 
@@ -40,7 +41,7 @@ fun batteryBelowThreshold(kHass: KHomeAssistant, nameOfBatterySensor: String, th
             belowThreshold = state < threshold
         }
 
-        batterySensor.onStateChanged(checkState)
+        batterySensor.onStateChanged(callbackWithout = checkState)
 
         // initial check
         checkState(batterySensor)

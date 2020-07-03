@@ -160,10 +160,94 @@ date. If the cache has not been updated in a while it will fully refresh it.
 
 
 ###Listeners
+An important part of automations is being able to react to state- or attribute changes. 
+Most entities include their own helper functions to provide listeners which improves readability
+and understandability. For instance, there's:
+```kotlin
+Light["bedroom_lamp"].onTurnedOn {
+    // do something
+}
+```
+or
+```kotlin
+GarageDoorBinarySensor["garage_door"].onOpened {
+    // do something
+}
+```
 
+However, not all possible attributes and states can be covered with helper functions, so
+KHomeAssistant provides a few extension functions on all entities.
+For example, for state changes there is:
+```kotlin
+MediaPlayer["stereo"].onStateChangedTo(PAUSED) {
+    // do something
+}
+```
+but also a more general
+```kotlin
+myEntity.onStateChanged {
+    // do something
+}
+```
+and even
+```kotlin
+myEntity.onStateChanged({ oldValue, newValue ->
+    // do something with old or new state value
+})
+```
 
+Listening for attribute changes works in a similar manner. You can listen for any attribute change
+using
+```kotlin
+myEntity.onAttributesChanged {
+    // do something
+}
+```
+or you can specify which attribute to listen for. This can be any property or attribute of the
+entity of your choice. For instance
+```kotlin
+val stereo = MediaPlayer["stereo"]
+stereo.onAttributeChangedNotTo(stereo::source, "TV") {
+    // turn off the tv or something
+}
+
+// or in DSL style (for more info see below)
+MediaPlayer["stereo"] {
+    onAttributeChangedNotTo(::source, "TV") {
+        // turn off the tv or something
+    }
+}
+```
+
+For all callbacks, `this` corresponds to the entity. This means you can simply type
+```kotlin
+Switch["bedroom_switch"].onTurnedOn {
+    // toggle the lights or something
+  
+    // turns off the switch
+    turnOff()
+}
+```
 
 ###Scheduler
+Scheduling when to run something is another essential part for automation. While you can freely
+use `delay(5.seconds)` in your code (as the thread will then simply suspend for 5 seconds), if
+you want to schedule something for each day, this is undoable.
+KHomeAssistant uses an in-house built scheduler to make this easy.
+
+For regular time intervals, there are functions available like
+```kotlin
+runEveryMinute {
+    // this gets run at the start of each minute
+}
+```
+and 
+```kotlin
+runEveryHour(alignWith = LOCAL_EPOCH + 30.minutes) {
+    // this gets run every hour at the 30 minute mark
+}
+```
+
 TODO
 
 ##Getting started

@@ -89,14 +89,17 @@ open class ToggleEntity<AttrsType : HassAttributes>(
         get() = state == UNAVAILABLE
 }
 
-fun <H : HassAttributes, E : ToggleEntity<H>> E.onTurnOn(callback: suspend E.() -> Unit) =
+fun <H : HassAttributes, E : ToggleEntity<H>> E.onTurnedOn(callback: suspend E.() -> Unit) =
     onStateChangedTo(ON, callback)
 
-fun <H : HassAttributes, E : ToggleEntity<H>> E.onTurnOff(callback: suspend E.() -> Unit) =
+fun <H : HassAttributes, E : ToggleEntity<H>> E.onTurnedOff(callback: suspend E.() -> Unit) =
     onStateChangedTo(OFF, callback)
 
-fun <H : HassAttributes, E : ToggleEntity<H>> E.onUnavailable(callback: suspend E.() -> Unit) =
+fun <H : HassAttributes, E : ToggleEntity<H>> E.onTurnedUnavailableOrUnknown(callback: suspend E.() -> Unit): E {
+    onStateChangedTo(UNKNOWN, callback)
     onStateChangedTo(UNAVAILABLE, callback)
+    return this
+}
 
 suspend inline fun <H : HassAttributes, E : ToggleEntity<H>> Iterable<E>.turnOn(async: Boolean = false) =
     this { turnOn(async) }

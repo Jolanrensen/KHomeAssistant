@@ -1,4 +1,8 @@
+import com.soywiz.klock.DateTime
+import com.soywiz.klock.Time
 import com.soywiz.klock.minutes
+import com.soywiz.klock.seconds
+import com.soywiz.korio.async.delay
 import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.OnOff.*
@@ -6,9 +10,7 @@ import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.domains.*
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
-import nl.jolanrensen.kHomeAssistant.entities.onTurnOn
-import nl.jolanrensen.kHomeAssistant.entities.turnOff
-import nl.jolanrensen.kHomeAssistant.entities.turnOn
+import nl.jolanrensen.kHomeAssistant.entities.*
 
 
 class BedroomLights(kHass: KHomeAssistant) : Automation(kHass) {
@@ -17,7 +19,7 @@ class BedroomLights(kHass: KHomeAssistant) : Automation(kHass) {
     val bedroom_switch by Switch
 
     override suspend fun initialize() {
-        bedroom_switch.onTurnOn {
+        bedroom_switch.onTurnedOn {
             if (allLights.any { it.isOn }) {
                 allLights.turnOff()
             } else {
@@ -41,7 +43,25 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
     override suspend fun initialize() {
         println(denon_avrx2200w)
 
-        denon_avrx2200w.volume_level
+        delay(5.seconds)
+
+        runEveryHour(alignWith = DateTime.EPOCH.localUnadjusted + 30.minutes) {
+
+        }
+
+        Light[""] {
+            onTurnedOn { }
+        }
+
+        denon_avrx2200w {
+            onTurnedOn {
+
+            }
+        }
+
+        denon_avrx2200w.onAttributeChanged("test", { old, new ->
+
+        })
 
 //        Group["living_room_lights"].useAs(Light) {
 //            color = Colors.RED

@@ -3,7 +3,8 @@ package nl.jolanrensen.kHomeAssistant
 import com.soywiz.klock.*
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.domains.sun
-import nl.jolanrensen.kHomeAssistant.entities.onChanged
+import nl.jolanrensen.kHomeAssistant.entities.invoke
+import nl.jolanrensen.kHomeAssistant.entities.onAttributeChanged
 
 /**
  * The scheduler always assumes local time instead of UTC time to give you a piece of mind.
@@ -18,10 +19,12 @@ import nl.jolanrensen.kHomeAssistant.entities.onChanged
  *     'val myUtcTime: DateTime = myLocalDateTimeTz.utc'
  */
 
+/** This is a [DateTimeTz] instance representing 00:00:00, Thursday, 1 January 1970, local time. */
+val LOCAL_EPOCH: DateTimeTz = DateTime.EPOCH.localUnadjusted
 
 // TODO
 //fun KHomeAssistantContext.runEveryWeekAt(dayOfWeek: DayOfWeek, time: Time, callback: suspend () -> Unit): Task {
-//    val offsetAtEpoch = DateTime.EPOCH.localUnadjusted.offset.time
+//    val offsetAtEpoch = LOCAL_EPOCH.offset.time
 //    return runEvery(1.weeks, DateTime(DateTime.EPOCH.date, time).localUnadjusted - offsetAtEpoch, callback)
 //}
 
@@ -36,44 +39,44 @@ suspend fun KHomeAssistant.runEveryDayAt(
 
 /** Schedule something to execute at a certain (local) time each day. */
 suspend fun KHomeAssistant.runEveryDayAt(localTime: Time, callback: suspend () -> Unit): Task {
-    val offsetAtEpoch = DateTime.EPOCH.localUnadjusted.offset.time
+    val offsetAtEpoch = LOCAL_EPOCH.offset.time
     return runEvery(1.days, DateTime(DateTime.EPOCH.date, localTime).localUnadjusted - offsetAtEpoch, callback)
 }
 
 /** Schedule something to execute each week, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the week will be picked. */
 suspend fun KHomeAssistant.runEveryWeek(
-    alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
+    alignWith: DateTimeTz = LOCAL_EPOCH + 4.days,
     callback: suspend () -> Unit
 ) = runEvery(1.weeks, alignWith, callback)
 
 /** Schedule something to execute each day, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the day will be picked. */
 suspend fun KHomeAssistant.runEveryDay(
-    alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
+    alignWith: DateTimeTz = LOCAL_EPOCH,
     callback: suspend () -> Unit
 ) = runEvery(1.days, alignWith, callback)
 
 /** Schedule something to execute each hour, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the hour will be picked. */
 suspend fun KHomeAssistant.runEveryHour(
-    alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
+    alignWith: DateTimeTz = LOCAL_EPOCH,
     callback: suspend () -> Unit
 ) = runEvery(1.hours, alignWith, callback)
 
 /** Schedule something to execute each minute, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the minute will be picked. */
 suspend fun KHomeAssistant.runEveryMinute(
-    alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
+    alignWith: DateTimeTz = LOCAL_EPOCH,
     callback: suspend () -> Unit
 ) = runEvery(1.minutes, alignWith, callback)
 
 /** Schedule something to execute each second, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the second will be picked. */
 suspend fun KHomeAssistant.runEverySecond(
-    alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
+    alignWith: DateTimeTz = LOCAL_EPOCH,
     callback: suspend () -> Unit
 ) = runEvery(1.seconds, alignWith, callback)
 
 /** Schedule something to repeatedly execute each given timespan, optionally aligned with a certain point in (local) time. If not aligned, the local epoch (00:00:00 jan 1 1970, local time) will be picked. */
 suspend fun KHomeAssistant.runEvery(
     timeSpan: TimeSpan,
-    alignWith: DateTimeTz = DateTime.EPOCH.localUnadjusted,
+    alignWith: DateTimeTz = LOCAL_EPOCH,
     callback: suspend () -> Unit
 ): Task {
     val task = RepeatedRegularTask(
@@ -99,7 +102,7 @@ suspend fun KHomeAssistant.runEvery(
 suspend fun KHomeAssistant.runEveryDayAtSunrise(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.nextRising + offset },
-        whenToUpdate = { update -> sun::nextRising.onChanged(sun) { update() } },
+        whenToUpdate = { update -> sun { onAttributeChanged(::nextRising) { update() } } },
         callback = callback
     )
 
@@ -107,7 +110,7 @@ suspend fun KHomeAssistant.runEveryDayAtSunrise(offset: TimeSpan = TimeSpan.ZERO
 suspend fun KHomeAssistant.runEveryDayAtSunset(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.nextSetting + offset },
-        whenToUpdate = { update -> sun::nextSetting.onChanged(sun) { update() } },
+        whenToUpdate = { update -> sun { onAttributeChanged(::nextSetting) { update() } } },
         callback = callback
     )
 
@@ -115,7 +118,7 @@ suspend fun KHomeAssistant.runEveryDayAtSunset(offset: TimeSpan = TimeSpan.ZERO,
 suspend fun KHomeAssistant.runEveryDayAtDawn(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.nextDawn + offset },
-        whenToUpdate = { update -> sun::nextDawn.onChanged(sun) { update() } },
+        whenToUpdate = { update -> sun { onAttributeChanged(::nextDawn) { update() } } },
         callback = callback
     )
 
@@ -123,7 +126,7 @@ suspend fun KHomeAssistant.runEveryDayAtDawn(offset: TimeSpan = TimeSpan.ZERO, c
 suspend fun KHomeAssistant.runEveryDayAtDusk(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.nextDusk + offset },
-        whenToUpdate = { update -> sun::nextDusk.onChanged(sun) { update() } },
+        whenToUpdate = { update -> sun { onAttributeChanged(::nextDusk) { update() } } },
         callback = callback
     )
 
@@ -131,7 +134,7 @@ suspend fun KHomeAssistant.runEveryDayAtDusk(offset: TimeSpan = TimeSpan.ZERO, c
 suspend fun KHomeAssistant.runEveryDayAtNoon(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.nextNoon + offset },
-        whenToUpdate = { update -> sun::nextNoon.onChanged(sun) { update() } },
+        whenToUpdate = { update -> sun { onAttributeChanged(::nextNoon) { update() } } },
         callback = callback
     )
 
@@ -139,7 +142,7 @@ suspend fun KHomeAssistant.runEveryDayAtNoon(offset: TimeSpan = TimeSpan.ZERO, c
 suspend fun KHomeAssistant.runEveryDayAtMidnight(offset: TimeSpan = TimeSpan.ZERO, callback: suspend () -> Unit) =
     runAt(
         getNextLocalExecutionTime = { sun.nextMidnight + offset },
-        whenToUpdate = { update -> sun::nextMidnight.onChanged(sun) { update() } },
+        whenToUpdate = { update -> sun { onAttributeChanged(::nextMidnight) { update() } } },
         callback = callback
     )
 

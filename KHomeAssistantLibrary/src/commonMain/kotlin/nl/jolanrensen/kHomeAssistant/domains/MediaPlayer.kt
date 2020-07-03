@@ -322,6 +322,16 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
                 }
             }
 
+        fun onTurnedOn(callback: suspend Entity.() -> Unit): Entity = onStateChangedTo(ON, callback)
+
+        fun onTurnedOff(callback: suspend Entity.() -> Unit): Entity = onStateChangedTo(OFF, callback)
+
+        fun onTurnedIdle(callback: suspend Entity.() -> Unit): Entity = onStateChangedTo(IDLE, callback)
+
+        fun onPaused(callback: suspend Entity.() -> Unit): Entity = onStateChangedTo(PAUSED, callback)
+
+        fun onStartedPlaying(callback: suspend Entity.() -> Unit): Entity = onStateChangedTo(PLAYING, callback)
+
         private fun checkIfSupported(vararg supportedFeatures: SupportedFeatures) {
             supportedFeatures.forEach {
                 if (it !in supportedFeatures)
@@ -582,6 +592,7 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
          * Fetch a thumbnail picture for this media player.
          */
         suspend fun getMediaPlayerThumbnail(): NativeImage? = kHassInstance.getMediaPlayerThumbnail(this)
+
 
     }
 }

@@ -4,7 +4,7 @@ import com.soywiz.klock.DateTimeTz
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.seconds
 import kotlinx.coroutines.channels.Channel
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.JsonElement
 import nl.jolanrensen.kHomeAssistant.Task
 import nl.jolanrensen.kHomeAssistant.core.StateListener
 import nl.jolanrensen.kHomeAssistant.runAt
@@ -39,28 +39,46 @@ fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributesChanged(
 /**
  * Creates a listener executed when the specified attribute of the entity changes.
  * The attribute must have the same name as in Home Assistant (or in [Entity.rawAttributes]).
+ *
+ * Example:
  * ```
  * myEntity.onAttributeChanged("my_attribute") {
  *     // do something
  * }
  * ```
+ * or
+ * ```
+ * myEntity.onAttributeChanged("my_attribute", { oldValue, newValue ->
+ *     // do something with oldValue for instance
+ * })
+ * ```
+ *
  * @param S the state type of the entity [E]
  * @param E the type of the receiver, a [Entity] inheriting entity
  * @receiver the entity for which to create the listener
  * @param attribute the name of the attribute (as in Home Assistant)
- * @param callback the block of code to execute when any attribute has changed
+ * @param callbackWith the block of code with values to execute when any attribute has changed. Don't provide [callbackWithout] in conjunction with this.
+ * @param callbackWithout the block of code to execute when any attribute has changed. Don't provide [callbackWith] in conjunction with this.
  * @return the entity
  */
 fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributeChanged(
     attribute: String,
-    callback: suspend E.() -> Unit
+    callbackWith: (suspend E.(oldValue: JsonElement?, newValue: JsonElement?) -> Unit)? = null,
+    callbackWithout: (suspend E.() -> Unit)? = null
 ): E {
+    if (callbackWith != null && callbackWithout != null || callbackWith == null && callbackWithout == null)
+        throw IllegalArgumentException("Exactly one of callbackWith and callbackWithout need to be provided")
+
     checkEntityExists()
     kHassInstance.stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add(StateListener({ oldState, newState ->
-            if (oldState?.attributes?.get(attribute) != newState?.attributes?.get(attribute))
-                callback()
+            val old = oldState?.attributes?.get(attribute)
+            val new = newState?.attributes?.get(attribute)
+            if (old != new) {
+                callbackWithout?.invoke(this)
+                callbackWith?.invoke(this, old, new)
+            }
         }))
     return this
 }
@@ -75,6 +93,9 @@ fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributeChanged(
  * myEntity.onAttributeChanged(myEntity::myAttribute) {
  *    // do something
  * }
+ * myEntity.onAttributeChanged(myEntity::myAttribute, { oldValue, newValue ->
+ *    // do something with oldValue for example
+ * })
  * ```
  * or
  * ```
@@ -82,6 +103,9 @@ fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributeChanged(
  *     onAttributeChanged(::myAttribute) {
  *         // do something
  *     }
+ *     onAttributeChanged(::myAttribute, { oldValue, newValue ->
+ *         // do something with oldValue for example
+ *     })
  * }
  * ```
  * @param A the type of the attribute
@@ -89,61 +113,46 @@ fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributeChanged(
  * @param E the type of the receiver, a [Entity] inheriting entity
  * @receiver the entity for which to create the listener
  * @param attribute the reference (::myAttribute) to the attribute in the entity
- * @param callback the block of code to execute when any attribute has changed
+ * @param callbackWith the block of code with values to execute when any attribute has changed. Don't provide [callbackWithout] in conjunction with this.
+ * @param callbackWithout the block of code to execute when any attribute has changed. Don't provide [callbackWith] in conjunction with this.
  * @return the entity
  */
 fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChanged(
     attribute: Attribute<A>,
-    callback: suspend E.() -> Unit
+    callbackWith: (suspend E.(oldValue: A?, newValue: A?) -> Unit)? = null,
+    callbackWithout: (suspend E.() -> Unit)? = null
 ): E {
+    if (callbackWith != null && callbackWithout != null || callbackWith == null && callbackWithout == null)
+        throw IllegalArgumentException("Exactly one of callbackWith and callbackWithout need to be provided")
+
     checkEntityExists()
     kHassInstance.stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add(StateListener({ oldState, _ ->
 
             // get the old attribute value by temporarily setting the old attributes as alternative in the delegate
-            alternativeAttributes = oldState?.attributes ?: json {}
-            val oldAttributeValue = attribute.get()
+            alternativeAttributes = oldState?.attributes
+            val oldAttributeValue: A? = try {
+                attribute.get()
+            } catch (e: Exception) {
+                null
+            }
             alternativeAttributes = null
 
-            val newAttributeValue = attribute.get()
+            val newAttributeValue: A? = try {
+                attribute.get()
+            } catch (e: Exception) {
+                null
+            }
 
-            if (oldAttributeValue != newAttributeValue)
-                callback()
+            if (oldAttributeValue != newAttributeValue) {
+                callbackWithout?.invoke(this)
+                callbackWith?.invoke(this, oldAttributeValue, newAttributeValue)
+            }
         }))
     return this
 }
 
-/**
- * Creates a listener executed when the attribute of the specified entity changes.
- * ```
- * myEntity::myAttribute.onChanged(myEntity) {
- *     // do something
- * }
- * ```
- * or
- * ```
- * myEntity {
- *     ::myAttribute.onChanged(this) {
- *         // do something
- *     }
- * }
- * ```
- * @param A the type of the attribute
- * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [Entity] inheriting entity
- * @receiver the attribute reference (::myAttribute) for which to create the listener
- * @param entity the entity for which to create the listener
- * @param callback the block of code to execute when any attribute has changed
- * @return the attribute
- */
-fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> Attribute<A>.onChanged(
-    entity: E,
-    callback: suspend E.() -> Unit
-): Attribute<A> {
-    entity.onAttributeChanged(this, callback)
-    return this
-}
 
 /**
  * Creates a listener executed when the specified attribute of the entity changes to the specified value.
@@ -178,38 +187,6 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChang
         callback()
 }
 
-/**
- * Creates a listener executed when the attribute of the specified entity changes to the specified value.
- * ```
- * myEntity::myAttribute.onChangedTo(myEntity, someValue) {
- *    // do something
- * }
- * ```
- * or
- * ```
- * myEntity {
- *     ::myAttribute.onChangedTo(this, someValue) {
- *         // do something
- *     }
- * }
- * ```
- * @param A the type of the attribute
- * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [Entity] inheriting entity
- * @param entity the entity for which to create the listener
- * @receiver the reference (::myAttribute) to the attribute in the entity
- * @param newAttributeValue the value the attribute must match to execute the [callback]
- * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
- * @return the entity
- */
-fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> Attribute<A>.onChangedTo(
-    entity: E,
-    newAttributeValue: A,
-    callback: suspend E.() -> Unit
-): Attribute<A> {
-    entity.onAttributeChangedTo(this, newAttributeValue, callback)
-    return this
-}
 
 /**
  * Creates a listener executed when the specified attribute of the entity changes anything but the specified value.
@@ -244,39 +221,6 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChang
         callback()
 }
 
-/**
- * Creates a listener executed when the attribute of the specified entity changes anything but the specified value.
- * ```
- * myEntity::myAttribute.onChangedNotTo(myEntity, someOtherValue) {
- *    // do something
- * }
- * ```
- * or
- * ```
- * myEntity {
- *     ::myAttribute.onChangedNotTo(this, someOtherValue) {
- *         // do something
- *     }
- * }
- * ```
- * @param A the type of the attribute
- * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [Entity] inheriting entity
- * @param entity the entity for which to create the listener
- * @receiver attribute the reference (::myAttribute) to the attribute in the entity
- * @param newAttributeValue the value the attribute must NOT match to execute the [callback]
- * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
- * @return the entity
- */
-fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> Attribute<A>.onChangedNotTo(
-    entity: E,
-    newAttributeValue: A,
-    callback: suspend E.() -> Unit
-): Attribute<A> {
-    entity.onAttributeChangedNotTo(this, newAttributeValue, callback)
-    return this
-}
-
 
 // --- NonSpecificAttribute ---
 
@@ -287,6 +231,9 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> Attribute<A>.onCha
  * myEntity.onAttributeChanged(MyDomain.MyEntity::myAttribute) {
  *    // do something
  * }
+ * myEntity.onAttributeChanged(MyDomain.MyEntity::myAttribute, { oldValue, newValue ->
+ *    // do something with oldValue for example
+ * })
  * ```
  * or
  * ```
@@ -294,6 +241,9 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> Attribute<A>.onCha
  *     onAttributeChanged(MyDomain.MyEntity::myAttribute) {
  *         // do something
  *     }
+ *     onAttributeChanged(MyDomain.MyEntity::myAttribute, { oldValue, newValue ->
+ *         // do something with oldValue for example
+ *     })
  * }
  * ```
  * @param A the type of the attribute
@@ -301,61 +251,46 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> Attribute<A>.onCha
  * @param E the type of the receiver, a [Entity] inheriting entity
  * @receiver the entity for which to create the listener
  * @param attribute the reference (MyDomain.MyEntity::myAttribute) to the attribute in the entity
- * @param callback the block of code to execute when any attribute has changed
+ * @param callbackWith the block of code with values to execute when any attribute has changed. Don't provide [callbackWithout] in conjunction with this.
+ * @param callbackWithout the block of code to execute when any attribute has changed. Don't provide [callbackWith] in conjunction with this.
  * @return the entity
  */
 fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChanged(
     attribute: NonSpecificAttribute<E, A>,
-    callback: suspend E.() -> Unit
+    callbackWith: (suspend E.(oldValue: A?, newValue: A?) -> Unit)? = null,
+    callbackWithout: (suspend E.() -> Unit)? = null
 ): E {
+    if (callbackWith != null && callbackWithout != null || callbackWith == null && callbackWithout == null)
+        throw IllegalArgumentException("Exactly one of callbackWith and callbackWithout need to be provided")
+
     checkEntityExists()
     kHassInstance.stateListeners
         .getOrPut(entityID) { hashSetOf() }
         .add(StateListener({ oldState, _ ->
 
             // get the old attribute value by temporarily setting the old attributes as alternative in the delegate
-            alternativeAttributes = oldState?.attributes ?: json {}
-            val oldAttributeValue = attribute.get(this)
+            alternativeAttributes = oldState?.attributes
+            val oldAttributeValue: A? = try {
+                attribute.get(this)
+            } catch (e: Exception) {
+                null
+            }
             alternativeAttributes = null
 
-            val newAttributeValue = attribute.get(this)
+            val newAttributeValue: A? = try {
+                attribute.get(this)
+            } catch (e: Exception) {
+                null
+            }
 
-            if (oldAttributeValue != newAttributeValue)
-                callback()
+            if (oldAttributeValue != newAttributeValue) {
+                callbackWithout?.invoke(this)
+                callbackWith?.invoke(this, oldAttributeValue, newAttributeValue)
+            }
         }))
     return this
 }
 
-/**
- * Creates a listener executed when the attribute of the specified entity changes.
- * ```
- * MyDomain.MyEntity::myAttribute.onChanged(myEntity) {
- *     // do something
- * }
- * ```
- * or
- * ```
- * myEntity {
- *     MyDomain.MyEntity::myAttribute.onChanged(this) {
- *         // do something
- *     }
- * }
- * ```
- * @param A the type of the attribute
- * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [Entity] inheriting entity
- * @receiver the attribute reference (::myAttribute) for which to create the listener
- * @param entity the entity for which to create the listener
- * @param callback the block of code to execute when any attribute has changed
- * @return the attribute
- */
-fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> NonSpecificAttribute<E, A>.onChanged(
-    entity: E,
-    callback: suspend E.() -> Unit
-): NonSpecificAttribute<E, A> {
-    entity.onAttributeChanged(this, callback)
-    return this
-}
 
 /**
  * Creates a listener executed when the specified attribute of the entity changes to the specified value.
@@ -390,104 +325,6 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChang
         callback()
 }
 
-/**
- * Creates a listener executed when the attribute of the specified entity changes to the specified value.
- * ```
- * MyDomain.MyEntity::myAttribute.onChangedTo(myEntity, someValue) {
- *    // do something
- * }
- * ```
- * or
- * ```
- * myEntity {
- *     MyDomain.MyEntity::myAttribute.onChangedTo(this, someValue) {
- *         // do something
- *     }
- * }
- * ```
- * @param A the type of the attribute
- * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [Entity] inheriting entity
- * @param entity the entity for which to create the listener
- * @receiver the reference (MyDomain.MyEntity::myAttribute) to the attribute in the entity
- * @param newAttributeValue the value the attribute must match to execute the [callback]
- * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
- * @return the entity
- */
-fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> NonSpecificAttribute<E, A>.onChangedTo(
-    entity: E,
-    newAttributeValue: A,
-    callback: suspend E.() -> Unit
-): NonSpecificAttribute<E, A> {
-    entity.onAttributeChangedTo(this, newAttributeValue, callback)
-    return this
-}
-
-/**
- * Creates a listener executed when the specified attribute of the entity changes anything but the specified value.
- * ```
- * myEntity.onAttributeChangedNotTo(MyDomain.MyEntity::myAttribute, someOtherValue) {
- *    // do something
- * }
- * ```
- * or
- * ```
- * myEntity {
- *     onAttributeChangedNotTo(MyDomain.MyEntity::myAttribute, someOtherValue) {
- *         // do something
- *     }
- * }
- * ```
- * @param A the type of the attribute
- * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [Entity] inheriting entity
- * @receiver the entity for which to create the listener
- * @param attribute the reference (MyDomain.MyEntity::myAttribute) to the attribute in the entity
- * @param newAttributeValue the value the attribute must NOT match to execute the [callback]
- * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
- * @return the entity
- */
-fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChangedNotTo(
-    attribute: NonSpecificAttribute<E, A>,
-    newAttributeValue: A,
-    callback: suspend E.() -> Unit
-): E = onAttributeChanged(attribute) {
-    if (attribute.get(this) != newAttributeValue)
-        callback()
-}
-
-/**
- * Creates a listener executed when the attribute of the specified entity changes anything but the specified value.
- * ```
- * MyDomain.MyEntity::myAttribute.onChangedNotTo(myEntity, someOtherValue) {
- *    // do something
- * }
- * ```
- * or
- * ```
- * myEntity {
- *     MyDomain.MyEntity::myAttribute.onChangedNotTo(this, someOtherValue) {
- *         // do something
- *     }
- * }
- * ```
- * @param A the type of the attribute
- * @param S the state type of the entity [E]
- * @param E the type of the receiver, a [Entity] inheriting entity
- * @param entity the entity for which to create the listener
- * @receiver attribute the reference (MyDomain.MyEntity::myAttribute) to the attribute in the entity
- * @param newAttributeValue the value the attribute must NOT match to execute the [callback]
- * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
- * @return the entity
- */
-fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> NonSpecificAttribute<E, A>.onChangedNotTo(
-    entity: E,
-    newAttributeValue: A,
-    callback: suspend E.() -> Unit
-): NonSpecificAttribute<E, A> {
-    entity.onAttributeChangedNotTo(this, newAttributeValue, callback)
-    return this
-}
 
 suspend fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.suspendUntilAttributeChangedTo(
     attribute: Attribute<A>,
