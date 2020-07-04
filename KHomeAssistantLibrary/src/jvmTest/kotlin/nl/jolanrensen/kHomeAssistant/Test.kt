@@ -3,7 +3,6 @@ package nl.jolanrensen.kHomeAssistant
 import com.soywiz.klock.minutes
 import com.soywiz.klock.plus
 import kotlinx.coroutines.runBlocking
-import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.domains.getValue
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
@@ -41,13 +40,6 @@ class Test {
         }
     }
 
-    val kHomeAssistant = KHomeAssistantInstance(
-        host = "home.jolanrensen.nl",
-        port = 8123,
-        secure = true,
-        debug = false,
-        accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI"
-    )
 
     @Test
     fun `Basic kHomeAssistant run`() = runBlocking {

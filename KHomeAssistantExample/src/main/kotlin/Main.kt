@@ -57,17 +57,17 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
             // do something
         }
 
-runAt(
-    DateTime(
-        year = Year(2020),
-        month = Month.September,
-        day = 22,
-        hour = 13,
-        minute = 30
-    ).localUnadjusted
-) {
-    // do something
-}
+        runAt(
+            DateTime(
+                year = Year(2020),
+                month = Month.September,
+                day = 22,
+                hour = 13,
+                minute = 30
+            ).localUnadjusted
+        ) {
+            // do something
+        }
 
         Light[""] {
             onTurnedOn { }
@@ -88,24 +88,7 @@ runAt(
 //            white_value = 100
 //        }
     }
-
 }
-
-
-//class MotionLights : Automation() {
-//
-//    override suspend fun initialize(): {
-//        Sensor
-//    }
-//}
-
-val kHomeAssistant = KHomeAssistantInstance(
-    host = "home.jolanrensen.nl",
-    port = 8123,
-    secure = true,
-    debug = true,
-    accessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI0ZTQzYjAwYzc2Njc0ODgzOTBlZTRkNWFmMzgxZGJhNiIsImlhdCI6MTU4NDQ0OTE4NywiZXhwIjoxODk5ODA5MTg3fQ.NaDfDicsHwdpsppIBGQ06moDulGV3K6jFn3ViQDcRwI"
-)
 
 
 class OutsideLights(kHass: KHomeAssistant) : Automation(kHass) {

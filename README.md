@@ -304,8 +304,6 @@ runAt(
 ```
 All schedules return a `Task` instance, which can be `cancel()`'ed at any time.
 
-TODO
-
 ##Getting started
 
 TODO
