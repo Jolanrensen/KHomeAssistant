@@ -158,6 +158,9 @@ MediaPlayer["stereo"].volume_level += 0.05f
 Attributes in KHomeAssistant are cached and updated when state changes occur, meaning they should always be up to
 date. If the cache has not been updated in a while it will fully refresh it.
 
+If you want to take a look at the current state / attributes of an entity, simply print it.
+The `toString` method of an entity is very powerful.
+
 
 ###Listeners
 An important part of automations is being able to react to state- or attribute changes. 
@@ -305,8 +308,115 @@ runAt(
 All schedules return a `Task` instance, which can be `cancel()`'ed at any time.
 
 ##Getting started
+I'm still working on getting KHomeAssistant to work as an Add-On for Home Assistant, however, in the
+meantime, you can already test KHomeAssistant from your own PC, as long as you can connect to your 
+Home Assistant instance over the network / internet. Firstly you'll need a Long Lived Access Token.
+This, you can create by going to your profile on the web interface, scrolling down and creating a new one.
 
-TODO
+All communication between the program and the Home Assistant instance goes via `KHomeAssistantInstance`.
+To get started, create an instance like
+```kotlin
+val kHomeAssistant = KHomeAssistantInstance(
+    host = "THE IP OR HOSTNAME OF YOUR INSTANCE",
+    port = 8123,  // for instance
+    secure = true,  // true if you're using https instead of http
+    debug = false,  // prints more messages if true
+    timeout = 2.seconds,  // Timeout for confirmation for updating states and attributes.
+    accessToken = "THE ACCESS TOKEN"
+)
+```
+Then, using this instance, you can call `.run` on it from a Coroutine context with instances of the automations
+you want to run. This can be done from the `main()` method if you like. For instance:
+```kotlin
+fun main() {
+    runBlocking {
+        kHomeAssistant.run(OutsideLights(kHomeAssistant)/*, maybe others */)
+    }
+}
+```
+And that's all! 
 
-###Functional and DSL style
-TODO
+###Functional, DSL style and more fun styles
+The beauty of Kotlin is that you can use it however you like and if you want, you
+can combine the strengths of object oriented programming and functional programming.
+
+To start off, all automations can also be created using a function call instead of having to create a class.
+```kotlin
+val automation: Automation = automation(kHomeAssistant, "Automation Name") {
+    // this can be seen as the initialize method
+}
+```
+Automations can even be defined directly in the `run` method if you would like to do so.
+```kotlin
+kHomeAssistant.run(
+    automation("one") {
+        // one automation
+    },
+    automation("other") {
+       // other automation
+    }
+)
+```
+
+Next, all entities are invokable, DSL-style, which can be compared to calling `.apply { }` on it.
+This makes for very readable and clear syntax and less typing.
+No one is a fan of syntax like
+```kotlin
+bedroom_lamp.color = Colors.RED
+bedroom_lamp.brightness_pct = 100f
+
+bedroom_lamp.onAttributeChanged(bedroom_lamp::effect) {
+    // do something
+}
+```
+instead, you can use
+```kotlin
+bedroom_lamp {
+    color = Colors.RED
+    brightness_pct = 100f   
+   
+    onAttributeChanged(::effect) {
+        // do something
+    }      
+}
+```
+which does exactly the same thing, however it is a lot clearer with less typing (so less room for error).
+
+If you want to target multiple lights at once, simply put them in a list or array and go for it:
+```kotlin
+val lights = listOf(bedroom_lamp, other_lamp)
+lights {
+    color = Colors.RED
+    brightness_pct = 100f
+
+    onAttributeChanged(::effect) {
+        // do something
+    }
+}
+```
+This saves you from even having to write a for loop.
+
+If all you ever want is to address multiple entities at once and don't want to address them individually, you can immediately
+create a list of entities using:
+```kotlin
+val lights: List<Light.Entity> = Light.Entities("light1", "light2", "light3")
+
+// or
+val lights: List<Light.Entity> = Light["light1", "light2", "light3"]
+```
+This also means that 
+```kotlin
+val light1 = Light["light1"]
+val light2 = Light["light2"]
+val light3 = Light["light3"]
+```
+can be shortened to (only inside a function):
+```kotlin
+val (light1, light2, light3) = Light["light1", "light2", "light3"]
+```
+
+Another fun notation is the delegate notation. You can initialize an entity like this:
+```kotlin
+val bedroom_lamp by Light
+```
+For this to work, the name of the variable needs to exactly match the name of the entity in Home Assistant.

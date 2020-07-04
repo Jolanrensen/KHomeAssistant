@@ -329,13 +329,13 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChang
 suspend fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.suspendUntilAttributeChangedTo(
     attribute: Attribute<A>,
     newAttributeValue: A,
-    timeout: TimeSpan = 2.seconds
+    timeout: TimeSpan = kHassInstance.instance.timeout
 ) = suspendUntilAttributeChanged(attribute, { it == newAttributeValue }, timeout)
 
 suspend fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.suspendUntilAttributeChanged(
     attribute: Attribute<A>,
     condition: (A) -> Boolean,
-    timeout: TimeSpan = 2.seconds
+    timeout: TimeSpan = kHassInstance.instance.timeout
 ) {
     checkEntityExists()
     if (condition(attribute.get())) return

@@ -1,7 +1,9 @@
 package nl.jolanrensen.kHomeAssistant.core
 
 import com.soywiz.klock.DateTime
+import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.parseUtc
+import com.soywiz.klock.seconds
 import com.soywiz.korim.bitmap.NativeImage
 import com.soywiz.korim.format.decodeImageBytes
 import com.soywiz.korio.util.encoding.Base64
@@ -43,8 +45,8 @@ import kotlin.time.minutes
  * @param port the port for your Home Assistant (API), usually 8123
  * @param accessToken the Long-lived Access Token that can be generated from your Home Assistant profile settings
  * @param secure whether to connect over SSL or not (https or http)
+ * @param timeout timeout for confirmation for updating states and attributes
  * @param debug if enabled, debug messages will be printed
- * @param automations a collection of [Automation] instances that should be run by [KHomeAssistantInstance]
  */
 @OptIn(ExperimentalTime::class)
 class KHomeAssistantInstance(
@@ -59,6 +61,9 @@ class KHomeAssistantInstance(
 
     /** Whether to connect over SSL or not (https or http). */
     val secure: Boolean = false,
+
+    /** Timeout for confirmation for updating states and attributes. */
+    val timeout: TimeSpan = 2.seconds,
 
     /** If enabled, debug messages will be printed. */
     override val debug: Boolean = false

@@ -82,12 +82,12 @@ fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onEntityRemoved(
 
 suspend fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.suspendUntilStateChangedTo(
     newState: S?,
-    timeout: TimeSpan = 1.seconds
+    timeout: TimeSpan = kHassInstance.instance.timeout
 ) = suspendUntilStateChanged({ it == newState }, timeout)
 
 suspend fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.suspendUntilStateChanged(
     condition: (S?) -> Boolean,
-    timeout: TimeSpan = 1.seconds
+    timeout: TimeSpan = kHassInstance.instance.timeout
 ) {
     checkEntityExists()
     if (condition(
@@ -134,7 +134,7 @@ suspend fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.suspendUntilStateC
 suspend fun KHomeAssistant.suspendUntilEntityExists(
     domain: Domain<*>,
     entityName: String,
-    timeout: TimeSpan = 1.seconds
+    timeout: TimeSpan = instance.timeout
 ) {
     val entityID = "${domain.domainName}.$entityName"
     if (entityID in instance.entityIds) return
