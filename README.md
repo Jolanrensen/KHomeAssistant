@@ -1,8 +1,9 @@
 # KHomeAssistant (WIP)
-Kotlin alternative to AppDaemon, an automation environment for Home Assistant.
+Kotlin alternative to AppDaemon, an automation environment and library for Home Assistant.
 
 
-Do you like Home Assistant and want to take automation to the next level? 
+Do you like Home Assistant and want to take automation to the next level?
+Do you want to create an Android application that needs to communicate with a Home Assistant instance?
 Have you tried AppDaemon but you found the typeless programming in Python to be a giant trial-and-error situation?
 Well, then KHomeAssistant is the library / add-on for you!
 
@@ -310,7 +311,12 @@ All schedules return a `Task` instance, which can be `cancel()`'ed at any time.
 ##Getting started
 I'm still working on getting KHomeAssistant to work as an Add-On for Home Assistant, however, in the
 meantime, you can already test KHomeAssistant from your own PC, as long as you can connect to your 
-Home Assistant instance over the network / internet. Firstly you'll need a Long Lived Access Token.
+Home Assistant instance over the network / internet. Recommended tools are Intellij by Jetbrains and some Kotlin knowledge of course.
+
+The library is not yet published, so for now, you can keep the library (KHomeAssistantLibrary) and your instance consisting
+of automation (KHomeAssistantExample) in the same project. Eventually, the library will be published.
+
+Firstly you'll need a Long Lived Access Token.
 This, you can create by going to your profile on the web interface, scrolling down and creating a new one.
 
 All communication between the program and the Home Assistant instance goes via `KHomeAssistantInstance`.
@@ -410,7 +416,7 @@ val light1 = Light["light1"]
 val light2 = Light["light2"]
 val light3 = Light["light3"]
 ```
-can be shortened to (only inside a function):
+can (only inside a function) be shortened to:
 ```kotlin
 val (light1, light2, light3) = Light["light1", "light2", "light3"]
 ```
@@ -420,3 +426,38 @@ Another fun notation is the delegate notation. You can initialize an entity like
 val bedroom_lamp by Light
 ```
 For this to work, the name of the variable needs to exactly match the name of the entity in Home Assistant.
+
+## Implemented Domains
+ - switch
+ - sun
+ - scene
+ - notify
+ - mqtt
+ - media_player
+ - light
+ - home_assistant
+ - hassio
+ - group
+ - input
+    - input_boolean
+    - input_datetime
+    - input_number
+    - input_select
+    - input_text
+ - binary_sensor (split per device_class)
+    - generic
+    - battery
+    - connectivity
+    - ...
+    - all of them are present
+ - sensor (split per device_class)
+    - generic
+    - battery
+    - TODO
+ - Tell me what TODO next!
+ 
+# Disclaimer
+This library is VERY MUCH a work in progress. If you're feeling adventurous you can try it out or help
+by creating implementing more domains! Any tips or contributions are welcome as well.
+
+Testing is a large part that still needs to be done.
