@@ -83,9 +83,9 @@ As you can see, callbacks can be inlined, making it much clearer what the automa
 Using helper functions in the library `.Entity()` can be replaced with `[]` which is less typing and still quite clear. 
 Also note that type annotations like `: Scene.Entity` can be omitted as the IDE will hint the type anyways.
 
-##Structure
+## Structure
 
-###Calling services
+### Calling services
 
 While calling services directly from an automation is still possible, 
 ```kotlin
@@ -117,7 +117,7 @@ Domain("some_unsupported_domain")["some_entity"]
     .callService(serviceName = "some_service", data = json { "some_value" to 10 })
 ```
 
-###States
+### States
 
 States are an important part of Home Assistant entities and are usually represented as a String.
 However, sometimes these states are actually Floats like for an "input_number" or the state can only
@@ -138,7 +138,7 @@ In some cases states are also writable, which is dependent on the domain's imple
 For instance, `Light` performs a `turnOn()` when the `state` is set to `ON` and a `turnOff()` when it's set to `OFF`.
 The IDE will tell you if it's possible to set the state like that or not.
 
-###Attributes
+### Attributes
 
 Most entities in Home Assistant have their own attributes. This can range from the current brightness of a light or the volume level of the media player.
 Unlike AppDaemon, attributes are available directly as properties of an entity. This means you can get the volume of your stereo like:
@@ -168,7 +168,7 @@ If you want to take a look at the current state / attributes of an entity, simpl
 The `toString` method of an entity is very powerful.
 
 
-###Listeners
+### Listeners
 
 An important part of automations is being able to react to state- or attribute changes. 
 Most entities include their own helper functions to provide listeners which improves readability
@@ -239,7 +239,7 @@ Switch["bedroom_switch"].onTurnedOn {
 }
 ```
 
-###Scheduler
+### Scheduler
 
 Scheduling when to run something is another essential part for automation. While you can freely
 use `delay(5.seconds)` in your code (as the thread will then simply suspend for 5 seconds), if
@@ -315,7 +315,7 @@ runAt(
 ```
 All schedules return a `Task` instance, which can be `cancel()`'ed at any time.
 
-##Getting started
+## Getting started
 
 I'm still working on getting KHomeAssistant to work as an Add-On for Home Assistant, however, in the
 meantime, you can already test KHomeAssistant from your own PC, as long as you can connect to your 
@@ -350,7 +350,7 @@ fun main() {
 ```
 And that's all! 
 
-###Functional, DSL style and more fun styles
+### Functional, DSL style and more fun styles
 
 The beauty of Kotlin is that you can use it however you like and if you want, you
 can combine the strengths of object oriented programming and functional programming.
