@@ -1,4 +1,5 @@
 # KHomeAssistant (WIP)
+
 Kotlin alternative to AppDaemon, an automation environment and library for Home Assistant.
 
 
@@ -83,7 +84,9 @@ Using helper functions in the library `.Entity()` can be replaced with `[]` whic
 Also note that type annotations like `: Scene.Entity` can be omitted as the IDE will hint the type anyways.
 
 ##Structure
+
 ###Calling services
+
 While calling services directly from an automation is still possible, 
 ```kotlin
 callService(serviceDomain = "light", serviceName = "turn_on", entityID = "light.bedroom_lamp")
@@ -115,6 +118,7 @@ Domain("some_unsupported_domain")["some_entity"]
 ```
 
 ###States
+
 States are an important part of Home Assistant entities and are usually represented as a String.
 However, sometimes these states are actually Floats like for an "input_number" or the state can only
 be one of several types, like "on" or "off" for a "light" entity. Hence, states in KHomeAssistant are typed
@@ -135,6 +139,7 @@ For instance, `Light` performs a `turnOn()` when the `state` is set to `ON` and 
 The IDE will tell you if it's possible to set the state like that or not.
 
 ###Attributes
+
 Most entities in Home Assistant have their own attributes. This can range from the current brightness of a light or the volume level of the media player.
 Unlike AppDaemon, attributes are available directly as properties of an entity. This means you can get the volume of your stereo like:
 ```kotlin
@@ -164,6 +169,7 @@ The `toString` method of an entity is very powerful.
 
 
 ###Listeners
+
 An important part of automations is being able to react to state- or attribute changes. 
 Most entities include their own helper functions to provide listeners which improves readability
 and understandability. For instance, there's:
@@ -234,6 +240,7 @@ Switch["bedroom_switch"].onTurnedOn {
 ```
 
 ###Scheduler
+
 Scheduling when to run something is another essential part for automation. While you can freely
 use `delay(5.seconds)` in your code (as the thread will then simply suspend for 5 seconds), if
 you want to schedule something for each day, this is undoable.
@@ -309,6 +316,7 @@ runAt(
 All schedules return a `Task` instance, which can be `cancel()`'ed at any time.
 
 ##Getting started
+
 I'm still working on getting KHomeAssistant to work as an Add-On for Home Assistant, however, in the
 meantime, you can already test KHomeAssistant from your own PC, as long as you can connect to your 
 Home Assistant instance over the network / internet. Recommended tools are Intellij by Jetbrains and some Kotlin knowledge of course.
@@ -343,6 +351,7 @@ fun main() {
 And that's all! 
 
 ###Functional, DSL style and more fun styles
+
 The beauty of Kotlin is that you can use it however you like and if you want, you
 can combine the strengths of object oriented programming and functional programming.
 
@@ -428,6 +437,7 @@ val bedroom_lamp by Light
 For this to work, the name of the variable needs to exactly match the name of the entity in Home Assistant.
 
 ## Implemented Domains
+
  - switch
  - sun
  - scene
@@ -457,6 +467,7 @@ For this to work, the name of the variable needs to exactly match the name of th
  - Tell me what TODO next!
  
 # Disclaimer
+
 This library is VERY MUCH a work in progress. If you're feeling adventurous you can try it out or help
 by creating implementing more domains! Any tips or contributions are welcome as well.
 
