@@ -461,3 +461,6 @@ This library is VERY MUCH a work in progress. If you're feeling adventurous you 
 by creating implementing more domains! Any tips or contributions are welcome as well.
 
 Testing is a large part that still needs to be done.
+
+While the library uses Kotlin Multiplatform. Currently only Kotlin/JVM works. There are still some reflection pieces
+missing in Kotlin/JS which I hope will be added soon. Kotlin/Native, same story.
