@@ -40,48 +40,6 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
     override suspend fun initialize() {
         println(denon_avrx2200w)
 
-        delay(5.seconds)
-
-        runEveryHour(offset = 30.minutes) {
-
-        }
-
-        runEvery(
-            timeSpan = 1.9.hours + 23.minutes - 4.8.seconds + 1.milliseconds,
-            alignWith = DateTime.nowLocal()
-        ) {
-            // do something
-        }
-
-        runIn(5.minutes) {
-            // do something
-        }
-
-        runAt(
-            DateTime(
-                year = Year(2020),
-                month = Month.September,
-                day = 22,
-                hour = 13,
-                minute = 30
-            ).localUnadjusted
-        ) {
-            // do something
-        }
-
-        Light[""] {
-            onTurnedOn { }
-        }
-
-        denon_avrx2200w {
-            onTurnedOn {
-
-            }
-        }
-
-        denon_avrx2200w.onAttributeChanged("test", { old, new ->
-
-        })
 
 //        Group["living_room_lights"].useAs(Light) {
 //            color = Colors.RED
