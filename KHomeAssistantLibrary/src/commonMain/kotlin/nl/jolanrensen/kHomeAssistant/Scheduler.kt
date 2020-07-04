@@ -28,9 +28,30 @@ val LOCAL_EPOCH: DateTimeTz = DateTime.EPOCH.localUnadjusted
 //    return runEvery(1.weeks, DateTime(DateTime.EPOCH.date, time).localUnadjusted - offsetAtEpoch, callback)
 //}
 
+/** Schedule something to execute each week at a certain day at a certain time. */
+suspend fun KHomeAssistant.runEveryWeekAt(
+    dayOfWeek: DayOfWeek,
+    hour: Int = 0,
+    minute: Int = 0,
+    second: Int = 0,
+    millisecond: Int = 0,
+    callback: suspend () -> Unit
+) = runEveryWeek(
+    dayOfWeek.index0Monday.days + hour.hours + minute.minutes + second.seconds + millisecond.milliseconds,
+    callback
+)
+
+/** Schedule something to execute each week at a certain day at a certain time. */
+suspend fun KHomeAssistant.runEveryWeekAt(
+    dayOfWeek: DayOfWeek,
+    time: Time,
+    callback: suspend () -> Unit
+) = runEveryWeek(dayOfWeek.index0Monday.days + time.encoded, callback)
+
+
 /** Schedule something to execute at a certain (local) time each day. */
 suspend fun KHomeAssistant.runEveryDayAt(
-    hour: Int,
+    hour: Int = 0,
     minute: Int = 0,
     second: Int = 0,
     millisecond: Int = 0,
@@ -43,11 +64,18 @@ suspend fun KHomeAssistant.runEveryDayAt(localTime: Time, callback: suspend () -
     return runEvery(1.days, DateTime(DateTime.EPOCH.date, localTime).localUnadjusted - offsetAtEpoch, callback)
 }
 
-/** Schedule something to execute each week, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the week will be picked. */
+/** Schedule something to execute each week, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the week (Monday) will be picked. */
 suspend fun KHomeAssistant.runEveryWeek(
     alignWith: DateTimeTz = LOCAL_EPOCH + 4.days,
     callback: suspend () -> Unit
 ) = runEvery(1.weeks, alignWith, callback)
+
+/** Schedule something to execute each week, optionally offset with a timeSpan (e.g. amount of days). If not offset, the beginning of the week (Monday) will be picked. */
+suspend fun KHomeAssistant.runEveryWeek(
+    offset: TimeSpan = 0.days + 0.hours + 0.minutes + 0.seconds + 0.milliseconds,
+    callback: suspend () -> Unit
+) = runEvery(1.weeks, LOCAL_EPOCH + 4.days + offset, callback)
+
 
 /** Schedule something to execute each day, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the day will be picked. */
 suspend fun KHomeAssistant.runEveryDay(
@@ -55,11 +83,25 @@ suspend fun KHomeAssistant.runEveryDay(
     callback: suspend () -> Unit
 ) = runEvery(1.days, alignWith, callback)
 
+/** Schedule something to execute each day, optionally offset with a timeSpan (e.g. amount of hours). If not offset, the beginning of the day will be picked. */
+suspend fun KHomeAssistant.runEveryDay(
+    offset: TimeSpan = 0.hours + 0.minutes + 0.seconds + 0.milliseconds,
+    callback: suspend () -> Unit
+) = runEvery(1.days, LOCAL_EPOCH + offset, callback)
+
+
 /** Schedule something to execute each hour, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the hour will be picked. */
 suspend fun KHomeAssistant.runEveryHour(
     alignWith: DateTimeTz = LOCAL_EPOCH,
     callback: suspend () -> Unit
 ) = runEvery(1.hours, alignWith, callback)
+
+/** Schedule something to execute each hour, optionally offset with a timeSpan (e.g. amount of minutes). If not offset, the beginning of the hour will be picked. */
+suspend fun KHomeAssistant.runEveryHour(
+    offset: TimeSpan = 0.minutes + 0.seconds + 0.milliseconds,
+    callback: suspend () -> Unit
+) = runEvery(1.hours, LOCAL_EPOCH + offset, callback)
+
 
 /** Schedule something to execute each minute, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the minute will be picked. */
 suspend fun KHomeAssistant.runEveryMinute(
@@ -67,11 +109,25 @@ suspend fun KHomeAssistant.runEveryMinute(
     callback: suspend () -> Unit
 ) = runEvery(1.minutes, alignWith, callback)
 
+/** Schedule something to execute each minute, optionally offset with a timespan (e.g. amount of seconds). If not offset, the beginning of the minute will be picked. */
+suspend fun KHomeAssistant.runEveryMinute(
+    offset: TimeSpan = 0.seconds + 0.milliseconds,
+    callback: suspend () -> Unit
+) = runEvery(1.minutes, LOCAL_EPOCH + offset, callback)
+
+
 /** Schedule something to execute each second, optionally aligned with a certain point in (local) time. If not aligned, the beginning of the second will be picked. */
 suspend fun KHomeAssistant.runEverySecond(
     alignWith: DateTimeTz = LOCAL_EPOCH,
     callback: suspend () -> Unit
 ) = runEvery(1.seconds, alignWith, callback)
+
+/** Schedule something to execute each second, optionally offset with a timeSpan (amount of milliseconds). If not offset, the beginning of the second will be picked. */
+suspend fun KHomeAssistant.runEverySecond(
+    offset: TimeSpan = 0.milliseconds,
+    callback: suspend () -> Unit
+) = runEvery(1.seconds, LOCAL_EPOCH + offset, callback)
+
 
 /** Schedule something to repeatedly execute each given timespan, optionally aligned with a certain point in (local) time. If not aligned, the local epoch (00:00:00 jan 1 1970, local time) will be picked. */
 suspend fun KHomeAssistant.runEvery(

@@ -1,7 +1,4 @@
-import com.soywiz.klock.DateTime
-import com.soywiz.klock.Time
-import com.soywiz.klock.minutes
-import com.soywiz.klock.seconds
+import com.soywiz.klock.*
 import com.soywiz.korio.async.delay
 import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.*
@@ -45,8 +42,15 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
 
         delay(5.seconds)
 
-        runEveryHour(alignWith = DateTime.EPOCH.localUnadjusted + 30.minutes) {
+        runEveryHour(offset = 30.minutes) {
 
+        }
+
+        runEvery(
+            timeSpan = 1.9.hours + 23.minutes - 4.8.seconds + 1.milliseconds,
+            alignWith = DateTime.nowLocal()
+        ) {
+            // do something
         }
 
         Light[""] {

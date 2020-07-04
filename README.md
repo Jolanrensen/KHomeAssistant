@@ -243,10 +243,46 @@ runEveryMinute {
 ```
 and 
 ```kotlin
-runEveryHour(alignWith = LOCAL_EPOCH + 30.minutes) {
-    // this gets run every hour at the 30 minute mark
+runEveryHour(offset = 30.minutes + 15.seconds) {
+    // this gets run every hour at the 30 minute mark plus 15 seconds
 }
 ```
+You can even go completely custom
+```kotlin
+runEvery(
+    timeSpan = 1.9.hours + 23.minutes - 4.8.seconds + 1.milliseconds,
+    alignWith = DateTime.nowLocal()
+) {
+    // do something
+}
+```
+
+There are also irregular intervals such as running something at sunset.
+Offsets are also available.
+```kotlin
+runEveryDayAtSunset(offset = -15.minutes) {
+    // this gets run every day 15 minutes before sunset
+}
+```
+As the time of the sunset changes every day, the next execution time gets updated automatically
+using an attribute listener.
+You can also create a scheduled execution for a changing execution time yourself (for instance
+using a `datetime_input`). To understand how that would work, let's look again at how `runEveryDayAtSunset` works.
+```kotlin
+runAt(
+    getNextLocalExecutionTime = { sun.nextRising },  // define how to get the execution time value
+    whenToUpdate = { update ->  // define when to update the execution time value
+        sun.onAttributeChanged(sun::nextRising) { update() }  // namely when the nextRising attribute changes
+    }
+) {
+    // do something
+}
+```
+
+
+
+One time only:
+runin, runat todo
 
 TODO
 
