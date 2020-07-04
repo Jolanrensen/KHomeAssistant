@@ -9,7 +9,7 @@ import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaContentType.*
-import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaPlayerState.*
+import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.State.*
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.SupportedFeatures.*
 import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT
@@ -29,9 +29,7 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
     override fun equals(other: Any?) = other is MediaPlayer
     override fun hashCode(): Int = domainName.hashCode()
 
-    // TODO maybe. All services also work with "all" as entity_id to control all media players
-
-    enum class MediaPlayerState(val value: String) {
+    enum class State(val value: String) {
         OFF("off"),
         ON("on"),
         PLAYING("playing"),
@@ -143,7 +141,6 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("supportedFeatures"))
         val supported_features: Int
 
-
         // Read / write
 
         /** Track number of current playing media, music track only. */
@@ -204,7 +201,7 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
     class Entity(
         override val kHassInstance: KHomeAssistant,
         override val name: String
-    ) : BaseEntity<MediaPlayerState, HassAttributes>(
+    ) : BaseEntity<State, HassAttributes>(
         kHassInstance = kHassInstance,
         name = name,
         domain = MediaPlayer(kHassInstance)
@@ -214,8 +211,11 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
         override val additionalToStringAttributes: Array<Attribute<*>> = super.additionalToStringAttributes +
                 getHassAttributesHelpers<HassAttributes>()
 
+        override fun stateToString(state: State): String = state.value
+        override fun stringToState(stateValue: String): State? = State.values().find { it.value == stateValue }
+
         /** state can also be writable. */
-        override var state: MediaPlayerState
+        override var state: State
             get() = super.state
             set(value) {
                 runBlocking { switchTo(value) }
@@ -367,7 +367,7 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
             return result
         }
 
-        suspend inline fun switchTo(state: MediaPlayerState, async: Boolean = false) {
+        suspend inline fun switchTo(state: State, async: Boolean = false) {
             when (state) {
                 ON -> turnOn(async)
                 OFF -> turnOff(async)

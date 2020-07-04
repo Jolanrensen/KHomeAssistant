@@ -2,10 +2,7 @@ import com.soywiz.korim.color.Colors
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
-import nl.jolanrensen.kHomeAssistant.domains.Light
-import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
-import nl.jolanrensen.kHomeAssistant.domains.Switch
-import nl.jolanrensen.kHomeAssistant.domains.getValue
+import nl.jolanrensen.kHomeAssistant.domains.*
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
 import nl.jolanrensen.kHomeAssistant.entities.*
 
@@ -39,9 +36,14 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
 
     val bedroom_lamp by Light
 
-    override suspend fun initialize() {
-        println(denon_avrx2200w)
+    val oosterhout by Weather
 
+    override suspend fun initialize() {
+//        println(denon_avrx2200w)
+
+        oosterhout {
+            println(this)
+        }
 
 //        Group["living_room_lights"].useAs(Light) {
 //            color = Colors.RED
