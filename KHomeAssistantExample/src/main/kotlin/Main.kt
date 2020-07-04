@@ -53,6 +53,22 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
             // do something
         }
 
+        runIn(5.minutes) {
+            // do something
+        }
+
+runAt(
+    DateTime(
+        year = Year(2020),
+        month = Month.September,
+        day = 22,
+        hour = 13,
+        minute = 30
+    ).localUnadjusted
+) {
+    // do something
+}
+
         Light[""] {
             onTurnedOn { }
         }

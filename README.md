@@ -279,10 +279,30 @@ runAt(
 }
 ```
 
-
-
-One time only:
-runin, runat todo
+Finally, you can define one-off schedulings.
+There is `runIn()` where you can schedule something to run in a certain amount of time from now.
+For example:
+```kotlin
+runIn(5.minutes) {
+    // do something
+}
+```
+There's also `runAt()` where you can define when to run something at a certain point in (local) time.
+For example:
+```kotlin
+runAt(
+    DateTime(
+        year = Year(2020), 
+        month = Month.September, 
+        day = 22, 
+        hour = 13, 
+        minute = 30
+    ).localUnadjusted
+) {
+    // do something
+}
+```
+All schedules return a `Task` instance, which can be `cancel()`'ed at any time.
 
 TODO
 
