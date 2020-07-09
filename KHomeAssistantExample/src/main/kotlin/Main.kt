@@ -50,6 +50,8 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
             println(this)
         }
 
+        println(getConfig())
+
 //        Group["living_room_lights"].useAs(Light) {
 //            color = Colors.RED
 //            white_value = 100

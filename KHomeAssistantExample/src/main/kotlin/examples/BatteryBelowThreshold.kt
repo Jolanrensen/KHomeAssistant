@@ -4,23 +4,24 @@ import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.automation
 import nl.jolanrensen.kHomeAssistant.domains.Notify
-import nl.jolanrensen.kHomeAssistant.domains.sensors.BatterySensor
+import nl.jolanrensen.kHomeAssistant.domains.sensors.BatteryLevelSensor
+import nl.jolanrensen.kHomeAssistant.domains.sensors.BatteryStateSensor
 import nl.jolanrensen.kHomeAssistant.entities.onStateChanged
 
 class BatteryBelowThreshold(nameOfBatterySensor: String, private val threshold: Int, kHass: KHomeAssistant) :
     Automation(kHass) {
 
     private var belowThreshold = false
-    private val batterySensor: BatterySensor.Entity = BatterySensor[nameOfBatterySensor]
+    private val batteryLevelSensor: BatteryLevelSensor.Entity = BatteryLevelSensor[nameOfBatterySensor]
 
     override suspend fun initialize() {
-        batterySensor.onStateChanged { checkState(this) }
+        batteryLevelSensor.onStateChanged { checkState(this) }
 
         // initial check
-        checkState(batterySensor)
+        checkState(batteryLevelSensor)
     }
 
-    private suspend fun checkState(sensor: BatterySensor.Entity) {
+    private suspend fun checkState(sensor: BatteryLevelSensor.Entity) {
         if (!belowThreshold && sensor.state < threshold) {
             Notify.notify(message = "Battery sensor ${sensor.name}'s percentage is below $threshold.")
         }
@@ -32,17 +33,17 @@ class BatteryBelowThreshold(nameOfBatterySensor: String, private val threshold: 
 fun batteryBelowThreshold(kHass: KHomeAssistant, nameOfBatterySensor: String, threshold: Int): Automation =
     automation(kHass, "BatteryBelowThreshold") {
         var belowThreshold = false
-        val batterySensor: BatterySensor.Entity = BatterySensor[nameOfBatterySensor]
+        val batteryLevelSensor: BatteryLevelSensor.Entity = BatteryLevelSensor[nameOfBatterySensor]
 
-        val checkState: suspend BatterySensor.Entity.() -> Unit = {
+        val checkState: suspend BatteryLevelSensor.Entity.() -> Unit = {
             if (!belowThreshold && state < threshold) {
                 Notify.notify(message = "Battery sensor $name's percentage is below $threshold.")
             }
             belowThreshold = state < threshold
         }
 
-        batterySensor.onStateChanged(callbackWithout = checkState)
+        batteryLevelSensor.onStateChanged(callbackWithout = checkState)
 
         // initial check
-        checkState(batterySensor)
+        checkState(batteryLevelSensor)
     }

@@ -32,6 +32,9 @@ interface BinarySensorHassAttributes : BaseHassAttributes {
     @Deprecated("You can use the typed version", replaceWith = ReplaceWith("deviceClass"))
     val device_class: String?
 
+    /** Defines the units of measurement, if any. This will also influence the graphical presentation in the history visualisation as continuous value. Sensors with missing unit_of_measurement are showing as discrete values. */
+    val unit_of_measurement: String?
+
     // Helper
     val deviceClass: SensorDeviceClass
         get() = SensorDeviceClass.values()
@@ -72,7 +75,7 @@ abstract class AbstractSensorEntity<StateType : Any, AttrsType : BinarySensorHas
 
     /** Readable state with added unit of measurement, aka '50%'. */
     val readableState: String
-        get() = unit_of_measurement?.let { "$state$unit_of_measurement" } ?: state.toString()
+        get() = unit_of_measurement?.let { "$state ${unit_of_measurement ?: ""}" } ?: state.toString()
 
 }
 

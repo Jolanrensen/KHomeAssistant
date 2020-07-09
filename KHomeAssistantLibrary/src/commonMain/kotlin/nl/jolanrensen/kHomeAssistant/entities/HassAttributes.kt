@@ -26,9 +26,6 @@ interface HassAttributes {
     /** For switches with an assumed state two buttons are shown (turn off, turn on) instead of a switch. If assumed_state is false you will get the default switch icon. */
     val assumed_state: Boolean
 
-    /** Defines the units of measurement, if any. This will also influence the graphical presentation in the history visualisation as continuous value. Sensors with missing unit_of_measurement are showing as discrete values. */
-    val unit_of_measurement: String?
-
     /** Defines the initial state for automations, on or off. */
     val initial_state: String
 
