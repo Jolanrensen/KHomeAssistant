@@ -22,7 +22,7 @@ class PresenceBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = PresenceBinarySensor(kHassInstance),
-        deviceClass = "presence"
+        expectedDeviceClass = BinarySensorDeviceClass.PRESENCE
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

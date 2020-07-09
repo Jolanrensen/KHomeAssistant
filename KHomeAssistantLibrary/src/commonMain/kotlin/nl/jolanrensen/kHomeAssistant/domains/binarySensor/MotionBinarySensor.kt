@@ -22,7 +22,7 @@ class MotionBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = MotionBinarySensor(kHassInstance),
-        deviceClass = "motion"
+        expectedDeviceClass = BinarySensorDeviceClass.MOTION
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

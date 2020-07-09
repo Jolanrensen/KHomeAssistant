@@ -1,5 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains.sensors
 
+import com.soywiz.korio.file.std.externalStorageVfs
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.entities.Attribute
 import nl.jolanrensen.kHomeAssistant.entities.BaseHassAttributes
@@ -20,7 +21,7 @@ class BatterySensor(override val kHassInstance: KHomeAssistant) :
             name = name
         )
 
-    interface HassAttributes : BaseHassAttributes {
+    interface HassAttributes : BinarySensorHassAttributes {
         /**  Boolean to indicate whether the device is charging.  */
         val is_charging: Boolean
 
@@ -35,7 +36,7 @@ class BatterySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = BatterySensor(kHassInstance),
-        deviceClass = "battery"
+        expectedDeviceClass = SensorDeviceClass.BATTERY
     ), HassAttributes {
         override fun stringToState(stateValue: String) = stateValue.toFloatOrNull()
         override fun stateToString(state: Float) = state.toString()

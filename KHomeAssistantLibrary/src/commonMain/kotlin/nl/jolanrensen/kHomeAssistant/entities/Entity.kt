@@ -172,7 +172,6 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
     override val entity_picture: String by attrsDelegate()
     override val icon: String by attrsDelegate()
     override val assumed_state: Boolean by attrsDelegate(true)
-    override val device_class: String by attrsDelegate() // TODO maybe move to binary sensor, sensor, cover and media player only
     override val unit_of_measurement: String? by attrsDelegate(null)
     override val initial_state: String by attrsDelegate()
     override val id: String by attrsDelegate()

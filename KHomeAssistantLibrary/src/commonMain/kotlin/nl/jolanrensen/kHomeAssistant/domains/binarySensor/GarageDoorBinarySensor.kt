@@ -22,7 +22,7 @@ class GarageDoorBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = GarageDoorBinarySensor(kHassInstance),
-        deviceClass = "garage_door"
+        expectedDeviceClass = BinarySensorDeviceClass.GARAGE_DOOR
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

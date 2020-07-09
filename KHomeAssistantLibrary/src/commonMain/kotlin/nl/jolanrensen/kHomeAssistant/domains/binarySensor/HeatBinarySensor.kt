@@ -22,7 +22,7 @@ class HeatBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = HeatBinarySensor(kHassInstance),
-        deviceClass = "heat"
+        expectedDeviceClass = BinarySensorDeviceClass.HEAT
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

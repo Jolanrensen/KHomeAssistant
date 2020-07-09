@@ -22,7 +22,7 @@ class SafetyBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = SafetyBinarySensor(kHassInstance),
-        deviceClass = "safety"
+        expectedDeviceClass = BinarySensorDeviceClass.SAFETY
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

@@ -22,7 +22,7 @@ class ConnectivityBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = ConnectivityBinarySensor(kHassInstance),
-        deviceClass = "connectivity"
+        expectedDeviceClass = BinarySensorDeviceClass.CONNECTIVITY
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

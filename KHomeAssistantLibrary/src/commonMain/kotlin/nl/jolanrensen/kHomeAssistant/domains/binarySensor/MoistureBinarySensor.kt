@@ -22,7 +22,7 @@ class MoistureBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = MoistureBinarySensor(kHassInstance),
-        deviceClass = "moisture"
+        expectedDeviceClass = BinarySensorDeviceClass.MOISTURE
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

@@ -22,7 +22,7 @@ class GasBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = GasBinarySensor(kHassInstance),
-        deviceClass = "gas"
+        expectedDeviceClass = BinarySensorDeviceClass.GAS
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

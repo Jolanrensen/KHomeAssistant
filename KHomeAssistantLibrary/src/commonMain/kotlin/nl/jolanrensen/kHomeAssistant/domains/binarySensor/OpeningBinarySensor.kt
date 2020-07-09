@@ -22,7 +22,7 @@ class OpeningBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = OpeningBinarySensor(kHassInstance),
-        deviceClass = "opening"
+        expectedDeviceClass = BinarySensorDeviceClass.OPENING
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

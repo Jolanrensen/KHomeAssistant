@@ -22,7 +22,7 @@ class BatteryBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = BatteryBinarySensor(kHassInstance),
-        deviceClass = "battery"
+        expectedDeviceClass = BinarySensorDeviceClass.BATTERY
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

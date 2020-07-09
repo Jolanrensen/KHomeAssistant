@@ -7,7 +7,7 @@ import nl.jolanrensen.kHomeAssistant.entities.getHassAttributes
 
 /** Generic sensor. The type of state will be a String and the unit_of_measurement will be absent. */
 class GenericSensor(override val kHassInstance: KHomeAssistant) :
-    AbstractSensor<String, BaseHassAttributes, GenericSensor.Entity>(kHassInstance) {
+    AbstractSensor<String, BinarySensorHassAttributes, GenericSensor.Entity>(kHassInstance) {
 
     /** Making sure GenericSensor acts as a singleton. */
     override fun equals(other: Any?) = other is GenericSensor
@@ -18,12 +18,12 @@ class GenericSensor(override val kHassInstance: KHomeAssistant) :
     class Entity(
         override val kHassInstance: KHomeAssistant,
         override val name: String
-    ) : AbstractSensorEntity<String, BaseHassAttributes>(
+    ) : AbstractSensorEntity<String, BinarySensorHassAttributes>(
         kHassInstance = kHassInstance,
         name = name,
         domain = GenericSensor(kHassInstance),
-        deviceClass = null
-    ), BaseHassAttributes {
+        expectedDeviceClass = SensorDeviceClass.GENERIC
+    ), BinarySensorHassAttributes {
 
         override val hassAttributes: Array<Attribute<*>> = getHassAttributes<BaseHassAttributes>()
 

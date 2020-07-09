@@ -22,7 +22,7 @@ class SmokeBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = SmokeBinarySensor(kHassInstance),
-        deviceClass = "smoke"
+        expectedDeviceClass = BinarySensorDeviceClass.SMOKE
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

@@ -29,6 +29,12 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
     override fun equals(other: Any?) = other is MediaPlayer
     override fun hashCode(): Int = domainName.hashCode()
 
+    enum class DeviceClass(val value: String?) {
+        GENERIC(null),
+        TV("tv"),
+        SPEAKER("speaker")
+    }
+
     enum class State(val value: String) {
         OFF("off"),
         ON("on"),
@@ -137,9 +143,13 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
         /** List of available sound modes. */
         val sound_mode_list: List<String>
 
-        /** Set of supported features. @see [supportedFeatures] */
+        /** Set of supported features. @see [supportedFeatures]. */
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("supportedFeatures"))
         val supported_features: Int
+
+        /** The class of the device as set by configuration. @see [deviceClass]. */
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("deviceClass"))
+        val device_class: String?
 
         // Read / write
 
@@ -194,6 +204,30 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
                 media_position = value.seconds.toFloat()
             }
 
+        /** The class of the device as set by configuration. */
+        val deviceClass: DeviceClass
+            get() = DeviceClass.values()
+                .find { it.value == device_class } ?: DeviceClass.GENERIC
+        
+        /** Cycle through the sources forwards. */
+        fun selectNextSource() {
+            source = source_list[(source_list.indexOf(source) + 1) % source_list.size]
+        }
+
+        /** Cycle through the sources backwards. */
+        fun selectPreviousSource() {
+            source = source_list[(source_list.indexOf(source) - 1) % source_list.size]
+        }
+
+        /** Cycle through the sound modes forwards. */
+        fun selectNextSoundMode() {
+            sound_mode = sound_mode_list[(sound_mode_list.indexOf(sound_mode) + 1) % sound_mode_list.size]
+        }
+
+        /** Cycle through the sound modes backwards. */
+        fun selectPreviousSoundMode() {
+            sound_mode = sound_mode_list[(sound_mode_list.indexOf(sound_mode) - 1) % sound_mode_list.size]
+        }
     }
 
     @Suppress("RemoveExplicitTypeArguments")
@@ -266,6 +300,9 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
         override val app_name: String by attrsDelegate()
         override val source_list: List<String> by attrsDelegate(listOf())
         override val sound_mode_list: List<String> by attrsDelegate(listOf())
+
+        @Deprecated("You can use the typed version", replaceWith = ReplaceWith("deviceClass"))
+        override val device_class: String? by attrsDelegate()
 
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("supportedFeatures"))
         override val supported_features: Int by attrsDelegate(0)

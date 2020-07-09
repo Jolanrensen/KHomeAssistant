@@ -22,7 +22,7 @@ class LightBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = LightBinarySensor(kHassInstance),
-        deviceClass = "light"
+        expectedDeviceClass = BinarySensorDeviceClass.LIGHT
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

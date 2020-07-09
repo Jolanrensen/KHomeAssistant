@@ -22,7 +22,7 @@ class PowerBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = PowerBinarySensor(kHassInstance),
-        deviceClass = "power"
+        expectedDeviceClass = BinarySensorDeviceClass.POWER
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

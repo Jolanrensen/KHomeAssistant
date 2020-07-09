@@ -22,7 +22,7 @@ class WindowBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = WindowBinarySensor(kHassInstance),
-        deviceClass = "window"
+        expectedDeviceClass = BinarySensorDeviceClass.WINDOW
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

@@ -22,7 +22,7 @@ class SoundBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = SoundBinarySensor(kHassInstance),
-        deviceClass = "sound"
+        expectedDeviceClass = BinarySensorDeviceClass.SOUND
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

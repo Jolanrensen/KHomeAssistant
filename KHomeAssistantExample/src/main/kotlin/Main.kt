@@ -3,6 +3,7 @@ import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.*
+import nl.jolanrensen.kHomeAssistant.domains.binarySensor.AbstractBinarySensor
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
 import nl.jolanrensen.kHomeAssistant.entities.*
 
@@ -39,7 +40,11 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
     val oosterhout by Weather
 
     override suspend fun initialize() {
-//        println(denon_avrx2200w)
+
+//        val test = AbstractBinarySensor.BinarySensorDeviceClass.GENERIC.domain(this)["test"]
+
+        println(denon_avrx2200w)
+
 
         oosterhout {
             println(this)

@@ -22,7 +22,7 @@ class PlugBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = PlugBinarySensor(kHassInstance),
-        deviceClass = "plug"
+        expectedDeviceClass = BinarySensorDeviceClass.PLUG
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

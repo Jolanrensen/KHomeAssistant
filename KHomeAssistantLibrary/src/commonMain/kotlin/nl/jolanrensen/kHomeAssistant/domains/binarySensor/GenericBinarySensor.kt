@@ -22,7 +22,7 @@ class GenericBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = GenericBinarySensor(kHassInstance),
-        deviceClass = null
+        expectedDeviceClass = BinarySensorDeviceClass.GENERIC
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()

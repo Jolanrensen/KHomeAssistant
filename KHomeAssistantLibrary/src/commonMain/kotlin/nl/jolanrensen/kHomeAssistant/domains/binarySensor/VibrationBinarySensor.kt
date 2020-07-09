@@ -22,7 +22,7 @@ class VibrationBinarySensor(override val kHassInstance: KHomeAssistant) :
         kHassInstance = kHassInstance,
         name = name,
         domain = VibrationBinarySensor(kHassInstance),
-        deviceClass = "vibration"
+        expectedDeviceClass = BinarySensorDeviceClass.VIBRATION
     ) {
         override fun stringToState(stateValue: String) =
             OnOff.values()
