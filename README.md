@@ -466,6 +466,7 @@ For this to work, the name of the variable needs to exactly match the name of th
     - TODO
  - weather
  - cover
+ - air_quality
  - Tell me what TODO next!
  - You can also implement a domain yourself following the `ExampleDomain` in the KHomeAssistantExample subproject.
  
