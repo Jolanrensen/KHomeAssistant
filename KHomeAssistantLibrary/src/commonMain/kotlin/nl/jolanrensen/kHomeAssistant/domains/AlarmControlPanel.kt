@@ -1,6 +1,5 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import com.soywiz.korio.file.std.resourcesVfs
 import kotlinx.serialization.json.json
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.AlarmControlPanel.State.*
@@ -92,6 +91,7 @@ class AlarmControlPanel<CodeFormat : Any>(
         override val code_format: String by attrsDelegate()
         override val changed_by: String? by attrsDelegate(null)
         override val code_arm_required: Boolean by attrsDelegate(true)
+
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("supportedFeatures"))
         override val supported_features: Int by attrsDelegate()
 
@@ -112,6 +112,14 @@ class AlarmControlPanel<CodeFormat : Any>(
                     throw UnsupportedFeatureException("Unfortunately the alarm control panel $name does not support ${it.name}.")
             }
         }
+
+        fun onTriggered(callback: suspend Entity.() -> Unit) = onStateChangedTo(TRIGGERED, callback)
+        fun onPending(callback: suspend Entity.() -> Unit) = onStateChangedTo(PENDING, callback)
+        fun onArmedHome(callback: suspend Entity.() -> Unit) = onStateChangedTo(ARMED_HOME, callback)
+        fun onArmedAway(callback: suspend Entity.() -> Unit) = onStateChangedTo(ARMED_AWAY, callback)
+        fun onArmedNight(callback: suspend Entity.() -> Unit) = onStateChangedTo(ARMED_NIGHT, callback)
+        fun onArmedCustomBypass(callback: suspend Entity.() -> Unit) = onStateChangedTo(ARMED_CUSTOM_BYPASS, callback)
+
 
         /** Send disarm command. */
         suspend fun disarm(code: CodeFormat? = null, async: Boolean = false): ResultMessage {
