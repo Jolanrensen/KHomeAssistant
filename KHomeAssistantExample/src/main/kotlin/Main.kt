@@ -1,11 +1,15 @@
-import com.soywiz.korim.color.Colors
+import com.soywiz.klock.seconds
+import com.soywiz.korio.async.delay
+import kotlinx.coroutines.delay
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.*
-import nl.jolanrensen.kHomeAssistant.domains.binarySensor.AbstractBinarySensor
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
-import nl.jolanrensen.kHomeAssistant.entities.*
+import nl.jolanrensen.kHomeAssistant.entities.invoke
+import nl.jolanrensen.kHomeAssistant.entities.onTurnedOn
+import nl.jolanrensen.kHomeAssistant.entities.turnOff
+import nl.jolanrensen.kHomeAssistant.entities.turnOn
 
 
 class BedroomLights(kHass: KHomeAssistant) : Automation(kHass) {
@@ -39,18 +43,19 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
 
     val oosterhout by Weather
 
+    val lock_linux by AlarmControlPanelNumber
+
     override suspend fun initialize() {
 
 //        val test = AbstractBinarySensor.BinarySensorDeviceClass.GENERIC.domain(this)["test"]
 
-        println(denon_avrx2200w)
+        println(lock_linux)
 
-
-        oosterhout {
-            println(this)
+        lock_linux {
+            armAway(2772)
+            delay(5.seconds)
+            disarm(2772)
         }
-
-        println(getConfig())
 
 //        Group["living_room_lights"].useAs(Light) {
 //            color = Colors.RED
