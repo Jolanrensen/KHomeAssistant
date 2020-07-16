@@ -164,8 +164,8 @@ class KHomeAssistantInstance(
      * )
      * ```
      * */
-    suspend fun run(vararg functionalAutomations: FunctionalAutomation) =
-        run(*functionalAutomations.map { it(this) }.toTypedArray())
+    suspend fun run(vararg functionalAutomations: FunctionalAutomation, mode: Mode = Mode.AUTOMATIC) =
+        run(automations = *functionalAutomations.map { it(this) }.toTypedArray(), mode = mode)
 
     /**
      * Allows to inline creation of [KHomeAssistantInstance] and automations and starting a run.
@@ -190,25 +190,25 @@ class KHomeAssistantInstance(
 //    suspend fun run(vararg automations: Automation) = run(automations.toList())
 
     /** Run KHomeAssistant, this makes the connection, authenticates, initializes and runs the complete HA interaction */
-    suspend fun run(vararg automations: Automation) {
+    suspend fun run(vararg automations: Automation, mode: Mode = Mode.AUTOMATIC) {
         this.automations = automations.toList()
         println("KHomeAssistant started running at ${DateTime.nowLocal().utc}")
         if (secure) WebsocketsHttpClient.httpClient.wss(
             host = host,
             port = port,
             path = "/api/websocket",
-            block = runOnWebsocket
+            block = runOnWebsocket(mode)
         ) else WebsocketsHttpClient.httpClient.ws(
             host = host,
             port = port,
             path = "/api/websocket",
-            block = runOnWebsocket
+            block = runOnWebsocket(mode)
         )
     }
 
     /** What to run on the websocket */
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val runOnWebsocket: suspend DefaultClientWebSocketSession.() -> Unit = {
+    private fun runOnWebsocket(mode: Mode): suspend DefaultClientWebSocketSession.() -> Unit = {
         // authenticate on Home Assistant
         authenticate()
 
@@ -229,10 +229,12 @@ class KHomeAssistantInstance(
 
         // cancel if there aren't any listeners and the automations are initialized
         println("All automations are initialized")
-        //delay(1000) // wait for a second, as [suspendUntilStateChangedTo] could still be running
-        if ((stateListeners.isEmpty() || stateListeners.values.all { it.all { it.shortLived } }) && scheduler.isEmpty && eventListeners.isEmpty()) {
+        val couldStop = (stateListeners.isEmpty() || stateListeners.values.all { it.all { it.shortLived } })
+                && scheduler.isEmpty
+                && eventListeners.isEmpty()
+
+        if (mode == Mode.JUST_INITIALIZE || mode == Mode.AUTOMATIC && couldStop) {
             println("There are no state listeners or scheduled tasks so KHomeAssistant is stopping...")
-//            cancelAllTimers()
             receiver!!.cancelAndJoin()
             sender!!.cancelAndJoin()
         } else {

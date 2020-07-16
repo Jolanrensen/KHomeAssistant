@@ -74,17 +74,14 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
         /** Integer between 0 and 255 for how bright a dedicated white LED should be. */
         var white_value: Int
 
+        /** An integer in mireds representing the color temperature you want the light to be. */
+        var color_temp: Int
+
         // write only
         /** String with the name of one of the built-in profiles (relax, energize, concentrate, reading) or one of the custom profiles defined in light_profiles.csv in the current working directory. Light profiles define an xy color and a brightness. If a profile is given and a brightness then the profile brightness will be overwritten. */
         var profile: String
             @Deprecated("'profile' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'profile' is write only")
-            set(_) = error("must be overridden")
-
-        /** An integer in mireds representing the color temperature you want the light to be. */
-        var color_temp: Int
-            @Deprecated("'color_temp' is write only", level = DeprecationLevel.ERROR)
-            get() = throw WriteOnlyException("'color_temp' is write only")
             set(_) = error("must be overridden")
 
         /** Alternatively, you can specify the color temperature in Kelvin. */
@@ -224,14 +221,11 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
         override var rgb_color: RGBColor by attrsDelegate()
         override var white_value: Int by attrsDelegate()
         override var xy_color: XYColor by attrsDelegate()
+        override var color_temp: Int by attrsDelegate()
         override var profile: String
             @Deprecated("'profile' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'profile' is write only")
             set(value) = attrsDelegate<String>().setValue(this, ::profile, value)
-        override var color_temp: Int
-            @Deprecated("'color_temp' is write only", level = DeprecationLevel.ERROR)
-            get() = throw WriteOnlyException("'color_temp' is write only")
-            set(value) = attrsDelegate<Int>().setValue(this, ::color_temp, value)
         override var kelvin: Int
             @Deprecated("'kelvin' is write only", level = DeprecationLevel.ERROR)
             get() = throw WriteOnlyException("'kelvin' is write only")
@@ -392,7 +386,7 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
                 }
             )
 
-            if (!async) suspendUntilStateChangedTo(OnOff.ON, transition ?: 1.seconds)
+            if (!async) suspendUntilStateChangedTo(OnOff.ON, transition ?: kHassInstance.instance.timeout)
 
             return result
         }

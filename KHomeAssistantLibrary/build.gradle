@@ -11,7 +11,7 @@ repositories {
     maven { url="https://dl.bintray.com/korlibs/korlibs" }
 }
 group 'nl.jolanrensen.kHomeAssistant'
-version '0.0.2'
+version '0.0.3'
 
 apply plugin: 'maven-publish'
 //apply plugin: 'kotlinx-serialization'
