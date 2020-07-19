@@ -6,6 +6,7 @@ import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.domains.sun
 import nl.jolanrensen.kHomeAssistant.entities.invoke
 import nl.jolanrensen.kHomeAssistant.entities.onAttributeChanged
+import kotlin.jvm.Volatile
 
 /**
  * The scheduler always assumes local time instead of UTC time to give you a piece of mind.
@@ -329,7 +330,7 @@ suspend fun KHomeAssistant.runEveryDayAt(
 )
 
 
-interface Task {
+/* TODO fun */ interface Task {
     suspend fun cancel()
 }
 
@@ -339,6 +340,8 @@ sealed class RepeatedTask : Comparable<RepeatedTask> {
     abstract val callback: suspend () -> Unit
     abstract suspend fun update()
     override fun compareTo(other: RepeatedTask) = scheduledNextExecution.compareTo(other.scheduledNextExecution)
+
+    abstract var lastExecutionScheduledExecutionTime: DateTime
 
     override fun toString() = scheduledNextExecution.toString()
 }
@@ -350,6 +353,10 @@ class RepeatedRegularTask(
     override val callback: suspend () -> Unit
 ) : RepeatedTask() {
 
+    @Volatile
+    override var lastExecutionScheduledExecutionTime: DateTime = DateTime.EPOCH
+
+    @Volatile
     override var scheduledNextExecution = alignWith
 
     init {
@@ -370,6 +377,11 @@ class RepeatedIrregularTask(
     whenToUpdate: suspend (update: suspend () -> Unit) -> Unit,
     override val callback: suspend () -> Unit
 ) : RepeatedTask() {
+
+    @Volatile
+    override var lastExecutionScheduledExecutionTime: DateTime = DateTime.EPOCH
+
+    @Volatile
     override var scheduledNextExecution: DateTime = getNextUTCExecutionTime()
 
     init {

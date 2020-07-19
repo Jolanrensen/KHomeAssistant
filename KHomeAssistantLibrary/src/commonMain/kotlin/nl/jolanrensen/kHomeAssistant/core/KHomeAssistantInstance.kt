@@ -66,7 +66,10 @@ class KHomeAssistantInstance(
     val timeout: TimeSpan = 2.seconds,
 
     /** If enabled, debug messages will be printed. */
-    override val debug: Boolean = false
+    override val debug: Boolean = false,
+
+    /** If enabled, the connection will be accuired again on close. */
+    val reconnectOnClose: Boolean = true
 ) : KHomeAssistant {
 
     override var loadedInitialStates: Boolean = false
@@ -345,7 +348,8 @@ class KHomeAssistantInstance(
                     }
                 }
             }
-            println("Receiver channel closed")
+            println("Receiver channel closed${if (reconnectOnClose) ", restarting..." else ""}")
+            if (reconnectOnClose) startReceiver(ioScope)
         }
     }
 

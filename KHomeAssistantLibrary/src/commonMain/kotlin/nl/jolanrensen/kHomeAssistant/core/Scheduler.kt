@@ -41,6 +41,9 @@ class Scheduler(private val kHomeAssistant: KHomeAssistantInstance) {
             // remove it from the schedule and execute
             kHomeAssistant.launch { next.callback() }
 
+            // set the last execution time
+            next.lastExecutionScheduledExecutionTime = next.scheduledNextExecution
+
             // check for a reschedule, probably not needed for RepeatedIrregularTask
             next.update()
         }
@@ -68,7 +71,10 @@ class Scheduler(private val kHomeAssistant: KHomeAssistantInstance) {
     /** Cancel this task and schedule it again. */
     suspend fun reschedule(task: RepeatedTask) {
         cancel(task)
-        schedule(task)
+
+        // makes sure tasks cannot be scheduled for the same point in time already executed.
+        if (task.scheduledNextExecution > task.lastExecutionScheduledExecutionTime)
+            schedule(task)
     }
 
     /** Make this task be executed by the [schedulerJob]. */
