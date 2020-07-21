@@ -242,6 +242,12 @@ class KHomeAssistantInstance(
             sender!!.cancelAndJoin()
         } else {
             println("There are ${stateListeners.values.sumBy { it.count { !it.shortLived } }} state listeners, ${scheduler.size} scheduled repeated tasks and ${eventListeners.size} event listeners, so KHomeAssistant keeps running...")
+
+            // Heartbeat
+            runEvery(5.seconds) {
+                if (!connectionIsAlive()) println("Connection is not alive!")
+            }
+
             receiver!!.join()
             sender!!.join()
         }
@@ -395,9 +401,7 @@ class KHomeAssistantInstance(
     private suspend fun initializeAutomations() {
         val automationInitialisations = hashSetOf<Job>()
         for (it in automations) this@KHomeAssistantInstance.launch {
-            val inner = launch {
-                it.initialize()
-            }
+            val inner = launch { it.initialize() }
             try {
                 inner.join()
             } catch (e: Exception) {
@@ -641,7 +645,7 @@ class KHomeAssistantInstance(
 
     override suspend fun connectionIsAlive(): Boolean = try {
         sendMessage<Ping, Pong>(Ping()).apply {
-            println(this)
+            debugPrintln(this)
         }
         true
     } catch (e: Exception) {
