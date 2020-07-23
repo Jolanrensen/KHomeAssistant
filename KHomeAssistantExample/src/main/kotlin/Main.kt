@@ -5,8 +5,7 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.domains.getValue
-import nl.jolanrensen.kHomeAssistant.runEverySecond
-import kotlin.time.seconds
+import nl.jolanrensen.kHomeAssistant.runEvery
 
 
 class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
@@ -30,12 +29,10 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
 
 //        println(lock_linux)
 
-        runEverySecond {
-            println("running every second!")
+        runEvery(2.5.seconds) {
+
+            println(denon_avrx2200w)
         }
-
-        println(denon_avrx2200w)
-
 //        Group["living_room_lights"].useAs(Light) {
 //            color = Colors.RED
 //            white_value = 100

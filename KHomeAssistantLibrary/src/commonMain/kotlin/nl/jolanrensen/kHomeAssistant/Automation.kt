@@ -12,13 +12,13 @@ abstract class Automation(kHass: KHomeAssistant) : KHomeAssistant by kHass {
     abstract suspend fun initialize()
 }
 
-typealias FunctionalAutomation = (kHass: KHomeAssistant) -> Automation
+class FunctionalAutomation(val invoke: (kHass: KHomeAssistant) -> Automation)
 
 /** Functional invocation of Automation where [KHomeAssistant] can be supplied later. */
 fun automation(
     automationName: String,
     initialize: suspend Automation.() -> Unit
-): FunctionalAutomation = { automation(it, automationName, initialize) }
+) = FunctionalAutomation { automation(it, automationName, initialize) }
 
 /** Functional invocation of Automation */
 fun automation(kHass: KHomeAssistant, automationName: String, initialize: suspend Automation.() -> Unit) =

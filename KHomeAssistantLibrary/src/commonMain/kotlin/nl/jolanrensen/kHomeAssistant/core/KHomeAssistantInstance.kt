@@ -6,6 +6,7 @@ import com.soywiz.klock.parseUtc
 import com.soywiz.klock.seconds
 import com.soywiz.korim.bitmap.NativeImage
 import com.soywiz.korim.format.decodeImageBytes
+import com.soywiz.korio.async.delay
 import com.soywiz.korio.util.encoding.Base64
 import io.ktor.client.features.websocket.DefaultClientWebSocketSession
 import io.ktor.client.features.websocket.ws
@@ -68,7 +69,7 @@ class KHomeAssistantInstance(
     /** If enabled, debug messages will be printed. */
     override val debug: Boolean = false,
 
-    /** If enabled, the connection will be accuired again on close. */
+    /** If enabled, the connection will be acquired again on close. */
     val reconnectOnClose: Boolean = true
 ) : KHomeAssistant {
 
@@ -138,7 +139,7 @@ class KHomeAssistantInstance(
     private val sendQueue: Channel<String> = Channel(UNLIMITED)
 
     /** A map containing channels waiting for a response with the given `messageID: Int`. */
-    private val responseAwaiters: HashMap<Int, Channel<String>> = hashMapOf()
+    private val responseAwaiters: HashMap<Int, Channel<String?>> = hashMapOf()
 
 
     /** The receiver channel has priority over the sending channel (Think updating state values, getting responses etc.).
@@ -167,8 +168,11 @@ class KHomeAssistantInstance(
      * )
      * ```
      * */
-    suspend fun run(vararg functionalAutomations: FunctionalAutomation, mode: Mode = Mode.AUTOMATIC) =
-        run(automations = *functionalAutomations.map { it(this) }.toTypedArray(), mode = mode)
+    suspend fun run(
+        vararg functionalAutomations: FunctionalAutomation,
+        mode: Mode = Mode.AUTOMATIC
+    ) =
+        run(automations = *functionalAutomations.map { it.invoke(this) }.toTypedArray(), mode = mode)
 
     /**
      * Allows to inline creation of [KHomeAssistantInstance] and automations and starting a run.
@@ -229,9 +233,9 @@ class KHomeAssistantInstance(
 
         // initialize all user specified automations
         initializeAutomations()
-
-        // cancel if there aren't any listeners and the automations are initialized
         println("All automations are initialized")
+
+
         val couldStop = (stateListeners.isEmpty() || stateListeners.values.all { it.all { it.shortLived } })
                 && scheduler.isEmpty
                 && eventListeners.isEmpty()
@@ -245,7 +249,8 @@ class KHomeAssistantInstance(
 
             // Heartbeat
             runEvery(5.seconds) {
-                if (!connectionIsAlive()) println("Connection is not alive!")
+                if (!connectionIsAlive())
+                    println("Connection is not alive!")
             }
 
             receiver!!.join()
@@ -280,82 +285,87 @@ class KHomeAssistantInstance(
     private fun DefaultClientWebSocketSession.startReceiver(ioScope: CoroutineScope) {
         receiver = ioScope.launch {
             debugPrintln("receiver running!")
-            while (true) {
-                if (incoming.isEmpty) {
-                    canSend = true
-                    canSendChannel.offer(Unit) // update the sender it's okay to send now if it was waiting before
-                }
-                // receive or wait, break if connection closed
-                val message = incoming.receiveOrNull() as? Frame.Text ?: break
-                canSend = false // incoming message, so stop the sender
-                ioScope.launch {
-                    val json = message.readText()
-                    debugPrintln(json)
+            while (reconnectOnClose) {
+                while (true) {
+                    if (incoming.isEmpty) {
+                        canSend = true
+                        canSendChannel.offer(Unit) // update the sender it's okay to send now if it was waiting before
+                    }
+                    // receive or wait, break if connection closed
+                    val message = incoming.receiveOrNull() as? Frame.Text ?: break
+                    canSend = false // incoming message, so stop the sender
+                    ioScope.launch {
+                        val json = message.readText()
+                        debugPrintln(json)
 
-                    val messageBase: MessageBase = fromJson(json)
-                    val id = messageBase.id
+                        val messageBase: MessageBase = fromJson(json)
+                        val id = messageBase.id
 
-                    when (messageBase.type) {
-                        "result", "pong" -> responseAwaiters[id]?.send(json)?.run { responseAwaiters.remove(id) }
-                        "event" -> {
-                            val eventMessage: EventMessage = fromJson(json)
-                            val event = eventMessage.event
-                            debugPrintln("Detected event firing: $event")
+                        when (messageBase.type) {
+                            "result", "pong" -> responseAwaiters[id]?.send(json)?.run { responseAwaiters.remove(id) }
+                            "event" -> {
+                                val eventMessage: EventMessage = fromJson(json)
+                                val event = eventMessage.event
+                                debugPrintln("Detected event firing: $event")
 
-                            when (event.event_type) {
-                                "state_changed" -> {
-                                    val eventDataStateChanged: EventDataStateChanged = fromJson(event.data)
-                                    val entityID = eventDataStateChanged.entity_id
-                                    val oldState = eventDataStateChanged.old_state
-                                    val newState = eventDataStateChanged.new_state
+                                when (event.event_type) {
+                                    "state_changed" -> {
+                                        val eventDataStateChanged: EventDataStateChanged = fromJson(event.data)
+                                        val entityID = eventDataStateChanged.entity_id
+                                        val oldState = eventDataStateChanged.old_state
+                                        val newState = eventDataStateChanged.new_state
 
-                                    when {
-                                        newState == null -> rawEntityData.remove(entityID)
-                                        oldState == null -> rawEntityData[entityID] = newState
-                                        else -> rawEntityData[entityID]!!.apply {
-                                            state = newState.state
-                                            attributes = newState.attributes
-                                        }
-                                    }
-
-                                    stateListeners[entityID]?.forEach {
-                                        this@KHomeAssistantInstance.launch {
-                                            try {
-                                                it.listener(oldState, newState)
-                                            } catch (e: Exception) {
-                                                PrintException.print("Error happened after state for entity $entityID changed from $oldState to $newState")
-                                                throw e
+                                        when {
+                                            newState == null -> rawEntityData.remove(entityID)
+                                            oldState == null -> rawEntityData[entityID] = newState
+                                            else -> rawEntityData[entityID]!!.apply {
+                                                state = newState.state
+                                                attributes = newState.attributes
                                             }
                                         }
+
+                                        stateListeners[entityID]?.forEach {
+                                            this@KHomeAssistantInstance.launch {
+                                                try {
+                                                    it.listener(oldState, newState)
+                                                } catch (e: Exception) {
+                                                    PrintException.print("Error happened after state for entity $entityID changed from $oldState to $newState")
+                                                    throw e
+                                                }
+                                            }
+                                        }
+
+                                        debugPrintln("Detected statechange $eventDataStateChanged")
                                     }
+                                    "call_service" -> {
+                                        val eventDataCallService: EventDataCallService = fromJson(event.data)
 
-                                    debugPrintln("Detected statechange $eventDataStateChanged")
+                                        debugPrintln("Detected call_service: $eventDataCallService")
+                                        // TODO
+                                    }
+                                    // TODO maybe add more in the future
                                 }
-                                "call_service" -> {
-                                    val eventDataCallService: EventDataCallService = fromJson(event.data)
 
-                                    debugPrintln("Detected call_service: $eventDataCallService")
-                                    // TODO
-                                }
-                                // TODO maybe add more in the future
-                            }
-
-                            eventListeners[event.event_type]?.forEach {
-                                this@KHomeAssistantInstance.launch {
-                                    try {
-                                        it(event)
-                                    } catch (e: Exception) {
-                                        PrintException.print("Error happened after event $event fired.")
-                                        throw e
+                                eventListeners[event.event_type]?.forEach {
+                                    this@KHomeAssistantInstance.launch {
+                                        try {
+                                            it(event)
+                                        } catch (e: Exception) {
+                                            PrintException.print("Error happened after event $event fired.")
+                                            throw e
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
+                println("Receiver channel closed${if (reconnectOnClose) ", restarting..." else ""}")
+                if (reconnectOnClose) {
+                    delay(5.seconds)
+                    authenticate() // to be sure
+                }
             }
-            println("Receiver channel closed${if (reconnectOnClose) ", restarting..." else ""}")
-            if (reconnectOnClose) startReceiver(ioScope)
         }
     }
 
@@ -428,10 +438,14 @@ class KHomeAssistantInstance(
      * @param Send the type of [message] inheriting from [Message] you want to send
      * @param Response the type of response inheriting from [ResultMessage]
      * @param message the message of type [Send] you want to send
+     * @param timeout optional timeout for a response, throws exception if exceeded
      * @return the response of type [Response] returned from Home Assistant
      * */
     @OptIn(ImplicitReflectionSerializer::class)
-    private suspend inline fun <reified Send : Message, reified Response : ResultMessage> sendMessage(message: Send): Response {
+    private suspend inline fun <reified Send : Message, reified Response : ResultMessage> sendMessage(
+        message: Send,
+        timeout: TimeSpan? = null
+    ): Response {
         // make sure the messages arrive in the queue in order
         messageIDMutex.withLock {
             message.id = ++messageID
@@ -439,10 +453,15 @@ class KHomeAssistantInstance(
         }
 
         // must wait for the results, or it's too fast for hass
-
-        val receiveChannel = Channel<String>(1)
+        val receiveChannel = Channel<String?>(1)
         responseAwaiters[message.id] = receiveChannel
-        val responseString = receiveChannel.receive()
+
+        if (timeout != null) launch {
+            delay(timeout)
+            responseAwaiters.remove(message.id)?.send(null)
+        }
+
+        val responseString = receiveChannel.receive() ?: throw Exception("timeout exceeded")
         debugPrintln("Received result response: $responseString")
 
         return fromJson(responseString)
@@ -644,7 +663,7 @@ class KHomeAssistantInstance(
         }
 
     override suspend fun connectionIsAlive(): Boolean = try {
-        sendMessage<Ping, Pong>(Ping()).apply {
+        sendMessage<Ping, Pong>(Ping(), timeout).apply {
             debugPrintln(this)
         }
         true
