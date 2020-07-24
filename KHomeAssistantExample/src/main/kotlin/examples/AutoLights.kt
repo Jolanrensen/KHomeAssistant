@@ -5,8 +5,6 @@ import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Group
 import nl.jolanrensen.kHomeAssistant.domains.input.InputBoolean
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
-import nl.jolanrensen.kHomeAssistant.entities.onStateChanged
-import nl.jolanrensen.kHomeAssistant.runEveryDayAt
 import nl.jolanrensen.kHomeAssistant.runEveryDayAtSunset
 
 class AutoLights(kHass: KHomeAssistant) : Automation(kHass) {
@@ -21,7 +19,14 @@ class AutoLights(kHass: KHomeAssistant) : Automation(kHass) {
     val turnOffTime = InputDatetime["living_room_lights_off"]
 
     override suspend fun initialize() {
-        listOf(allLights, autoLightsOn, autoLightsOnSunset, autoLightsOff, turnOnTime, turnOffTime).forEach { println(it) }
+        listOf(
+            allLights,
+            autoLightsOn,
+            autoLightsOnSunset,
+            autoLightsOff,
+            turnOnTime,
+            turnOffTime
+        ).forEach { println(it) }
 
         runEveryDayAtSunset {
             if (autoLightsOn && autoLightsOnSunset) {
@@ -30,30 +35,14 @@ class AutoLights(kHass: KHomeAssistant) : Automation(kHass) {
             }
         }
 
-        runEveryDayAt(
-            { turnOnTime.time },
-            { update ->
-                turnOnTime.onStateChanged {
-                    println("Turn on time changed, updating to $time")
-                    update()
-                }
-            }
-        ) {
+        turnOnTime.runEveryDayAtTime {
             if (autoLightsOn && !autoLightsOnSunset) {
                 println("Time to turn on the lights!")
                 allLights.turnOn()
             }
         }
 
-        runEveryDayAt(
-            { turnOffTime.time },
-            { update ->
-                turnOffTime.onStateChanged {
-                    println("Turn off time changed, updating to $time")
-                    update()
-                }
-            }
-        ) {
+        turnOffTime.runEveryDayAtTime {
             if (autoLightsOff) {
                 println("Time to turn off the lights!")
                 allLights.turnOff()

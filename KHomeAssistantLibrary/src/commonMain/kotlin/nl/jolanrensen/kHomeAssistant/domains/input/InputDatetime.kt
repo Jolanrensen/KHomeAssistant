@@ -9,7 +9,8 @@ import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
-import kotlin.reflect.KProperty
+import nl.jolanrensen.kHomeAssistant.runAt
+import nl.jolanrensen.kHomeAssistant.runEveryDayAt
 
 /**
  * Input Datetime
@@ -224,6 +225,52 @@ class InputDatetime(override val kHassInstance: KHomeAssistant) : Domain<InputDa
                     setDateTime(localDateTime = value)
                 }
             }
+
+        /**
+         * Specify something to run at the specified date time value of the entity.
+         * It gets updated when the state of the entity changes.
+         */
+        suspend fun runAtDateTime(callback: suspend Entity.() -> Unit): Entity {
+            if (!has_date) throw IllegalArgumentException("entity $name does not have a date.")
+            if (!has_time) throw IllegalArgumentException("entity $name does not have a time.")
+            kHassInstance.runAt(
+                getNextLocalExecutionTime = { dateTime },
+                whenToUpdate = { update -> onAttributeChanged(::dateTime) { update() } }
+            ) {
+                callback()
+            }
+            return this
+        }
+
+        /**
+         * Specify something to run at the specified date value of the entity and the given time.
+         * It gets updated when the state of the entity changes.
+         */
+        suspend fun runAtDate(localTime: Time = Time(0), callback: suspend Entity.() -> Unit): Entity {
+            if (!has_date) throw IllegalArgumentException("entity $name does not have a date.")
+            kHassInstance.runAt(
+                getNextLocalExecutionTime = { DateTime(date, localTime).localUnadjusted },
+                whenToUpdate = { update -> onAttributeChanged(::date) { update() } }
+            ) {
+                callback()
+            }
+            return this
+        }
+
+        /**
+         * Specify something to run at the specified time value of this entity every day.
+         * It gets updated when the state of the entity changes.
+         */
+        suspend fun runEveryDayAtTime(callback: suspend Entity.() -> Unit): Entity {
+            if (!has_time) throw IllegalArgumentException("entity $name does not have a time.")
+            kHassInstance.runEveryDayAt(
+                { time },
+                { update -> onAttributeChanged(::time) { update() } }
+            ) {
+                callback()
+            }
+            return this
+        }
 
         /** Set the state value. To make a [DateTimeTz] (like 9 am local time), use `DateTime(someDate, Time(hour=9)).localUnadjusted`. */
         suspend fun setDateTime(localDateTime: DateTimeTz, async: Boolean = false): ResultMessage {

@@ -19,13 +19,14 @@ class BedroomLights(kHass: KHomeAssistant) : Automation(kHass) {
     private val pisa by Light
     private val bed by Light
     private val allLights = listOf(bedroom_lamp, globe, pisa, bed)
+    private val allLightsWithoutBed = listOf(bedroom_lamp, globe, pisa)
 
     private val bedroom_switch by Switch
 
     private val Light.Entity.isWarm: Boolean
         get() {
             val currentTemp = if (isOn) color_temp else max_mireds
-            return abs(currentTemp - max_mireds) < abs(currentTemp - min_mireds)
+            return abs(currentTemp - max_mireds) <= abs(currentTemp - min_mireds)
         }
 
     private fun Light.Entity.toggleWarmth() {
@@ -40,12 +41,15 @@ class BedroomLights(kHass: KHomeAssistant) : Automation(kHass) {
 
     private suspend fun turnOffAllLights() {
         println("Turning off all lights")
-        allLights.turnOff()
+        allLightsWithoutBed.turnOff()
+
+        // unreliable
+        bed.turnOff(async = true)
     }
 
     private suspend fun turnOnAllLights() {
         println("Turning on all lights")
-        allLights.turnOn()
+        allLightsWithoutBed.turnOn()
 
         // I don't really care when it doesn't succeed, so async is true
         bed.turnOn(

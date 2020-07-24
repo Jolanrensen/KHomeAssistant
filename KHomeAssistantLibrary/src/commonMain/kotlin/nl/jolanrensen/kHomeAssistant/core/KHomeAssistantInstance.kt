@@ -1,9 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.core
 
-import com.soywiz.klock.DateTime
-import com.soywiz.klock.TimeSpan
-import com.soywiz.klock.parseUtc
-import com.soywiz.klock.seconds
+import com.soywiz.klock.*
 import com.soywiz.korim.bitmap.NativeImage
 import com.soywiz.korim.format.decodeImageBytes
 import com.soywiz.korio.async.delay
@@ -139,7 +136,10 @@ class KHomeAssistantInstance(
     private val sendQueue: Channel<String> = Channel(UNLIMITED)
 
     /** A map containing channels waiting for a response with the given `messageID: Int`. */
-    private val responseAwaiters: HashMap<Int, Channel<String?>> = hashMapOf()
+    @Volatile
+    private var responseAwaiters: HashMap<Int, Channel<String?>> = hashMapOf()
+
+    private var connectionWasAlive = false
 
 
     /** The receiver channel has priority over the sending channel (Think updating state values, getting responses etc.).
@@ -248,9 +248,14 @@ class KHomeAssistantInstance(
             println("There are ${stateListeners.values.sumBy { it.count { !it.shortLived } }} state listeners, ${scheduler.size} scheduled repeated tasks and ${eventListeners.size} event listeners, so KHomeAssistant keeps running...")
 
             // Heartbeat
-            runEvery(5.seconds) {
-                if (!connectionIsAlive())
+            runEvery(50.seconds) {
+                if (!connectionIsAlive()) {
                     println("Connection is not alive!")
+                    connectionWasAlive = false
+                } else if (!connectionWasAlive) {
+                    connectionWasAlive = true
+                    println("Connection alive!")
+                }
             }
 
             receiver!!.join()
@@ -302,7 +307,7 @@ class KHomeAssistantInstance(
                         val id = messageBase.id
 
                         when (messageBase.type) {
-                            "result", "pong" -> responseAwaiters[id]?.send(json)?.run { responseAwaiters.remove(id) }
+                            "result", "pong" -> responseAwaiters.remove(id)?.send(json)
                             "event" -> {
                                 val eventMessage: EventMessage = fromJson(json)
                                 val event = eventMessage.event
@@ -456,8 +461,7 @@ class KHomeAssistantInstance(
         val receiveChannel = Channel<String?>(1)
         responseAwaiters[message.id] = receiveChannel
 
-        if (timeout != null) launch {
-            delay(timeout)
+        if (timeout != null) runIn(timeout) {
             responseAwaiters.remove(message.id)?.send(null)
         }
 
@@ -663,9 +667,12 @@ class KHomeAssistantInstance(
         }
 
     override suspend fun connectionIsAlive(): Boolean = try {
-        sendMessage<Ping, Pong>(Ping(), timeout).apply {
-            debugPrintln(this)
+        val time = measureTime {
+            val result = sendMessage<Ping, Pong>(Ping(), 15.seconds)
+            debugPrintln(result)
         }
+        // TODO
+        println("ping pong took ${time.seconds} seconds")
         true
     } catch (e: Exception) {
         println(e)
