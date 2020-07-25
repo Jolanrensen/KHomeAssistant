@@ -248,7 +248,7 @@ class KHomeAssistantInstance(
             println("There are ${stateListeners.values.sumBy { it.count { !it.shortLived } }} state listeners, ${scheduler.size} scheduled repeated tasks and ${eventListeners.size} event listeners, so KHomeAssistant keeps running...")
 
             // Heartbeat
-            runEvery(50.seconds) {
+            runEvery(30.seconds) {
                 if (!connectionIsAlive()) {
                     println("Connection is not alive!")
                     connectionWasAlive = false
@@ -672,7 +672,7 @@ class KHomeAssistantInstance(
             debugPrintln(result)
         }
         // TODO
-        println("ping pong took ${time.seconds} seconds")
+        debugPrintln("ping pong took ${time.seconds} seconds")
         true
     } catch (e: Exception) {
         println(e)
