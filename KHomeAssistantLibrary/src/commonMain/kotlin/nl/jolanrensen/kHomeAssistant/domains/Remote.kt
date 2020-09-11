@@ -3,7 +3,8 @@ package nl.jolanrensen.kHomeAssistant.domains
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.seconds
 import com.soywiz.korio.async.delay
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff
 import nl.jolanrensen.kHomeAssistant.entities.*
@@ -116,7 +117,7 @@ class Remote(override val kHassInstance: KHomeAssistant) : Domain<Remote.Entity>
         suspend fun turnOn(activity: String, async: Boolean = false): ResultMessage {
             val result = callService(
                 serviceName = "turn_on",
-                data = json { "activity" to activity }
+                data = buildJsonObject { put("activity", activity) }
             )
             if (!async) suspendUntilStateChangedTo(OnOff.ON)
             return result
@@ -166,12 +167,12 @@ class Remote(override val kHassInstance: KHomeAssistant) : Domain<Remote.Entity>
         ): ResultMessage {
             val result = callService(
                 serviceName = "send_command",
-                data = json {
-                    "command" to commands.toList().toJson()
-                    device?.let { "device" to it }
-                    noRepeats?.let { "num_repeats" to it }
-                    delay?.let { "delay_secs" to it.seconds }
-                    hold?.let { "hold_secs" to it.seconds }
+                data = buildJsonObject {
+                    put("command", commands.toList().toJson())
+                    device?.let { put("device", it) }
+                    noRepeats?.let { put("num_repeats", it) }
+                    delay?.let { put("delay_secs", it.seconds) }
+                    hold?.let { put("hold_secs", it.seconds) }
                 }
             )
             if (!async) delay(((delay ?: 0.seconds) + (hold ?: 0.seconds)) * commands.count() * (noRepeats ?: 1))
@@ -215,11 +216,11 @@ class Remote(override val kHassInstance: KHomeAssistant) : Domain<Remote.Entity>
         ): ResultMessage {
             val result = callService(
                 serviceName = "learn_command",
-                data = json {
-                    "command" to commands.toList().toJson()
-                    device?.let { "device" to it }
-                    alternative?.let { "alternative" to it }
-                    timeout?.let { "timeout" to it.seconds }
+                data = buildJsonObject {
+                    put("command", commands.toList().toJson())
+                    device?.let { put("device", it) }
+                    alternative?.let { put("alternative", it) }
+                    timeout?.let { put("timeout", it.seconds) }
                 }
             )
             if (!async) delay(timeout ?: 0.seconds)

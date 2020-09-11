@@ -103,14 +103,14 @@ class Weather(override val kHassInstance: KHomeAssistant) : Domain<Weather.Entit
         val forecast_: List<Forecast>
             get() = forecast.map {
                 Forecast(
-                    dateTime = HASS_DATE_FORMAT_SUN.parse(it["datetime"]!!.content),
-                    temperatureHigher = it["temperature"]!!.float,
+                    dateTime = HASS_DATE_FORMAT_SUN.parse(it["datetime"]!!.jsonPrimitive.content),
+                    temperatureHigher = it["temperature"]!!.jsonPrimitive.float,
                     condition = State.values().find { value ->
-                        it["condition"]?.contentOrNull == value.value
+                        it["condition"]?.jsonPrimitive?.contentOrNull == value.value
                     } ?: State.UNKNOWN,
-                    temperatureLower = it["templow"]?.floatOrNull,
-                    precipitation = it["precipitation"]?.floatOrNull,
-                    precipitationProbability = it["precipitation_probability"]?.intOrNull
+                    temperatureLower = it["templow"]?.jsonPrimitive?.floatOrNull,
+                    precipitation = it["precipitation"]?.jsonPrimitive?.floatOrNull,
+                    precipitationProbability = it["precipitation_probability"]?.jsonPrimitive?.intOrNull
 
                 )
             }

@@ -3,7 +3,8 @@ package nl.jolanrensen.kHomeAssistant.domains.input
 import com.soywiz.klock.*
 import com.soywiz.klock.DateFormat.Companion.FORMAT_DATE
 import com.soywiz.klock.TimeFormat.Companion.FORMAT_TIME
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.Domain
@@ -276,14 +277,14 @@ class InputDatetime(override val kHassInstance: KHomeAssistant) : Domain<InputDa
         suspend fun setDateTime(localDateTime: DateTimeTz, async: Boolean = false): ResultMessage {
             val result = callService(
                 serviceName = "set_datetime",
-                data = json {
+                data = buildJsonObject {
                     localDateTime.let {
                         if (has_date) {
-                            "date" to ("${it.yearInt}-${it.month1}-${it.dayOfMonth}")
+                            put("date", ("${it.yearInt}-${it.month1}-${it.dayOfMonth}"))
                         }
 
                         if (has_time)
-                            "time" to "${it.hours}:${it.minutes}:${it.seconds}"
+                            put("time", "${it.hours}:${it.minutes}:${it.seconds}")
                     }
                 }
             )
@@ -296,11 +297,11 @@ class InputDatetime(override val kHassInstance: KHomeAssistant) : Domain<InputDa
         suspend fun setDate(localDate: Date, async: Boolean = false): ResultMessage {
             val result = callService(
                 serviceName = "set_datetime",
-                data = json {
+                data = buildJsonObject {
                     localDate.let {
-                        "date" to "${it.year}-${it.month1}-${it.day}"
+                        put("date", "${it.year}-${it.month1}-${it.day}")
                         if (has_time)
-                            "time" to time.let { "${it.hour}:${it.minute}:${it.second}" }
+                            put("time", time.let { "${it.hour}:${it.minute}:${it.second}" })
                     }
                 }
             )
@@ -312,11 +313,11 @@ class InputDatetime(override val kHassInstance: KHomeAssistant) : Domain<InputDa
         suspend fun setTime(localTime: Time, async: Boolean = false): ResultMessage {
             val result = callService(
                 serviceName = "set_datetime",
-                data = json {
+                data = buildJsonObject {
                     localTime.let {
                         if (has_date)
-                            "date" to date.let { "${it.year}-${it.month1}-${it.day}" }
-                        "time" to "${it.hour}:${it.minute}:${it.second}"
+                            put("date", date.let { "${it.year}-${it.month1}-${it.day}" })
+                        put("time", "${it.hour}:${it.minute}:${it.second}")
                     }
                 }
             )

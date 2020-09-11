@@ -4,9 +4,10 @@ import com.soywiz.klock.DateTime
 import com.soywiz.klock.DateTimeTz
 import com.soywiz.korim.bitmap.NativeImage
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.core.StateListener
 import nl.jolanrensen.kHomeAssistant.domains.Domain
@@ -59,7 +60,7 @@ interface KHomeAssistant : CoroutineScope {
         entity: Entity<*, *>,
         serviceDomain: Domain<*>,
         serviceName: String,
-        data: JsonObject = json { }
+        data: JsonObject = buildJsonObject { }
     ): ResultMessage
 
     /**
@@ -69,7 +70,7 @@ interface KHomeAssistant : CoroutineScope {
      * @param data the optional [JsonObject] or [Map]<[String], [JsonElement]> containing the extra data for the service
      * @return the result in form of a [ResultMessage]
      * */
-    suspend fun callService(serviceDomain: Domain<*>, serviceName: String, data: JsonObject = json { }): ResultMessage
+    suspend fun callService(serviceDomain: Domain<*>, serviceName: String, data: JsonObject = buildJsonObject { }): ResultMessage
 
     /**
      * Calls the given service on Home Assistant.
@@ -78,7 +79,7 @@ interface KHomeAssistant : CoroutineScope {
      * @param data the optional [JsonObject] or [Map]<[String], [JsonElement]> containing the extra data for the service
      * @return the result in form of a [ResultMessage]
      * */
-    suspend fun callService(entity: Entity<*, *>, serviceName: String, data: JsonObject = json { }): ResultMessage
+    suspend fun callService(entity: Entity<*, *>, serviceName: String, data: JsonObject = buildJsonObject { }): ResultMessage
 
     /**
      * Calls the given service on Home Assistant.
@@ -92,7 +93,7 @@ interface KHomeAssistant : CoroutineScope {
         serviceDomain: String,
         serviceName: String,
         entityID: String? = null,
-        data: JsonObject = json { }
+        data: JsonObject = buildJsonObject {  }
     ): ResultMessage
 
     /**

@@ -1,9 +1,8 @@
 package nl.jolanrensen.kHomeAssistant
 
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
 import nl.jolanrensen.kHomeAssistant.entities.BaseEntity
-import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.HassAttributes
 
 /**
@@ -18,7 +17,7 @@ import nl.jolanrensen.kHomeAssistant.entities.HassAttributes
  * SceneEntityState(
  *      entity = Light["some_light"],
  *      state = ON,
- *      attributes = json {
+ *      attributes = buildJsonObject {
  *          "brightness" to 100
  *          "color" to "green"
  *      }
@@ -33,5 +32,5 @@ class SceneEntityState<StateType : Any, AttrsType : HassAttributes, Entity : Bas
     val entity: Entity,
     val state: StateType,
     val attributes: Entity.() -> Unit = {},
-    val additionalAttributes: JsonObject = json {  }
+    val additionalAttributes: JsonObject = buildJsonObject { }
 )

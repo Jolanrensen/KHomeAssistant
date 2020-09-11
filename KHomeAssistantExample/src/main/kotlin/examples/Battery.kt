@@ -2,6 +2,7 @@ package examples
 
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Notify
@@ -16,9 +17,9 @@ class Battery(private val threshold: Int, private val alwaysSend: Boolean = fals
             val batteryDevices: HashSet<Pair<DefaultEntity, Int>> = hashSetOf()
 
             for (device in entities) {
-                val battery = device["battery"]?.intOrNull
-                    ?: device["battery_level"]?.intOrNull
-                    ?: if (device["device_class"]?.contentOrNull == "battery")
+                val battery = device["battery"]?.jsonPrimitive?.intOrNull
+                    ?: device["battery_level"]?.jsonPrimitive?.intOrNull
+                    ?: if (device["device_class"]?.jsonPrimitive?.contentOrNull == "battery")
                         device.state.toIntOrNull()
                     else null
 

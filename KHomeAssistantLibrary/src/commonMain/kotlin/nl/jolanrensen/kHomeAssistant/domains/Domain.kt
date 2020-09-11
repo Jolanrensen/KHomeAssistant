@@ -4,7 +4,7 @@ package nl.jolanrensen.kHomeAssistant.domains
 
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.core.KHomeAssistantInstance
 import nl.jolanrensen.kHomeAssistant.entities.Entity
@@ -68,7 +68,7 @@ interface Domain<out E : Entity<*, *>> {
      * @param data a map of [String] to [JsonElement] that will be sent to Home Assistant along with the command
      * @return a [ResultMessage] containing the results of the call
      * */
-    suspend fun callService(serviceName: String, data: JsonObject = json { }): ResultMessage =
+    suspend fun callService(serviceName: String, data: JsonObject = buildJsonObject { }): ResultMessage =
         kHassInstance.callService(
             serviceDomain = this,
             serviceName = serviceName,

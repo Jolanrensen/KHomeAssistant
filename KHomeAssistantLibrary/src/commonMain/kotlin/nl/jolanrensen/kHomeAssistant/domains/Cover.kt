@@ -1,6 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.Cover.DeviceClass.GENERIC
@@ -277,7 +278,7 @@ class Cover(override val kHassInstance: KHomeAssistant) : Domain<Cover.Entity> {
                 throw IllegalArgumentException("position $position must be in 0..100")
             val result = callService(
                 serviceName = "set_cover_position",
-                data = json { "position" to position }
+                data = buildJsonObject { put("position", position) }
             )
             if (!async) suspendUntilAttributeChangedTo(::current_cover_position, position)
             return result
@@ -290,7 +291,7 @@ class Cover(override val kHassInstance: KHomeAssistant) : Domain<Cover.Entity> {
                 throw IllegalArgumentException("position $tiltPosition must be in 0..100")
             val result = callService(
                 serviceName = "set_cover_tilt_position",
-                data = json { "tilt_position" to tiltPosition }
+                data = buildJsonObject { put("tilt_position", tiltPosition) }
             )
             if (!async) suspendUntilAttributeChangedTo(::current_cover_tilt_position, tiltPosition)
             return result

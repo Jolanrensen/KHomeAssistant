@@ -1,8 +1,6 @@
 package nl.jolanrensen.kHomeAssistant
 
 import kotlinx.serialization.json.*
-import kotlinx.serialization.json.JsonNull.jsonNull
-import nl.jolanrensen.kHomeAssistant.entities.HassAttributes
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -10,18 +8,18 @@ import kotlin.reflect.typeOf
 inline fun <reified T : Any?> JsonElement.cast(): T? = try {
     when (T::class) {
         // JsonElements
-        JsonPrimitive::class -> primitive as T
+        JsonPrimitive::class -> jsonPrimitive as T
         JsonObject::class, Map::class -> jsonObject as T
         JsonArray::class, List::class -> jsonArray as T
         JsonNull::class -> jsonNull as T
 
         // JsonPrimitives
-        String::class -> content as T
-        Int::class -> int as T
-        Long::class -> long as T
-        Double::class -> double as T
-        Float::class -> float as T
-        Boolean::class -> boolean as T
+        String::class -> jsonPrimitive.content as T
+        Int::class -> jsonPrimitive.int as T
+        Long::class -> jsonPrimitive.long as T
+        Double::class -> jsonPrimitive.double as T
+        Float::class -> jsonPrimitive.float as T
+        Boolean::class -> jsonPrimitive.boolean as T
         else -> null
     }
 } catch (e: Exception) {
@@ -35,7 +33,7 @@ fun <T : Any?> JsonElement.cast(type: KType): T = try {
         // NULLABLE
 
         // JsonElements
-        typeOf<JsonPrimitive?>() -> primitive as T
+        typeOf<JsonPrimitive?>() -> jsonPrimitive as T
         typeOf<JsonObject?>() -> jsonObject as T
         typeOf<Map<String, JsonElement>?>() -> jsonObject.toMap() as T
         // TODO maybe add all for map
@@ -43,30 +41,30 @@ fun <T : Any?> JsonElement.cast(type: KType): T = try {
         typeOf<JsonNull?>() -> jsonNull as T
         typeOf<JsonArray?>() -> jsonArray as T
 
-        typeOf<List<JsonPrimitive>?>() -> jsonArray.map { it.primitive } as T
+        typeOf<List<JsonPrimitive>?>() -> jsonArray.map { it.jsonPrimitive } as T
         typeOf<List<JsonObject>?>() -> jsonArray.map { it.jsonObject } as T
         typeOf<List<JsonArray>?>() -> jsonArray.map { it.jsonArray } as T
         typeOf<List<JsonNull>?>() -> jsonArray.map { it.jsonNull } as T
-        typeOf<List<String>?>() -> jsonArray.map { it.content } as T
-        typeOf<List<Int>?>() -> jsonArray.map { it.int } as T
-        typeOf<List<Long>?>() -> jsonArray.map { it.long } as T
-        typeOf<List<Double>?>() -> jsonArray.map { it.double } as T
-        typeOf<List<Float>?>() -> jsonArray.map { it.float } as T
-        typeOf<List<Boolean>?>() -> jsonArray.map { it.boolean } as T
+        typeOf<List<String>?>() -> jsonArray.map { it.jsonPrimitive.content } as T
+        typeOf<List<Int>?>() -> jsonArray.map { it.jsonPrimitive.int } as T
+        typeOf<List<Long>?>() -> jsonArray.map { it.jsonPrimitive.long } as T
+        typeOf<List<Double>?>() -> jsonArray.map { it.jsonPrimitive.double } as T
+        typeOf<List<Float>?>() -> jsonArray.map { it.jsonPrimitive.float } as T
+        typeOf<List<Boolean>?>() -> jsonArray.map { it.jsonPrimitive.boolean } as T
 
         // JsonPrimitives
-        typeOf<String?>() -> content as T
-        typeOf<Int?>() -> int as T
-        typeOf<Long?>() -> long as T
-        typeOf<Double?>() -> double as T
-        typeOf<Float?>() -> float as T
-        typeOf<Boolean?>() -> boolean as T
+        typeOf<String?>() -> jsonPrimitive.content as T
+        typeOf<Int?>() -> jsonPrimitive.int as T
+        typeOf<Long?>() -> jsonPrimitive.long as T
+        typeOf<Double?>() -> jsonPrimitive.double as T
+        typeOf<Float?>() -> jsonPrimitive.float as T
+        typeOf<Boolean?>() -> jsonPrimitive.boolean as T
 
 
         // NON-NULLABLE
 
         // JsonElements
-        typeOf<JsonPrimitive>() -> primitive as T
+        typeOf<JsonPrimitive>() -> jsonPrimitive as T
         typeOf<JsonObject>() -> jsonObject as T
         typeOf<Map<String, JsonElement>>() -> jsonObject.toMap() as T
         // TODO maybe add all for map
@@ -74,24 +72,24 @@ fun <T : Any?> JsonElement.cast(type: KType): T = try {
         typeOf<JsonNull>() -> jsonNull as T
         typeOf<JsonArray>() -> jsonArray as T
 
-        typeOf<List<JsonPrimitive>>() -> jsonArray.map { it.primitive } as T
+        typeOf<List<JsonPrimitive>>() -> jsonArray.map { it.jsonPrimitive } as T
         typeOf<List<JsonObject>>() -> jsonArray.map { it.jsonObject } as T
         typeOf<List<JsonArray>>() -> jsonArray.map { it.jsonArray } as T
         typeOf<List<JsonNull>>() -> jsonArray.map { it.jsonNull } as T
-        typeOf<List<String>>() -> jsonArray.map { it.content } as T
-        typeOf<List<Int>>() -> jsonArray.map { it.int } as T
-        typeOf<List<Long>>() -> jsonArray.map { it.long } as T
-        typeOf<List<Double>>() -> jsonArray.map { it.double } as T
-        typeOf<List<Float>>() -> jsonArray.map { it.float } as T
-        typeOf<List<Boolean>>() -> jsonArray.map { it.boolean } as T
+        typeOf<List<String>>() -> jsonArray.map { it.jsonPrimitive.content } as T
+        typeOf<List<Int>>() -> jsonArray.map { it.jsonPrimitive.int } as T
+        typeOf<List<Long>>() -> jsonArray.map { it.jsonPrimitive.long } as T
+        typeOf<List<Double>>() -> jsonArray.map { it.jsonPrimitive.double } as T
+        typeOf<List<Float>>() -> jsonArray.map { it.jsonPrimitive.float } as T
+        typeOf<List<Boolean>>() -> jsonArray.map { it.jsonPrimitive.boolean } as T
 
         // JsonPrimitives
-        typeOf<String>() -> content as T
-        typeOf<Int>() -> int as T
-        typeOf<Long>() -> long as T
-        typeOf<Double>() -> double as T
-        typeOf<Float>() -> float as T
-        typeOf<Boolean>() -> boolean as T
+        typeOf<String>() -> jsonPrimitive.content as T
+        typeOf<Int>() -> jsonPrimitive.int as T
+        typeOf<Long>() -> jsonPrimitive.long as T
+        typeOf<Double>() -> jsonPrimitive.double as T
+        typeOf<Float>() -> jsonPrimitive.float as T
+        typeOf<Boolean>() -> jsonPrimitive.boolean as T
         else -> throw IllegalArgumentException("Couldn't cast $this to type $type")
     }
 
@@ -117,7 +115,7 @@ fun Any?.toJson(): JsonElement = this?.let {
 
         else -> throw IllegalArgumentException("Couldn't cast $this to json")
     }
-} ?: jsonNull
+} ?: JsonNull
 
-operator fun JsonArray.plus(other: JsonArray) = JsonArray(content + other.content)
-operator fun JsonObject.plus(other: JsonObject) = JsonObject(content + other.content)
+operator fun JsonArray.plus(other: JsonArray) = JsonArray(this as List<JsonElement> + other as List<JsonElement>)
+operator fun JsonObject.plus(other: JsonObject) = JsonObject(this as Map<String, JsonElement> + other as Map<String, JsonElement>)

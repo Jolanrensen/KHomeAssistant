@@ -1,5 +1,7 @@
 import com.soywiz.klock.DateTime
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.json
+import kotlinx.serialization.json.put
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.contentEquals
 import nl.jolanrensen.kHomeAssistant.domains.Domain
@@ -25,8 +27,8 @@ class Example(override val kHassInstance: KHomeAssistant) : Domain<Example.Entit
     suspend fun exampleDomainServiceCall(something: Int): ResultMessage =
         callService(
             serviceName = "some_service",
-            data = json {
-                "something" to something
+            data = buildJsonObject {
+                put("something", something)
             }
         )
 
@@ -160,8 +162,8 @@ class Example(override val kHassInstance: KHomeAssistant) : Domain<Example.Entit
         suspend fun exampleSetAttrServiceCall(value: List<String>, async: Boolean = false): ResultMessage {
             val result = callService(
                 serviceName = "asasfsad",
-                data = json {
-                    "some_other_attribute" to value.toJson()
+                data = buildJsonObject {
+                    put("some_other_attribute", value.toJson())
                 }
             )
             if (!async) suspendUntilAttributeChanged(::some_other_attribute, { it.contentEquals(value) })
@@ -174,11 +176,11 @@ class Example(override val kHassInstance: KHomeAssistant) : Domain<Example.Entit
             someOtherValue: DateTime? = null
         ) = callService(
             serviceName = "some_service",
-            data = json {
+            data = buildJsonObject {
                 // if someValue isn't null, check and add it to the data
                 someValue?.let {
                     if (it !in 0..100) throw IllegalArgumentException("incorrect someValue $it")
-                    "some_value" to it
+                    put("some_value", it)
                 }
 
                 // same story for the other value
@@ -187,7 +189,7 @@ class Example(override val kHassInstance: KHomeAssistant) : Domain<Example.Entit
                     // you can also perform checks with the attributes
                     // for instance checking whether some string is supported by the device
                     if (it !in someOtherAttribute) throw IllegalArgumentException("incorrect someOtherValue $it")
-                    "some_other_value" to it.toString()
+                    put("some_other_value", it.toString())
                 }
             }
         )

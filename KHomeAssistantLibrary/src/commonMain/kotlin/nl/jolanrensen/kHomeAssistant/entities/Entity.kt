@@ -4,7 +4,7 @@ import com.soywiz.klock.DateTimeTz
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
 import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.Domain
@@ -126,8 +126,8 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) =
             if (saveToJson) {
-                json = json ?: json { }
-                json = json!! + json { property.name to value.toJson() }
+                json = json ?: buildJsonObject { }
+                json = json!! + buildJsonObject { put(property.name, value.toJson()) }
             } else runBlocking { setValue(property.name, value) }
     }
 
@@ -141,7 +141,7 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
             when (val attr = (alternativeAttributes ?: rawAttributes)[property.name]) {
                 null -> default
                 else -> try {
-                    attr.cast<V>(property.returnType)
+                    attr.cast(property.returnType)
                 } catch (e: Exception) {
                     default
                 }
@@ -149,8 +149,8 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: V) =
             if (saveToJson) {
-                json = json ?: json { }
-                json = json!! + json { property.name to value.toJson() }
+                json = json ?: buildJsonObject { }
+                json = json!! + buildJsonObject { put(property.name, value.toJson()) }
             } else runBlocking { setValue(property.name, value) }
     }
 
@@ -203,7 +203,7 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
     suspend fun callService(
         serviceName: String,
         serviceDomain: Domain<*> = domain, // we need the real domain here
-        data: JsonObject = json { },
+        data: JsonObject = buildJsonObject { },
         doEntityCheck: Boolean = true
     ): ResultMessage {
         if (saveToJson) error("This is a copy of the entity disconnected from Home Assistant. You can only set attributes.")

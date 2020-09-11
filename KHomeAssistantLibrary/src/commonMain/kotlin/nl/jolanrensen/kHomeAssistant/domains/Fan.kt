@@ -1,6 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Fan.SupportedFeatures.*
 import nl.jolanrensen.kHomeAssistant.entities.*
@@ -153,7 +154,7 @@ class Fan(override val kHassInstance: KHomeAssistant) : Domain<Fan.Entity> {
                 throw IllegalArgumentException("speed $speedName is not supported by the fan $name.")
             val result = callService(
                 serviceName = "set_speed",
-                data = json { "speed" to speedName }
+                data = buildJsonObject { put("speed", speedName) }
             )
             if (!async) suspendUntilAttributeChangedTo(::speed, speedName)
             return result
@@ -168,7 +169,7 @@ class Fan(override val kHassInstance: KHomeAssistant) : Domain<Fan.Entity> {
             checkIfSupported(SUPPORT_DIRECTION)
             val result = callService(
                 serviceName = "set_direction",
-                data = json { "direction" to directionName }
+                data = buildJsonObject { put("direction", directionName) }
             )
             if (!async) suspendUntilAttributeChangedTo(::current_direction, directionName)
             return result
@@ -179,7 +180,7 @@ class Fan(override val kHassInstance: KHomeAssistant) : Domain<Fan.Entity> {
             checkIfSupported(SUPPORT_OSCILLATE)
             val result = callService(
                 serviceName = "oscillating",
-                data = json { "oscillating" to oscillating }
+                data = buildJsonObject { put("oscillating", oscillating) }
             )
             if (!async) suspendUntilAttributeChangedTo(::oscillating, oscillating)
             return result

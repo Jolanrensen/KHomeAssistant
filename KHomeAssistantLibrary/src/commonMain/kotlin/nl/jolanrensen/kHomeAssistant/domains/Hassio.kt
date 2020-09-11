@@ -1,6 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 
 /**
@@ -19,7 +20,7 @@ class Hassio(override val kHassInstance: KHomeAssistant) : Domain<Nothing> {
      */
     suspend fun addOnRestart(addOn: String) = callService(
         serviceName = "addon_restart",
-        data = json { "addon" to addOn }
+        data = buildJsonObject { put("addon", addOn) }
     )
 
     /**
@@ -28,7 +29,7 @@ class Hassio(override val kHassInstance: KHomeAssistant) : Domain<Nothing> {
      */
     suspend fun addOnStart(addOn: String) = callService(
         serviceName = "addon_start",
-        data = json { "addon" to addOn }
+        data = buildJsonObject { put("addon", addOn) }
     )
 
     /**
@@ -37,7 +38,7 @@ class Hassio(override val kHassInstance: KHomeAssistant) : Domain<Nothing> {
      */
     suspend fun addOnStdin(addOn: String) = callService(
         serviceName = "addon_stdin",
-        data = json { "addon" to addOn }
+        data = buildJsonObject { put("addon", addOn) }
     )
 
     /**
@@ -46,7 +47,7 @@ class Hassio(override val kHassInstance: KHomeAssistant) : Domain<Nothing> {
      */
     suspend fun addOnStop(addOn: String) = callService(
         serviceName = "addon_stop",
-        data = json { "addon" to addOn }
+        data = buildJsonObject { put("addon", addOn) }
     )
 
     /** Reboot the host system. */

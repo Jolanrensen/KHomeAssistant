@@ -1,9 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.*
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.plus
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
@@ -33,13 +30,13 @@ class Notify(override val kHassInstance: KHomeAssistant) : Domain<Nothing> {
         serviceName: String = "notify",
         title: String? = null,
         target: Array<String>? = null,
-        data: JsonObject = json { }
+        data: JsonObject = buildJsonObject { }
     ): ResultMessage = callService(
         serviceName = serviceName,
-        data = data + json {
-            message?.let { "message" to it }
-            title?.let { "title" to it }
-            target?.let { "target" to JsonArray(target.map(::JsonPrimitive)) }
+        data = data + buildJsonObject {
+            message?.let { put("message", it) }
+            title?.let { put("title", it) }
+            target?.let { put("target", JsonArray(target.map(::JsonPrimitive))) }
         }.also { if ("message" !in it) throw IllegalArgumentException("'message' is a required attribute") }
     )
 

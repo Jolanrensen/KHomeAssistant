@@ -1,10 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
 import com.soywiz.klock.TimeSpan
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.*
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.SceneEntityState
 import nl.jolanrensen.kHomeAssistant.entities.*
@@ -46,13 +43,13 @@ class Scene(override val kHassInstance: KHomeAssistant) : Domain<Scene.Entity> {
     ): ResultMessage =
         callService(
             serviceName = "apply",
-            data = json {
+            data = buildJsonObject {
                 transition?.let {
                     if (it < TimeSpan.ZERO)
                         throw IllegalArgumentException("incorrect transition $it")
                     "transition" to transition
                 }
-                "entities" to getEntitiesObject(data)
+                put("entities", getEntitiesObject(data))
             }
         )
 
@@ -67,12 +64,12 @@ class Scene(override val kHassInstance: KHomeAssistant) : Domain<Scene.Entity> {
         snapshotEntities: Iterable<BaseEntity<*, *>>? = null
     ): ResultMessage = callService(
         serviceName = "create",
-        data = json {
-            "scene_id" to sceneId.toLowerCase().replace(" ", "_")
-            "entities" to getEntitiesObject(data)
+        data = buildJsonObject {
+            put("scene_id", sceneId.toLowerCase().replace(" ", "_"))
+            put("entities", getEntitiesObject(data))
 
             snapshotEntities?.let {
-                "snapshot_entities" to JsonArray(it.map { JsonPrimitive(it.entityID) })
+                put("snapshot_entities", JsonArray(it.map { JsonPrimitive(it.entityID) }))
             }
 
         }
@@ -80,16 +77,19 @@ class Scene(override val kHassInstance: KHomeAssistant) : Domain<Scene.Entity> {
 
     @Suppress("UNCHECKED_CAST")
     private fun getEntitiesObject(data: Iterable<SceneEntityState<*, *, *>>): JsonObject =
-        json {
+        buildJsonObject {
             for (sceneEntityState in data) {
                 sceneEntityState as SceneEntityState<Any, BaseHassAttributes, BaseEntity<Any, BaseHassAttributes>>
                 val entityClone = sceneEntityState.entity.clone().apply {
                     saveToJson = true
                 }
                 sceneEntityState.attributes.invoke(entityClone)
-                sceneEntityState.entity.entityID to (json {
-                    "state" to sceneEntityState.entity.stateToString(sceneEntityState.state)
-                } + (entityClone.json ?: json { })) + sceneEntityState.additionalAttributes
+                put(
+                    key = sceneEntityState.entity.entityID,
+                    element = buildJsonObject {
+                        put("state", sceneEntityState.entity.stateToString(sceneEntityState.state))
+                    } + (entityClone.json ?: buildJsonObject { }) + sceneEntityState.additionalAttributes
+                )
 
             }
         }
@@ -142,11 +142,11 @@ class Scene(override val kHassInstance: KHomeAssistant) : Domain<Scene.Entity> {
          * @param transition Transition duration it takes to bring devices to the state defined in the scene. */
         suspend fun turnOn(transition: TimeSpan? = null): ResultMessage = callService(
             serviceName = "turn_on",
-            data = json {
+            data = buildJsonObject {
                 transition?.let {
                     if (it < TimeSpan.ZERO)
                         throw IllegalArgumentException("incorrect transition $it")
-                    "transition" to transition.seconds
+                    put("transition", transition.seconds)
                 }
             }
         )

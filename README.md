@@ -114,7 +114,7 @@ Now you can see that because domains and entities are now typed, there can be a 
 While it is encouraged to help expand the library, in the meantime you can use something like this:
 ```kotlin
 Domain("some_unsupported_domain")["some_entity"]
-    .callService(serviceName = "some_service", data = json { "some_value" to 10 })
+    .callService(serviceName = "some_service", data = buildJsonObject { put("some_value", 10) })
 ```
 
 ### States

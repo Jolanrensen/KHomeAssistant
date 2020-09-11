@@ -2,7 +2,8 @@ package nl.jolanrensen.kHomeAssistant.domains
 
 import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.seconds
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
@@ -34,15 +35,15 @@ class Mqtt(override val kHassInstance: KHomeAssistant) : Domain<Nothing> {
         retain: Boolean = false
     ): ResultMessage = callService(
         serviceName = "publish",
-        data = json {
-            "topic" to topic
+        data = buildJsonObject {
+            put("topic", topic)
             if (payload != null && payload_template != null || payload == null && payload_template == null)
                 throw IllegalArgumentException("You need to include either payload or payload_template, but not both.\n")
 
-            payload?.let { "payload" to it }
-            payload_template?.let { "payload_template" to it }
-            qos?.let { "qos" to it }
-            "retain" to retain
+            payload?.let { put("payload", it) }
+            payload_template?.let { put("payload_template", it) }
+            qos?.let { put("qos", it) }
+            put("retain", retain)
         }
     )
 
@@ -57,9 +58,9 @@ class Mqtt(override val kHassInstance: KHomeAssistant) : Domain<Nothing> {
         duration: TimeSpan = 5.seconds
     ): ResultMessage = callService(
         serviceName = "dump",
-        data = json {
-            "topic" to topic
-            "duration" to duration.seconds
+        data = buildJsonObject {
+            put("topic", topic)
+            put("duration", duration.seconds)
         }
     )
 }

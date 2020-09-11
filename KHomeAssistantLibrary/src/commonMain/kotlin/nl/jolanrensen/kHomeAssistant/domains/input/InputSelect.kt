@@ -1,7 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains.input
 
-import kotlinx.serialization.json.json
-import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.*
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.contentEquals
@@ -106,13 +105,13 @@ class InputSelect(override val kHassInstance: KHomeAssistant) : Domain<InputSele
         suspend fun setOptions(options: List<String>, async: Boolean = false): ResultMessage {
             val result = callService(
                 serviceName = "set_options",
-                data = json {
+                data = buildJsonObject {
                     options.let {
                         val entityOptions = this@Entity.options
                         if (!options.contentEquals(entityOptions)) {
-                            "options" to jsonArray {
-                                options.forEach { +it }
-                            }
+                            put("options", buildJsonArray {
+                                options.forEach { add(it) }
+                            })
                         }
                     }
                 } // TODO test
@@ -130,11 +129,11 @@ class InputSelect(override val kHassInstance: KHomeAssistant) : Domain<InputSele
         suspend fun selectOption(option: String, async: Boolean = false): ResultMessage {
             val result = callService(
                 serviceName = "select_option",
-                data = json {
+                data = buildJsonObject {
                     option.let {
                         if (it !in options)
                             throw IllegalArgumentException("incorrect value $it")
-                        "option" to option
+                        put("option", option)
                     }
                 }
             )

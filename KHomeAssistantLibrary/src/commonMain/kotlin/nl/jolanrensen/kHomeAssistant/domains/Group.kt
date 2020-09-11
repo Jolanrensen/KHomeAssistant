@@ -1,6 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.OnOff.*
 import nl.jolanrensen.kHomeAssistant.entities.*
@@ -41,12 +42,12 @@ class Group(override val kHassInstance: KHomeAssistant) : Domain<Group.Entity> {
     ): ResultMessage {
         val result = callService(
             serviceName = "set",
-            data = json {
-                "object_id" to groupName.toLowerCase().replace(" ", "_")
-                friendlyName?.let { "name" to it }
-                icon?.let { "icon" to it }
-                "entities" to entities.map { it.entityID }.toJson()
-                "all" to all
+            data = buildJsonObject {
+                put("object_id", groupName.toLowerCase().replace(" ", "_"))
+                friendlyName?.let { put("name", it) }
+                icon?.let { put("icon", it) }
+                put("entities", entities.map { it.entityID }.toJson())
+                put("all", all)
             }
         )
         if (!async) kHassInstance.suspendUntilEntityExists(this, groupName)
@@ -177,7 +178,7 @@ class Group(override val kHassInstance: KHomeAssistant) : Domain<Group.Entity> {
         /** Remove this user group. */
         suspend fun remove(): ResultMessage = domain.callService(
             serviceName = "remove",
-            data = json { "object_id" to name }
+            data = buildJsonObject { put("object_id", name) }
         )
 
         /**
@@ -197,15 +198,15 @@ class Group(override val kHassInstance: KHomeAssistant) : Domain<Group.Entity> {
             all: Boolean? = null
         ): ResultMessage = domain.callService(
             serviceName = "set",
-            data = json {
-                "object_id" to name
-                friendlyName?.let { "name" to it }
-                icon?.let { "icon" to it }
+            data = buildJsonObject {
+                put("object_id", name)
+                friendlyName?.let { put("name", it) }
+                icon?.let { put("icon", it) }
                 if (entities != null && addEntities != null)
                     throw IllegalArgumentException("You can't add and replace entities in the group at the same time.")
-                entities?.let { "entities" to it.map { it.entityID }.toJson() }
-                addEntities?.let { "add_entities" to it.map { it.entityID }.toJson() }
-                all?.let { "all" to it }
+                entities?.let { put("entities", it.map { it.entityID }.toJson()) }
+                addEntities?.let { put("add_entities", it.map { it.entityID }.toJson()) }
+                all?.let { put("all", it) }
             }
         )
 

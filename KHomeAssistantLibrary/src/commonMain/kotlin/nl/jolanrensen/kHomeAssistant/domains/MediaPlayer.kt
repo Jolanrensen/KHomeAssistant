@@ -5,7 +5,8 @@ import com.soywiz.klock.TimeSpan
 import com.soywiz.klock.parseUtc
 import com.soywiz.klock.seconds
 import com.soywiz.korim.bitmap.NativeImage
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer.MediaContentType.*
@@ -180,7 +181,7 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
 
         /** Duration of current playing media. */
         val mediaDuration: TimeSpan
-            get() = media_duration.seconds
+            get() = media_duration.toDouble().seconds
 
         /** When was the position of the current playing media valid. */
         val mediaPositionUpdatedAt: DateTimeTz
@@ -199,7 +200,7 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
 
         /** Position of current playing media. */
         var mediaPosition: TimeSpan
-            get() = media_position.seconds
+            get() = media_position.toDouble().seconds
             set(value) {
                 media_position = value.seconds.toFloat()
             }
@@ -269,7 +270,7 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
                 }
                 ::volume_level.name -> volumeSet(value as Float)
                 ::is_volume_muted.name -> volumeMute(value as Boolean)
-                ::media_position.name -> mediaSeek((value as Float).seconds)
+                ::media_position.name -> mediaSeek((value as Float).toDouble().seconds)
                 ::source.name -> selectSource(value as String)
                 ::sound_mode.name -> selectSoundMode(value as String)
                 ::shuffle.name -> shuffleSet(value as Boolean)
@@ -444,11 +445,11 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
             checkIfSupported(SUPPORT_VOLUME_SET)
             val result = callService(
                 serviceName = "volume_set",
-                data = json {
+                data = buildJsonObject {
                     volumeLevel.let {
                         if (it !in 0f..1f)
                             throw IllegalArgumentException("incorrect volumeLevel $it")
-                        "volume_level" to it
+                        put("volume_level", it)
                     }
                 }
             )
@@ -462,8 +463,8 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
             checkIfSupported(SUPPORT_VOLUME_MUTE)
             val result = callService(
                 serviceName = "volume_mute",
-                data = json {
-                    "is_volume_muted" to mute
+                data = buildJsonObject {
+                    put("is_volume_muted", mute)
                 }
             )
 
@@ -544,8 +545,8 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
             checkIfSupported(SUPPORT_SEEK)
             val result = callService(
                 serviceName = "media_seek",
-                data = json {
-                    "seek_position" to seekPosition.seconds
+                data = buildJsonObject {
+                    put("seek_position", seekPosition.seconds)
                 }
             )
 
@@ -558,9 +559,9 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
             checkIfSupported(SUPPORT_PLAY_MEDIA)
             return callService(
                 serviceName = "play_media",
-                data = json {
-                    "media_content_id" to mediaContentId
-                    "media_content_type" to mediaContentType
+                data = buildJsonObject {
+                    put("media_content_id", mediaContentId)
+                    put("media_content_type", mediaContentType)
                 }
             )
         }
@@ -583,11 +584,11 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
             checkIfSupported(SUPPORT_SELECT_SOURCE)
             val result = callService(
                 serviceName = "select_source",
-                data = json {
+                data = buildJsonObject {
                     source.let {
                         if (it !in source_list)
                             throw IllegalArgumentException("incorrect source $it")
-                        "source" to it
+                        put("source", it)
                     }
                 }
             )
@@ -599,11 +600,11 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
             checkIfSupported(SUPPORT_SELECT_SOUND_MODE)
             val result = callService(
                 serviceName = "select_sound_mode",
-                data = json {
+                data = buildJsonObject {
                     soundMode.let {
                         if (it !in sound_mode_list)
                             throw IllegalArgumentException("incorrect sound mode $it")
-                        "sound_mode" to it
+                        put("sound_mode", it)
                     }
                 }
             )
@@ -615,9 +616,9 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
             checkIfSupported(SUPPORT_SHUFFLE_SET)
             val result = callService(
                 serviceName = "shuffle_set",
-                data = json {
+                data = buildJsonObject {
                     shuffle.let {
-                        "shuffle" to it
+                        put("shuffle", it)
                     }
                 }
             )

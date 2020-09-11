@@ -17,7 +17,6 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.channels.receiveOrNull
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.ImplicitReflectionSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -172,7 +171,7 @@ class KHomeAssistantInstance(
         vararg functionalAutomations: FunctionalAutomation,
         mode: Mode = Mode.AUTOMATIC
     ) =
-        run(automations = *functionalAutomations.map { it.invoke(this) }.toTypedArray(), mode = mode)
+        run(automations = functionalAutomations.map { it.invoke(this) }.toTypedArray(), mode = mode)
 
     /**
      * Allows to inline creation of [KHomeAssistantInstance] and automations and starting a run.
@@ -446,7 +445,6 @@ class KHomeAssistantInstance(
      * @param timeout optional timeout for a response, throws exception if exceeded
      * @return the response of type [Response] returned from Home Assistant
      * */
-    @OptIn(ImplicitReflectionSerializer::class)
     private suspend inline fun <reified Send : Message, reified Response : ResultMessage> sendMessage(
         message: Send,
         timeout: TimeSpan? = null

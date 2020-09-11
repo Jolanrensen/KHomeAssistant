@@ -1,6 +1,7 @@
 package nl.jolanrensen.kHomeAssistant.domains.input
 
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.cast
@@ -106,11 +107,11 @@ class InputNumber(override val kHassInstance: KHomeAssistant) : Domain<InputNumb
         suspend fun setValue(value: Float, async: Boolean = false): ResultMessage {
             val result = callService(
                 serviceName = "set_value",
-                data = json {
+                data = buildJsonObject {
                     value.let {
                         if (it !in min..max)
                             throw IllegalArgumentException("incorrect value $it")
-                        "value" to it
+                        put("value", it)
                     }
                 }
             )

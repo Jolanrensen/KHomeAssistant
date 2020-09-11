@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant.domains
 
-import kotlinx.serialization.json.json
+import kotlinx.serialization.json.buildJsonObject
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.AlarmControlPanel.State.*
 import nl.jolanrensen.kHomeAssistant.domains.AlarmControlPanel.SupportedFeatures.*
@@ -128,7 +128,7 @@ class AlarmControlPanel<CodeFormat : Any>(
             //val prevState = state
             val result = callService(
                 serviceName = "alarm_disarm",
-                data = json { if (code != null) "code" to code.toJson() }
+                data = buildJsonObject { if (code != null) put("code", code.toJson()) }
             )
             // TODO check how to wait for result
             if (!async) suspendUntilStateChangedTo(DISARMED)
@@ -142,7 +142,7 @@ class AlarmControlPanel<CodeFormat : Any>(
             checkIfSupported(SUPPORT_ALARM_ARM_AWAY)
             val result = callService(
                 serviceName = "alarm_arm_away",
-                data = json { if (code != null) "code" to code.toJson() }
+                data = buildJsonObject { if (code != null) put("code", code.toJson()) }
             )
             // TODO check how to wait for result
             if (!async) suspendUntilStateChangedTo(ARMED_AWAY)
@@ -156,7 +156,7 @@ class AlarmControlPanel<CodeFormat : Any>(
             checkIfSupported(SUPPORT_ALARM_ARM_HOME)
             val result = callService(
                 serviceName = "alarm_arm_home",
-                data = json { if (code != null) "code" to code.toJson() }
+                data = buildJsonObject { if (code != null) put("code", code.toJson()) }
             )
             // TODO check how to wait for result
             if (!async) suspendUntilStateChangedTo(ARMED_HOME)
@@ -170,7 +170,7 @@ class AlarmControlPanel<CodeFormat : Any>(
             checkIfSupported(SUPPORT_ALARM_ARM_NIGHT)
             val result = callService(
                 serviceName = "alarm_arm_night",
-                data = json { if (code != null) "code" to code.toJson() }
+                data = buildJsonObject { if (code != null) put("code", code.toJson()) }
             )
             // TODO check how to wait for result
             if (!async) suspendUntilStateChangedTo(ARMED_NIGHT)
@@ -184,7 +184,7 @@ class AlarmControlPanel<CodeFormat : Any>(
             checkIfSupported(SUPPORT_ALARM_ARM_CUSTOM_BYPASS)
             val result = callService(
                 serviceName = "alarm_arm_custom_bypass",
-                data = json { if (code != null) "code" to code.toJson() }
+                data = buildJsonObject { if (code != null) put("code", code.toJson()) }
             )
             // TODO check how to wait for result
             if (!async) suspendUntilStateChangedTo(ARMED_CUSTOM_BYPASS)
@@ -198,7 +198,7 @@ class AlarmControlPanel<CodeFormat : Any>(
             checkIfSupported(SUPPORT_ALARM_TRIGGER)
             val result = callService(
                 serviceName = "alarm_trigger",
-                data = json { if (code != null) "code" to code.toJson() }
+                data = buildJsonObject { if (code != null) put("code", code.toJson()) }
             )
             // TODO check how to wait for result
             if (!async) suspendUntilStateChangedTo(TRIGGERED)

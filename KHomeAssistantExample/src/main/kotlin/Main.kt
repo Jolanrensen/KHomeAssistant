@@ -1,5 +1,4 @@
 import com.soywiz.klock.seconds
-import examples.BedroomLights
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
@@ -43,8 +42,8 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
 fun main() = runBlocking {
     println("running!")
     kHomeAssistant.run(
-//        TestAutomation(kHomeAssistant)
-        BedroomLights(kHomeAssistant)
+        TestAutomation(kHomeAssistant)
+//        BedroomLights(kHomeAssistant)
 //        AutoLights(kHomeAssistant)
     )
 }

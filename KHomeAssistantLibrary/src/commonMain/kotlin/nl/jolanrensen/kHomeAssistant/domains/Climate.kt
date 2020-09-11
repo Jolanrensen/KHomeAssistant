@@ -131,7 +131,7 @@
 //        suspend fun setHvacMode(hvacModeName: String, async: Boolean = false): ResultMessage {
 //            val result = callService(
 //                serviceName = "set_hvac_mode",
-//                data = json {
+//                data = buildJsonObject {
 //                    hvacModeName.let {
 //                        if (it !in hvac_modes)
 //                            throw IllegalArgumentException("Climate does not support HVAC mode $it")
