@@ -55,7 +55,9 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
         IMAGE("image"),
         URL("url"),
         GAME("game"),
-        APP("app")
+        APP("app"),
+
+        CAST("cast"),
     }
 
     enum class SupportedFeatures(val value: Int) {
@@ -65,6 +67,7 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
         SUPPORT_VOLUME_MUTE(8),
         SUPPORT_PREVIOUS_TRACK(16),
         SUPPORT_NEXT_TRACK(32),
+
         SUPPORT_TURN_ON(128),
         SUPPORT_TURN_OFF(256),
         SUPPORT_PLAY_MEDIA(512),
@@ -74,7 +77,8 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
         SUPPORT_CLEAR_PLAYLIST(8192),
         SUPPORT_PLAY(16384),
         SUPPORT_SHUFFLE_SET(32768),
-        SUPPORT_SELECT_SOUND_MODE(65536)
+        SUPPORT_SELECT_SOUND_MODE(65536),
+        SUPPORT_BROWSE_MEDIA(131072),
     }
 
     override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
@@ -209,7 +213,7 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
         val deviceClass: DeviceClass
             get() = DeviceClass.values()
                 .find { it.value == device_class } ?: DeviceClass.GENERIC
-        
+
         /** Cycle through the sources forwards. */
         fun selectNextSource() {
             source = source_list[(source_list.indexOf(source) + 1) % source_list.size]
@@ -579,6 +583,41 @@ class MediaPlayer(override val kHassInstance: KHomeAssistant) : Domain<MediaPlay
         suspend fun playUrl(mediaContentId: String) = playMedia(URL, mediaContentId)
         suspend fun playGame(mediaContentId: String) = playMedia(GAME, mediaContentId)
         suspend fun playApp(mediaContentId: String) = playMedia(APP, mediaContentId)
+        suspend fun cast(mediaContentId: String) = playMedia(CAST, mediaContentId)
+
+        /**
+         * Cast youtube to this media player.
+         *
+         * @param mediaId the part after "youtube.com/watch?v=" of the video you'd like to play, like "dQw4w9WgXcQ".
+         * @param enqueue optional parameter if you want to only enqueue the video.
+         * @param playlistId optional, play video with media_id from this playlist.
+         */
+        suspend fun castYoutube(mediaId: String, enqueue: Boolean = false, playlistId: String? = null) =
+            playMedia(
+                mediaContentType = CAST,
+                mediaContentId = buildJsonObject {
+                    put("app_name", "youtube")
+                    put("media_id", mediaId)
+                    if (enqueue) put("enqueue", true)
+                    playlistId?.let { put("playlist_id", it) }
+                }.toString()
+            )
+
+        /**
+         * Cast Supla to this media player.
+         *
+         * @param mediaId the Spula item ID.
+         * @param isLive optional, make true if this item is a livestream.
+         */
+        suspend fun castSupla(mediaId: String, isLive: Boolean = false) =
+            playMedia(
+                mediaContentType = CAST,
+                mediaContentId = buildJsonObject {
+                    put("app_name", "supla")
+                    put("media_id", mediaId)
+                    if (isLive) put("is_live", isLive)
+                }.toString()
+            )
 
         suspend fun selectSource(source: String, async: Boolean = false): ResultMessage {
             checkIfSupported(SUPPORT_SELECT_SOURCE)

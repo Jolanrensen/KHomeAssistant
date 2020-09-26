@@ -20,7 +20,7 @@ class Scheduler(private val kHomeAssistant: KHomeAssistantInstance) {
      * The scheduler stops itself when there are no tasks left in
      * [scheduledRepeatedTasks]. If there is are tasks, it waits until it's time to execute the first (and is cancelable
      * doing this), then it executes the task and reschedules it.*/
-    private fun getNewSchedulerJob() = kHomeAssistant.launch {
+    private fun getNewSchedulerJob(): Job = kHomeAssistant.launch {
         while (scheduledRepeatedTasks.isNotEmpty()) {
             // Get next scheduled task in the future
             val next = scheduledRepeatedTasksLock.withLock {

@@ -18,7 +18,7 @@ allprojects {
     }
 }
 
-project(":KHomeAssistantExample") {
+project(":KHomeAssistantJVMExample") {
     dependencies {
 //        implementation project(":KHomeAssistant-library")
     }

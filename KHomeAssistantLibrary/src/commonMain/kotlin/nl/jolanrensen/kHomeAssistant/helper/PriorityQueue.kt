@@ -10,7 +10,7 @@ package nl.jolanrensen.kHomeAssistant.helper
 class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
 
     /** The dataset, unsorted except for the root, which is at heap[0].] */
-    /* TODO MAKE PRIVATE */var heap: Array<E?>
+    private var heap: Array<E?>
 
     /** The number of elements in the MinHeap. */
     override var size: Int

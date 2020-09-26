@@ -5,12 +5,11 @@ import com.soywiz.korim.bitmap.NativeImage
 import com.soywiz.korim.format.decodeImageBytes
 import com.soywiz.korio.async.delay
 import com.soywiz.korio.util.encoding.Base64
-import io.ktor.client.features.websocket.DefaultClientWebSocketSession
-import io.ktor.client.features.websocket.ws
-import io.ktor.client.features.websocket.wss
-import io.ktor.http.cio.websocket.Frame
-import io.ktor.http.cio.websocket.readText
-import io.ktor.http.cio.websocket.send
+import io.ktor.client.*
+import io.ktor.client.features.websocket.*
+import io.ktor.client.request.*
+import io.ktor.http.*
+import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
@@ -32,6 +31,8 @@ import kotlin.jvm.Volatile
 import kotlin.time.ExperimentalTime
 import kotlin.time.TimeSource
 import kotlin.time.minutes
+import io.ktor.client.features.websocket.wss
+import io.ktor.client.features.websocket.ws
 
 /**
  * KHomeAssistant instance.
@@ -84,7 +85,7 @@ class KHomeAssistantInstance(
     /** Makes sure that separate coroutines can fail independently. */
     private val supervisor = SupervisorJob()
 
-    /** The context of the current coroutinescope */
+    /** The context of the current coroutine scope */
     override val coroutineContext = Dispatchers.Default + supervisor + exceptionHandler
 
     /** The cache for the state and attributes of all entities in Home Assistant. */
@@ -170,8 +171,7 @@ class KHomeAssistantInstance(
     suspend fun run(
         vararg functionalAutomations: FunctionalAutomation,
         mode: Mode = Mode.AUTOMATIC
-    ) =
-        run(automations = functionalAutomations.map { it.invoke(this) }.toTypedArray(), mode = mode)
+    ) = run(automations = functionalAutomations.map { it.invoke(this) }.toTypedArray(), mode = mode)
 
     /**
      * Allows to inline creation of [KHomeAssistantInstance] and automations and starting a run.
@@ -213,7 +213,6 @@ class KHomeAssistantInstance(
     }
 
     /** What to run on the websocket */
-    @OptIn(ExperimentalCoroutinesApi::class)
     private fun runOnWebsocket(mode: Mode): suspend DefaultClientWebSocketSession.() -> Unit = {
         // authenticate on Home Assistant
         authenticate()

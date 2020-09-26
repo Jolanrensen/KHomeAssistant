@@ -1,10 +1,8 @@
-import com.soywiz.klock.seconds
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.domains.getValue
-import nl.jolanrensen.kHomeAssistant.runEvery
 
 
 class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
@@ -22,29 +20,18 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
 //
 //    val lock_linux by AlarmControlPanelNumber
 
+
     override suspend fun initialize() {
-
-//        val test = AbstractBinarySensor.BinarySensorDeviceClass.GENERIC.domain(this)["test"]
-
-//        println(lock_linux)
-
-        runEvery(2.5.seconds) {
-
-            println(denon_avrx2200w)
-        }
-//        Group["living_room_lights"].useAs(Light) {
-//            color = Colors.RED
-//            white_value = 100
-//        }
+        println(denon_avrx2200w)
     }
 }
 
-fun main() = runBlocking {
+fun main() = kotlinx.coroutines.runBlocking {
     println("running!")
     kHomeAssistant.run(
         TestAutomation(kHomeAssistant)
 //        BedroomLights(kHomeAssistant)
 //        AutoLights(kHomeAssistant)
-    )
+    )//.join()
 }
 

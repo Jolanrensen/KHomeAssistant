@@ -3,7 +3,6 @@ package nl.jolanrensen.kHomeAssistant
 import com.soywiz.klock.minutes
 import com.soywiz.klock.plus
 import kotlinx.coroutines.runBlocking
-import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.domains.getValue
 import nl.jolanrensen.kHomeAssistant.domains.input.InputDatetime
@@ -16,32 +15,28 @@ class Test {
     class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
 
         val denon_avrx2200w by MediaPlayer
-//    val bothDateAndTime = InputDatetime["both_date_and_time"]
-//    val onlyDate = InputDatetime["only_date"]
-//    val onlyTime = InputDatetime.Entity("only_time")
-//
-//    val shield_cast by MediaPlayer
-//
-//    val bedroom_lamp by Light
-//
-//    val oosterhout by Weather
-//
-//    val lock_linux by AlarmControlPanelNumber
+        val bothDateAndTime = InputDatetime["both_date_and_time"]
+        val onlyDate = InputDatetime["only_date"]
+        val onlyTime = InputDatetime.Entity("only_time")
 
         override suspend fun initialize() {
+            println(denon_avrx2200w)
+            println(bothDateAndTime)
+            println(onlyDate)
+            println(onlyTime)
 
-//        val test = AbstractBinarySensor.BinarySensorDeviceClass.GENERIC.domain(this)["test"]
+//            onEventFired("call_service") {
+//                println("call service called!")
+//                println(it)
+//            }
 
-//        println(lock_linux)
+            onlyTime {
+                time += 1.minutes
 
-//        runEvery(2.5.seconds) {
-//
-            println(entities)
-//        }
-//        Group["living_room_lights"].useAs(Light) {
-//            color = Colors.RED
-//            white_value = 100
-//        }
+                println(this)
+
+            }
+
         }
     }
 
@@ -54,9 +49,6 @@ class Test {
         assert(true)
     }
 
-    @Test
-    fun `Other test`() {
-        println(HassAttributes::class.members)
-    }
+
 
 }
