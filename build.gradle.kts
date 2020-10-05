@@ -20,6 +20,6 @@ allprojects {
 
 project(":KHomeAssistantJVMExample") {
     dependencies {
-//        implementation project(":KHomeAssistant-library")
+//        implementation(project(":KHomeAssistant-library"))
     }
 }

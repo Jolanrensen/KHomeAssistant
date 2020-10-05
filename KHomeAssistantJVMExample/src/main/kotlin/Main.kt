@@ -1,8 +1,12 @@
+import com.soywiz.klock.seconds
+import examples.BedroomLights
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.domains.getValue
+import nl.jolanrensen.kHomeAssistant.domains.input.InputBoolean
+import nl.jolanrensen.kHomeAssistant.runEvery
 
 
 class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
@@ -20,18 +24,22 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
 //
 //    val lock_linux by AlarmControlPanelNumber
 
+    val cast_radio by InputBoolean
+
 
     override suspend fun initialize() {
-        println(denon_avrx2200w)
+        runEvery(5.seconds) {
+            cast_radio.toggle()
+        }
     }
 }
 
-fun main() = kotlinx.coroutines.runBlocking {
+fun main() = runBlocking {
     println("running!")
     kHomeAssistant.run(
-        TestAutomation(kHomeAssistant)
-//        BedroomLights(kHomeAssistant)
+//        TestAutomation(kHomeAssistant)
+        BedroomLights(kHomeAssistant)
 //        AutoLights(kHomeAssistant)
-    )//.join()
+    ).join()
 }
 

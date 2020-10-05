@@ -1,10 +1,8 @@
 package nl.jolanrensen.kHomeAssistant
 
 import com.soywiz.klock.DateTime
-import com.soywiz.klock.DateTimeTz
 import com.soywiz.korim.bitmap.NativeImage
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject

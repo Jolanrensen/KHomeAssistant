@@ -5,10 +5,7 @@ import com.soywiz.korim.bitmap.NativeImage
 import com.soywiz.korim.format.decodeImageBytes
 import com.soywiz.korio.async.delay
 import com.soywiz.korio.util.encoding.Base64
-import io.ktor.client.*
 import io.ktor.client.features.websocket.*
-import io.ktor.client.request.*
-import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -27,12 +24,8 @@ import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
 import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT
 import nl.jolanrensen.kHomeAssistant.messages.*
+import kotlin.coroutines.CoroutineContext
 import kotlin.jvm.Volatile
-import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
-import kotlin.time.minutes
-import io.ktor.client.features.websocket.wss
-import io.ktor.client.features.websocket.ws
 
 /**
  * KHomeAssistant instance.
@@ -46,7 +39,6 @@ import io.ktor.client.features.websocket.ws
  * @param timeout timeout for confirmation for updating states and attributes
  * @param debug if enabled, debug messages will be printed
  */
-@OptIn(ExperimentalTime::class)
 class KHomeAssistantInstance(
     /** The address on which to reach your Home Assistant server. Like "https://myHomeAssistant.com". */
     val host: String,
@@ -67,7 +59,10 @@ class KHomeAssistantInstance(
     override val debug: Boolean = false,
 
     /** If enabled, the connection will be acquired again on close. */
-    val reconnectOnClose: Boolean = true
+    val reconnectOnClose: Boolean = true,
+
+    /** The coroutine dispatcher that will be used by KHomeAssistant. */
+    val coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : KHomeAssistant {
 
     override var loadedInitialStates: Boolean = false
@@ -78,15 +73,15 @@ class KHomeAssistantInstance(
     private var automations: Collection<Automation> = listOf()
 
     /** All exceptions from couroutines in this scope will be handled here. */
-    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+    private val exceptionHandler: CoroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
         PrintException.print("", throwable)
     }
 
     /** Makes sure that separate coroutines can fail independently. */
-    private val supervisor = SupervisorJob()
+    private val supervisor: CompletableJob = SupervisorJob()
 
     /** The context of the current coroutine scope */
-    override val coroutineContext = Dispatchers.Default + supervisor + exceptionHandler
+    override val coroutineContext: CoroutineContext = coroutineDispatcher + supervisor + exceptionHandler
 
     /** The cache for the state and attributes of all entities in Home Assistant. */
     @Volatile
@@ -104,11 +99,11 @@ class KHomeAssistantInstance(
         }
 
     /** The age of the [rawEntityData]. */
-    private var cacheAge = TimeSource.Monotonic.markNow()
+    private var cacheAge: DateTime = DateTime.now()
 
     /** The time after which to do a full refresh of the state/attributes of all entities.
      * Usually KHomeAssistant relies on state change events. */
-    private val maxCacheAge = 15.minutes
+    private val maxCacheAge: TimeSpan = 15.minutes
 
 
     /** HA version reported by the connected instance */
@@ -118,7 +113,7 @@ class KHomeAssistantInstance(
     private var messageID: Int = 0
 
     /** Mutex that has to be used to modify [messageID] to prevent race conditions. */
-    private val messageIDMutex = Mutex()
+    private val messageIDMutex: Mutex = Mutex()
 
     /** All the event listeners, `eventListeners["event"] =` set of listeners for this event type. */
     override val eventListeners: HashMap<String, HashSet<suspend (Event) -> Unit>> = hashMapOf()
@@ -139,16 +134,16 @@ class KHomeAssistantInstance(
     @Volatile
     private var responseAwaiters: HashMap<Int, Channel<String?>> = hashMapOf()
 
-    private var connectionWasAlive = false
+    private var connectionWasAlive: Boolean = false
 
 
     /** The receiver channel has priority over the sending channel (Think updating state values, getting responses etc.).
      * That's why this boolean is used to make the sender wait until there is no receiving data from Home Assistant. */
     @Volatile
-    private var canSend = true
+    private var canSend: Boolean = true
 
     /** Channel to signal that [canSend] has been set to `true`. */
-    private val canSendChannel = Channel<Unit>()
+    private val canSendChannel: Channel<Unit> = Channel()
 
     /** Instance of the scheduler for this KHomeAssistant instance. */
     private val scheduler = Scheduler(this)
@@ -168,10 +163,10 @@ class KHomeAssistantInstance(
      * )
      * ```
      * */
-    suspend fun run(
+    fun run(
         vararg functionalAutomations: FunctionalAutomation,
         mode: Mode = Mode.AUTOMATIC
-    ) = run(automations = functionalAutomations.map { it.invoke(this) }.toTypedArray(), mode = mode)
+    ): Job = run(automations = functionalAutomations.map { it.invoke(this) }.toTypedArray(), mode = mode)
 
     /**
      * Allows to inline creation of [KHomeAssistantInstance] and automations and starting a run.
@@ -196,8 +191,8 @@ class KHomeAssistantInstance(
 //    suspend fun run(vararg automations: Automation) = run(automations.toList())
 
     /** Run KHomeAssistant, this makes the connection, authenticates, initializes and runs the complete HA interaction */
-    suspend fun run(vararg automations: Automation, mode: Mode = Mode.AUTOMATIC) {
-        this.automations = automations.toList()
+    fun run(vararg automations: Automation, mode: Mode = Mode.AUTOMATIC): Job = launch {
+        this@KHomeAssistantInstance.automations = automations.toList()
         println("KHomeAssistant started running at ${DateTime.nowLocal().utc}")
         if (secure) WebsocketsHttpClient.httpClient.wss(
             host = host,
@@ -342,7 +337,6 @@ class KHomeAssistantInstance(
                                     }
                                     "call_service" -> {
                                         val eventDataCallService: EventDataCallService = fromJson(event.data)
-
                                         debugPrintln("Detected call_service: $eventDataCallService")
                                         // TODO
                                     }
@@ -395,7 +389,7 @@ class KHomeAssistantInstance(
         }
         rawEntityData = newCache
         loadedInitialStates = true
-        cacheAge = TimeSource.Monotonic.markNow()
+        cacheAge = DateTime.now()
         debugPrintln("Updated cache!")
     }
 
@@ -551,7 +545,7 @@ class KHomeAssistantInstance(
      */
     override fun <EntityType : Entity<*, *>> getRawAttributes(entity: EntityType): JsonObject =
         try {
-            if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
+            if (DateTime.now() - cacheAge > maxCacheAge) launch { updateCache() }
             rawEntityData[entity.entityID]!!.attributes
         } catch (e: Exception) {
             throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
@@ -567,7 +561,7 @@ class KHomeAssistantInstance(
      * @throws Exception if the state cannot be parsed using `[entity].parseStateValue()`
      */
     override fun <StateType : Any, EntityType : Entity<StateType, *>> getState(entity: EntityType): StateType {
-        if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
+        if (DateTime.now() - cacheAge > maxCacheAge) launch { updateCache() }
 
         val stateValue = try {
             rawEntityData[entity.entityID]!!.state
@@ -591,7 +585,7 @@ class KHomeAssistantInstance(
      * @return a [Context] instance.
      */
     override fun getContext(entity: Entity<*, *>): Context = try {
-        if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
+        if (DateTime.now() - cacheAge > maxCacheAge) launch { updateCache() }
         rawEntityData[entity.entityID]!!.context
     } catch (e: Exception) {
         throw EntityNotInHassException(
@@ -606,7 +600,7 @@ class KHomeAssistantInstance(
      * @return a [DateTime] instance
      */
     override fun getLastChanged(entity: Entity<*, *>): DateTime = try {
-        if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
+        if (DateTime.now() - cacheAge > maxCacheAge) launch { updateCache() }
         HASS_DATE_FORMAT.parseUtc(rawEntityData[entity.entityID]!!.last_changed)
     } catch (e: Exception) {
         throw EntityNotInHassException(
@@ -621,7 +615,7 @@ class KHomeAssistantInstance(
      * @return a [DateTime] instance
      */
     override fun getLastUpdated(entity: Entity<*, *>): DateTime = try {
-        if (cacheAge.elapsedNow() > maxCacheAge) launch { updateCache() }
+        if (DateTime.now() - cacheAge > maxCacheAge) launch { updateCache() }
         HASS_DATE_FORMAT.parseUtc(rawEntityData[entity.entityID]!!.last_updated)
     } catch (e: Exception) {
         throw EntityNotInHassException(
