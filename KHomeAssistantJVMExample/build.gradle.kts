@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -36,9 +37,12 @@ dependencies {
 //    implementation( "org.jetbrains.kotlin:kotlin-reflect:1.3.72")
 }
 
+application {
+    mainClassName = "MainKt"
+}
 
-//mainClassName = "MainKt"
 //
+
 tasks.withType<KotlinCompile>().all {
     kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
 }
@@ -49,8 +53,13 @@ tasks.withType<KotlinCompile>().all {
 //    }
 //}
 
-//jar {
-//    manifest {
-//        attributes "Main-Class": mainClassName
-//    }
+//val shadowJar by tasks.getting(ShadowJar::class) {
+//
+//    this.mainClassName = mainClassName
 //}
+
+val jar by tasks.getting(Jar::class) {
+    manifest {
+        attributes["Main-Class"] = "MainKt"
+    }
+}
