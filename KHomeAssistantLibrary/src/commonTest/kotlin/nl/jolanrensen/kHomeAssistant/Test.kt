@@ -1,8 +1,13 @@
 package nl.jolanrensen.kHomeAssistant
 
 import kotlin.test.Test
+import kotlin.test.assertTrue
 
-@Test
-fun `Test TimeOfDay`() {
+class Test {
+
+    @Test
+    fun `Test TimeOfDay`() {
+        assertTrue(true)
+    }
 
 }

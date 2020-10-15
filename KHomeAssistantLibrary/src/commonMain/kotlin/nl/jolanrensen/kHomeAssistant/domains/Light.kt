@@ -22,6 +22,7 @@ import kotlin.time.seconds
 /**
  * https://www.home-assistant.io/integrations/light/
  * */
+@OptIn(ExperimentalTime::class)
 public class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
     override val domainName: String = "light"
 
@@ -162,7 +163,7 @@ public class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.En
             }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
+    @OptIn(ExperimentalStdlibApi::class, ExperimentalTime::class)
     class Entity(
         override val kHassInstance: KHomeAssistant,
         override val name: String,

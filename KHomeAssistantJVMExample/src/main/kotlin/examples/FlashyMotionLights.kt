@@ -12,6 +12,7 @@ import nl.jolanrensen.kHomeAssistant.runIn
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
+@OptIn(ExperimentalTime::class)
 class FlashyMotionLights(kHass: KHomeAssistant) : Automation(kHass) {
 
     private val livingRoomLight = Light["living_room"]

@@ -13,5 +13,3 @@
 /KHomeAssistant/build/classes/kotlin/linux/test/
 /.idea/
 /KHomeAssistant/.idea/
-/KHomeAssistantExample/src/main/kotlin/instance.kt
-/KHomeAssistantLibrary/src/jvmTest/kotlin/nl/jolanrensen/kHomeAssistant/instance.kt

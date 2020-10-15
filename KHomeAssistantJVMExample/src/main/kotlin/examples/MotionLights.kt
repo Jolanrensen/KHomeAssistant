@@ -18,6 +18,7 @@ import kotlin.time.seconds
  * @param entityOn the entity to turn on for 60 seconds when the motion is detected. This can be any [ToggleEntity] like [Light] or [Switch].
  * @param delay the time for [entityOn] to be on when motion is detected by [sensor].
  */
+@OptIn(ExperimentalTime::class)
 class MotionLights(
     kHass: KHomeAssistant,
     val sensor: MotionBinarySensor.Entity,
@@ -40,6 +41,7 @@ class MotionLights(
 }
 
 // functional variant
+@OptIn(ExperimentalTime::class)
 fun motionLights(kHass: KHomeAssistant): Automation = automation(kHass, "MotionLights") {
     val driveLight = Light["drive"]
     val driveSensor = MotionBinarySensor["drive"]

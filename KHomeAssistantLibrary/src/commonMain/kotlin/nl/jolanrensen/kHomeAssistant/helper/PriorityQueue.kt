@@ -7,7 +7,7 @@ package nl.jolanrensen.kHomeAssistant.helper
  *
  * Algorithms by Tom Peters.
  */
-class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
+public class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
 
     /** The dataset, unsorted except for the root, which is at heap[0].] */
     private var heap: Array<E?>
@@ -20,7 +20,7 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
      * @param initSize the initial size of the Array backing the data of the heap.
      * */
     @Suppress("UNCHECKED_CAST")
-    constructor(initSize: Int) {
+    public constructor(initSize: Int) {
         heap = arrayOfNulls<Comparable<*>>(initSize) as Array<E?>
         size = 0
     }
@@ -29,7 +29,7 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
      * Constructs a [PriorityQueue] based on another [PriorityQueue].
      * @param otherQueue the other MinHeap to copy
      */
-    constructor(otherQueue: PriorityQueue<E>) {
+    public constructor(otherQueue: PriorityQueue<E>) {
         heap = otherQueue.heap.copyOf()
         size = otherQueue.size
     }
@@ -75,7 +75,7 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
      * @throws Exception if [isEmpty] is true
      * @see next
      * */
-    fun peek(): E = heap[0]!!
+    public fun peek(): E = heap[0]!!
 
     /**
      * Remove and get the element currently at the root.
@@ -83,7 +83,7 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
      * @throws Exception if [isEmpty] is true
      * @see extractNext
      * */
-    fun poll(): E {
+    public fun poll(): E {
         val min = peek()
         heap[0] = heap[size - 1]
         size--
@@ -96,7 +96,7 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
      * @throws Exception if [isEmpty] is true
      * @see peek
      * */
-    val next: E get() = peek()
+    public val next: E get() = peek()
 
     /**
      * Remove and get the element currently at the root.
@@ -104,13 +104,13 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
      * @throws Exception if [isEmpty] is true
      * @see poll
      */
-    fun extractNext(): E = poll()
+    public fun extractNext(): E = poll()
 
     /**
      * Insert an element in the queue.
      * @param element the element to be inserted into the queue
      * */
-    fun push(element: E) {
+    public fun push(element: E) {
         // check if heap is big enough and possibly extend it
         if (size == heap.size)
             heap = heap.copyOf(newSize = size + 1)
@@ -139,9 +139,9 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
         return true
     }
 
-    override fun contains(element: E) = element in heap
+    override fun contains(element: E): Boolean = element in heap
 
-    override fun containsAll(elements: Collection<E>) = elements.all { it in heap }
+    override fun containsAll(elements: Collection<E>): Boolean = elements.all { it in heap }
 
     override fun isEmpty(): Boolean = size == 0
 
@@ -164,12 +164,12 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
         return true
     }
 
-    override fun removeAll(elements: Collection<E>) = elements.any { remove(it) }
+    override fun removeAll(elements: Collection<E>): Boolean = elements.any { remove(it) }
 
-    override fun retainAll(elements: Collection<E>) = removeAll(heap.filter { it !in elements })
+    override fun retainAll(elements: Collection<E>): Boolean = removeAll(heap.filter { it !in elements })
 
     /** This iterator loops over the sorted queue. */
-    override fun iterator() = object : MutableIterator<E> {
+    override fun iterator(): MutableIterator<E> = object : MutableIterator<E> {
         private val copy = copyOf()
         private var lastItem: E? = null
 
@@ -182,12 +182,12 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
         }
     }
 
-    override fun toString() = "MinHeap: ${map { it.toString() }}"
+    override fun toString(): String = "MinHeap: ${map { it.toString() }}"
 
     /** Returns a copy of this [PriorityQueue].
      * @return the copy of this [PriorityQueue]
      * */
-    fun copyOf() = PriorityQueue(this)
+    public fun copyOf(): PriorityQueue<E> = PriorityQueue(this)
 }
 
 /**
@@ -196,7 +196,7 @@ class PriorityQueue<E : Comparable<E>> : MutableCollection<E> {
  * @param elements the elements to be initially added to the queue
  * @return a new [PriorityQueue] containing the elements provided
  */
-fun <E : Comparable<E>> priorityQueueOf(elements: Collection<E>) =
+public fun <E : Comparable<E>> priorityQueueOf(elements: Collection<E>): PriorityQueue<E> =
     PriorityQueue<E>(elements.size).also { it += elements }
 
 /**
@@ -205,5 +205,5 @@ fun <E : Comparable<E>> priorityQueueOf(elements: Collection<E>) =
  * @param elements the elements to be initially added to the queue
  * @return a new [PriorityQueue] containing the elements provided
  */
-fun <E : Comparable<E>> priorityQueueOf(vararg elements: E) =
+public fun <E : Comparable<E>> priorityQueueOf(vararg elements: E): PriorityQueue<E> =
     PriorityQueue<E>(elements.size).also { it += elements }

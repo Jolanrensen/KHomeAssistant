@@ -18,7 +18,7 @@ import kotlin.time.ExperimentalTime
  * @param kHomeAssistant the [KHomeAssistantInstance] instance
  */
 @OptIn(ExperimentalTime::class)
-class Scheduler(private val kHomeAssistant: KHomeAssistantInstance) {
+public class Scheduler(private val kHomeAssistant: KHomeAssistantInstance) {
     /**
      * Returns a new instance of the scheduler job.
      * The scheduler stops itself when there are no tasks left in
@@ -62,18 +62,18 @@ class Scheduler(private val kHomeAssistant: KHomeAssistantInstance) {
     private val scheduledRepeatedTasks: PriorityQueue<RepeatedTask> = priorityQueueOf()
 
     /** Returns whether the scheduler is empty. */
-    val isEmpty
+    public val isEmpty: Boolean
         get() = scheduledRepeatedTasks.isEmpty()
 
     /** Returns the amount of tasks the scheduler has. */
-    val size
+    public val size: Int
         get() = scheduledRepeatedTasks.size
 
     /** Mutex that needs to be used when working with [scheduledRepeatedTasks] */
     private val scheduledRepeatedTasksLock = Mutex()
 
     /** Cancel this task and schedule it again. */
-    suspend fun reschedule(task: RepeatedTask) {
+    public suspend fun reschedule(task: RepeatedTask) {
         cancel(task)
 
         // makes sure tasks cannot be scheduled for the same point in time already executed.
@@ -82,7 +82,7 @@ class Scheduler(private val kHomeAssistant: KHomeAssistantInstance) {
     }
 
     /** Make this task be executed by the [schedulerJob]. */
-    suspend fun schedule(task: RepeatedTask) {
+    public suspend fun schedule(task: RepeatedTask) {
         scheduledRepeatedTasksLock.withLock {
             if (scheduledRepeatedTasks.isEmpty() || task < scheduledRepeatedTasks.next) {
                 schedulerJob?.cancel()
@@ -95,7 +95,7 @@ class Scheduler(private val kHomeAssistant: KHomeAssistantInstance) {
     }
 
     /** Stop this task from being executed by the [schedulerJob]. */
-    suspend fun cancel(task: RepeatedTask) {
+    public suspend fun cancel(task: RepeatedTask) {
         scheduledRepeatedTasksLock.withLock {
             scheduledRepeatedTasks -= task
         }

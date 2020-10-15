@@ -10,6 +10,7 @@ import nl.jolanrensen.kHomeAssistant.runEveryDayAtSunset
 import kotlin.time.ExperimentalTime
 import kotlin.time.minutes
 
+@OptIn(ExperimentalTime::class)
 class OutsideLights(kHass: KHomeAssistant) : Automation(kHass) {
 
     // TODO add scenes
