@@ -1,7 +1,7 @@
+@file:OptIn(ExperimentalTime::class)
+
 package nl.jolanrensen.kHomeAssistant.domains
 
-import com.soywiz.klock.TimeSpan
-import com.soywiz.klock.seconds
 import com.soywiz.korim.color.Colors
 import com.soywiz.korim.color.RGBA
 import kotlinx.serialization.json.JsonArray
@@ -14,23 +14,26 @@ import nl.jolanrensen.kHomeAssistant.domains.Light.SupportedFeatures.*
 import nl.jolanrensen.kHomeAssistant.entities.*
 import nl.jolanrensen.kHomeAssistant.helper.*
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.seconds
 
 
 /**
  * https://www.home-assistant.io/integrations/light/
  * */
-class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
-    override val domainName = "light"
+public class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
+    override val domainName: String = "light"
 
     /** Making sure Light acts as a singleton. */
-    override fun equals(other: Any?) = other is Light
+    override fun equals(other: Any?): Boolean = other is Light
     override fun hashCode(): Int = domainName.hashCode()
 
-    enum class Flash(val value: String) {
+    public enum class Flash(public val value: String) {
         SHORT("short"), LONG("long")
     }
 
-    enum class SupportedFeatures(val value: Int) {
+    public enum class SupportedFeatures(public val value: Int) {
         SUPPORT_BRIGHTNESS(1),
         SUPPORT_COLOR_TEMP(2),
         SUPPORT_EFFECT(4),
@@ -42,7 +45,7 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
 
     override fun Entity(name: String): Entity = Entity(kHassInstance = kHassInstance, name = name)
 
-    interface HassAttributes : BaseHassAttributes {
+    public interface HassAttributes : BaseHassAttributes {
         // read only
 
         /** Minimum color temperature in mireds. */
@@ -162,7 +165,7 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
     @OptIn(ExperimentalStdlibApi::class)
     class Entity(
         override val kHassInstance: KHomeAssistant,
-        override val name: String
+        override val name: String,
     ) : ToggleEntity<HassAttributes>(
         kHassInstance = kHassInstance,
         name = name,
@@ -175,7 +178,7 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
         @Suppress("UNCHECKED_CAST")
         override suspend fun <V : Any?> setValue(
             propertyName: String,
-            value: V
+            value: V,
         ) {
             when (propertyName) {
                 ::brightness.name -> {
@@ -264,9 +267,8 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
                 throw UnsupportedFeatureException("Unfortunately the light $name does not support ${supportedFeature.name}.")
         }
 
-
         suspend fun turnOn(
-            transition: TimeSpan? = null,
+            transition: Duration? = null,
             profile: String? = null,
             hs_color: HSColor? = null,
             xy_color: XYColor? = null,
@@ -282,16 +284,16 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
             brightness_step_pct: Float? = null,
             flash: Flash? = null,
             effect: String? = null,
-            async: Boolean = false
+            async: Boolean = false,
         ): ResultMessage {
             val result = callService(
                 serviceName = "turn_on",
                 data = buildJsonObject {
                     transition?.let {
                         checkIfSupported(SUPPORT_TRANSITION)
-                        if (it < TimeSpan.ZERO)
+                        if (it < Duration.ZERO)
                             throw IllegalArgumentException("incorrect transition $it")
-                        put("transition", it.seconds)
+                        put("transition", it.inSeconds)
                     }
                     profile?.let {
                         put("profile", it)
@@ -399,12 +401,12 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
          * @param transition time in seconds in which to turn off
          */
         @OptIn(ExperimentalStdlibApi::class)
-        suspend fun turnOff(transition: TimeSpan, async: Boolean = false): ResultMessage {
+        suspend fun turnOff(transition: Duration, async: Boolean = false): ResultMessage {
             val result = callService(
                 serviceName = "turn_off",
                 data = buildJsonObject {
                     transition.let {
-                        if (it < TimeSpan.ZERO)
+                        if (it < Duration.ZERO)
                             throw IllegalArgumentException("incorrect transition $it")
                         "transition" to it
                     }
@@ -418,7 +420,7 @@ class Light(override val kHassInstance: KHomeAssistant) : Domain<Light.Entity> {
 }
 
 /** Access the Light Domain */
-val KHomeAssistant.Light: Light
+public val KHomeAssistant.Light: Light
     get() = Light(this)
 
 

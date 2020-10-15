@@ -3,6 +3,7 @@ package nl.jolanrensen.kHomeAssistant
 import com.soywiz.klock.DateTime
 import com.soywiz.korim.bitmap.NativeImage
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.datetime.Instant
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -18,7 +19,7 @@ import nl.jolanrensen.kHomeAssistant.messages.Event
 import nl.jolanrensen.kHomeAssistant.messages.HassConfig
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
 
-interface KHomeAssistant : CoroutineScope {
+interface KHomeAssistant {
 
     var loadedInitialStates: Boolean
 
@@ -42,6 +43,9 @@ interface KHomeAssistant : CoroutineScope {
 
     /** If enabled, debug messages will be printed. */
     val debug: Boolean
+
+    /** The coroutine scope that will be used for all automations. */
+    val scope: CoroutineScope
 
     /** Performs a ping/pong to see if the Home Assistant is still connected. */
     suspend fun connectionIsAlive(): Boolean
@@ -126,14 +130,14 @@ interface KHomeAssistant : CoroutineScope {
      * @param entity the entity to get the datetime for.
      * @return a [DateTime] instance
      */
-    fun getLastChanged(entity: Entity<*, *>): DateTime
+    fun getLastChanged(entity: Entity<*, *>): Instant
 
     /**
      * Return the last update time for the given [entity]
      * @param entity the entity to get the datetime for.
      * @return a [DateTime] instance
      */
-    fun getLastUpdated(entity: Entity<*, *>): DateTime
+    fun getLastUpdated(entity: Entity<*, *>): Instant
 
     /**
      * This will get a dump of the current config in Home Assistant.

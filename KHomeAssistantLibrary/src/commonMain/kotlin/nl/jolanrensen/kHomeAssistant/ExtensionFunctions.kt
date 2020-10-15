@@ -3,11 +3,11 @@ package nl.jolanrensen.kHomeAssistant
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
 
-fun <T> Collection<T>.contentEquals(other: Collection<T>): Boolean =
+public fun <T> Collection<T>.contentEquals(other: Collection<T>): Boolean =
     containsAll(other) && other.containsAll(this)
 
 /** */
-fun <T : Any?> KProperty<T>.toKProperty0(instance: Any?): KProperty0<T> =
+public fun <T : Any?> KProperty<T>.toKProperty0(instance: Any?): KProperty0<T> =
     object : KProperty0<T>, KProperty<T> by this {
         override fun get(): T = call(instance)
         override fun getDelegate(): Any? = error("")

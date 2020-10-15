@@ -1,6 +1,5 @@
 package nl.jolanrensen.kHomeAssistant.core
 
-import com.soywiz.klock.*
 import com.soywiz.korim.bitmap.NativeImage
 import com.soywiz.korim.format.decodeImageBytes
 import com.soywiz.korio.async.delay
@@ -13,6 +12,8 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.channels.receiveOrNull
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -24,8 +25,8 @@ import nl.jolanrensen.kHomeAssistant.entities.Entity
 import nl.jolanrensen.kHomeAssistant.entities.EntityNotInHassException
 import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT
 import nl.jolanrensen.kHomeAssistant.messages.*
-import kotlin.coroutines.CoroutineContext
 import kotlin.jvm.Volatile
+import kotlin.time.*
 
 /**
  * KHomeAssistant instance.
@@ -39,30 +40,31 @@ import kotlin.jvm.Volatile
  * @param timeout timeout for confirmation for updating states and attributes
  * @param debug if enabled, debug messages will be printed
  */
-class KHomeAssistantInstance(
+@OptIn(ExperimentalTime::class)
+public class KHomeAssistantInstance(
     /** The address on which to reach your Home Assistant server. Like "https://myHomeAssistant.com". */
-    val host: String,
+    private val host: String,
 
     /** The port for your Home Assistant (API), usually 8123. */
-    val port: Int = 8123,
+    private val port: Int = 8123,
 
     /** The Long-lived Access Token that can be generated from your Home Assistant profile settings. */
-    val accessToken: String,
+    private val accessToken: String,
 
     /** Whether to connect over SSL or not (https or http). */
-    val secure: Boolean = false,
+    private val secure: Boolean = false,
 
     /** Timeout for confirmation for updating states and attributes. */
-    val timeout: TimeSpan = 2.seconds,
+    val timeout: Duration = 2.seconds,
 
     /** If enabled, debug messages will be printed. */
     override val debug: Boolean = false,
 
     /** If enabled, the connection will be acquired again on close. */
-    val reconnectOnClose: Boolean = true,
+    private val reconnectOnClose: Boolean = true,
 
     /** The coroutine dispatcher that will be used by KHomeAssistant. */
-    val coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    public val coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : KHomeAssistant {
 
     override var loadedInitialStates: Boolean = false
@@ -81,7 +83,7 @@ class KHomeAssistantInstance(
     private val supervisor: CompletableJob = SupervisorJob()
 
     /** The context of the current coroutine scope */
-    override val coroutineContext: CoroutineContext = coroutineDispatcher + supervisor + exceptionHandler
+    override val scope: CoroutineScope = CoroutineScope(coroutineDispatcher + supervisor + exceptionHandler)
 
     /** The cache for the state and attributes of all entities in Home Assistant. */
     @Volatile
@@ -99,11 +101,11 @@ class KHomeAssistantInstance(
         }
 
     /** The age of the [rawEntityData]. */
-    private var cacheAge: DateTime = DateTime.now()
+    private var cacheAge: Instant = Clock.System.now()
 
     /** The time after which to do a full refresh of the state/attributes of all entities.
      * Usually KHomeAssistant relies on state change events. */
-    private val maxCacheAge: TimeSpan = 15.minutes
+    private val maxCacheAge: Duration = 15.minutes
 
 
     /** HA version reported by the connected instance */
@@ -191,9 +193,9 @@ class KHomeAssistantInstance(
 //    suspend fun run(vararg automations: Automation) = run(automations.toList())
 
     /** Run KHomeAssistant, this makes the connection, authenticates, initializes and runs the complete HA interaction */
-    fun run(vararg automations: Automation, mode: Mode = Mode.AUTOMATIC): Job = launch {
+    fun run(vararg automations: Automation, mode: Mode = Mode.AUTOMATIC): Job = scope.launch {
         this@KHomeAssistantInstance.automations = automations.toList()
-        println("KHomeAssistant started running at ${DateTime.nowLocal().utc}")
+        println("KHomeAssistant started running at ${Clock.System.now()}")
         if (secure) WebsocketsHttpClient.httpClient.wss(
             host = host,
             port = port,
@@ -208,6 +210,7 @@ class KHomeAssistantInstance(
     }
 
     /** What to run on the websocket */
+    @OptIn(ExperimentalTime::class)
     private fun runOnWebsocket(mode: Mode): suspend DefaultClientWebSocketSession.() -> Unit = {
         // authenticate on Home Assistant
         authenticate()
@@ -323,7 +326,7 @@ class KHomeAssistantInstance(
                                         }
 
                                         stateListeners[entityID]?.forEach {
-                                            this@KHomeAssistantInstance.launch {
+                                            scope.launch {
                                                 try {
                                                     it.listener(oldState, newState)
                                                 } catch (e: Exception) {
@@ -344,7 +347,7 @@ class KHomeAssistantInstance(
                                 }
 
                                 eventListeners[event.event_type]?.forEach {
-                                    this@KHomeAssistantInstance.launch {
+                                    scope.launch {
                                         try {
                                             it(event)
                                         } catch (e: Exception) {
@@ -381,7 +384,7 @@ class KHomeAssistantInstance(
     }
 
     /** Update [rawEntityData] from Home Assistant. */
-    suspend fun updateCache() {
+    private suspend fun updateCache() {
         val response: FetchStateResponse = sendMessage(FetchStateMessage())
         val newCache = hashMapOf<String, StateResult>()
         response.result!!.forEach {
@@ -389,7 +392,7 @@ class KHomeAssistantInstance(
         }
         rawEntityData = newCache
         loadedInitialStates = true
-        cacheAge = DateTime.now()
+        cacheAge = Clock.System.now()
         debugPrintln("Updated cache!")
     }
 
@@ -407,7 +410,7 @@ class KHomeAssistantInstance(
     /** Initialize all automations asynchronously */
     private suspend fun initializeAutomations() {
         val automationInitialisations = hashSetOf<Job>()
-        for (it in automations) this@KHomeAssistantInstance.launch {
+        for (it in automations) scope.launch {
             val inner = launch { it.initialize() }
             try {
                 inner.join()
@@ -422,13 +425,13 @@ class KHomeAssistantInstance(
     }
 
     /** Cancel this task and schedule it again. */
-    suspend fun reschedule(task: RepeatedTask) = scheduler.reschedule(task)
+    public suspend fun reschedule(task: RepeatedTask): Unit = scheduler.reschedule(task)
 
     /** Make this task be executed by the [scheduler]. */
-    suspend fun schedule(task: RepeatedTask) = scheduler.schedule(task)
+    public suspend fun schedule(task: RepeatedTask): Unit = scheduler.schedule(task)
 
     /** Stop this task from being executed by the [scheduler]. */
-    suspend fun cancel(task: RepeatedTask) = scheduler.cancel(task)
+    public suspend fun cancel(task: RepeatedTask): Unit = scheduler.cancel(task)
 
     /** This suspend function allows to send a message to Home Assistant and get the response.
      *
@@ -440,7 +443,7 @@ class KHomeAssistantInstance(
      * */
     private suspend inline fun <reified Send : Message, reified Response : ResultMessage> sendMessage(
         message: Send,
-        timeout: TimeSpan? = null
+        timeout: Duration? = null
     ): Response {
         // make sure the messages arrive in the queue in order
         messageIDMutex.withLock {
@@ -545,7 +548,7 @@ class KHomeAssistantInstance(
      */
     override fun <EntityType : Entity<*, *>> getRawAttributes(entity: EntityType): JsonObject =
         try {
-            if (DateTime.now() - cacheAge > maxCacheAge) launch { updateCache() }
+            if (Clock.System.now() - cacheAge > maxCacheAge) scope.launch { updateCache() }
             rawEntityData[entity.entityID]!!.attributes
         } catch (e: Exception) {
             throw EntityNotInHassException("The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.")
@@ -561,7 +564,7 @@ class KHomeAssistantInstance(
      * @throws Exception if the state cannot be parsed using `[entity].parseStateValue()`
      */
     override fun <StateType : Any, EntityType : Entity<StateType, *>> getState(entity: EntityType): StateType {
-        if (DateTime.now() - cacheAge > maxCacheAge) launch { updateCache() }
+        if (Clock.System.now() - cacheAge > maxCacheAge) scope.launch { updateCache() }
 
         val stateValue = try {
             rawEntityData[entity.entityID]!!.state
@@ -585,7 +588,7 @@ class KHomeAssistantInstance(
      * @return a [Context] instance.
      */
     override fun getContext(entity: Entity<*, *>): Context = try {
-        if (DateTime.now() - cacheAge > maxCacheAge) launch { updateCache() }
+        if (Clock.System.now() - cacheAge > maxCacheAge) scope.launch { updateCache() }
         rawEntityData[entity.entityID]!!.context
     } catch (e: Exception) {
         throw EntityNotInHassException(
@@ -599,9 +602,9 @@ class KHomeAssistantInstance(
      * @param entity the entity to get the datetime for.
      * @return a [DateTime] instance
      */
-    override fun getLastChanged(entity: Entity<*, *>): DateTime = try {
-        if (DateTime.now() - cacheAge > maxCacheAge) launch { updateCache() }
-        HASS_DATE_FORMAT.parseUtc(rawEntityData[entity.entityID]!!.last_changed)
+    override fun getLastChanged(entity: Entity<*, *>): Instant = try {
+        if (Clock.System.now() - cacheAge > maxCacheAge) scope.launch { updateCache() }
+        Instant.parse(rawEntityData[entity.entityID]!!.last_changed)
     } catch (e: Exception) {
         throw EntityNotInHassException(
             "The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.",
@@ -614,9 +617,9 @@ class KHomeAssistantInstance(
      * @param entity the entity to get the datetime for.
      * @return a [DateTime] instance
      */
-    override fun getLastUpdated(entity: Entity<*, *>): DateTime = try {
-        if (DateTime.now() - cacheAge > maxCacheAge) launch { updateCache() }
-        HASS_DATE_FORMAT.parseUtc(rawEntityData[entity.entityID]!!.last_updated)
+    override fun getLastUpdated(entity: Entity<*, *>): Instant = try {
+        if (Clock.System.now() - cacheAge > maxCacheAge) scope.launch { updateCache() }
+        Instant.parse(rawEntityData[entity.entityID]!!.last_updated)
     } catch (e: Exception) {
         throw EntityNotInHassException(
             "The entity_id \"${entity.entityID}\" does not exist in your Home Assistant instance.",
@@ -663,7 +666,7 @@ class KHomeAssistantInstance(
             debugPrintln(result)
         }
         // TODO
-        debugPrintln("ping pong took ${time.seconds} seconds")
+        debugPrintln("ping pong took ${time.inSeconds} seconds")
         true
     } catch (e: Exception) {
         println(e)

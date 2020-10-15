@@ -39,6 +39,9 @@ dependencies {
 
 
 kotlin {
+
+    explicitApiWarning()
+
     jvm {
         compilations["main"].kotlinOptions {
 //            jvmTarget = "1.8"
@@ -50,7 +53,7 @@ kotlin {
 //            freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
         }
     }
-//    js {
+//    js(BOTH) {
 //        browser {
 //        }
 //        nodejs {
@@ -73,7 +76,8 @@ kotlin {
 //                implementation(kotlin("stdlib-common"))
                 implementation("io.ktor:ktor-client-core:1.3.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
-                implementation("com.soywiz.korlibs.klock:klock:1.12.1")
+//                implementation("com.soywiz.korlibs.klock:klock:1.12.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.1.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.0.0-RC")
                 implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.10")
                 implementation("com.soywiz.korlibs.kds:kds:1.11.0")
@@ -114,7 +118,7 @@ kotlin {
             languageSettings.enableLanguageFeature("InlineClasses")
             languageSettings.useExperimentalAnnotation("kotlin.RequiresOptIn")
         }
-//        jsMain { // TODO
+//        val jsMain by getting {
 //            dependencies {
 //                implementation( kotlin("stdlib-js"))
 ////                implementation( "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5")
@@ -124,7 +128,7 @@ kotlin {
 //
 //            }
 //        }
-//        jsTest {
+//        val jsTest by getting {
 //            dependencies {
 //                implementation( kotlin("test-js"))
 //            }

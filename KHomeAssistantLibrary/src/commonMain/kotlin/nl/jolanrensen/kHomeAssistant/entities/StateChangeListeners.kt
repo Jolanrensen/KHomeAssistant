@@ -1,16 +1,18 @@
+@file:OptIn(ExperimentalTime::class)
+
 package nl.jolanrensen.kHomeAssistant.entities
 
-import com.soywiz.klock.DateTimeTz
-import com.soywiz.klock.TimeSpan
-import com.soywiz.klock.seconds
 import kotlinx.coroutines.channels.Channel
+import kotlinx.datetime.Clock
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.Task
 import nl.jolanrensen.kHomeAssistant.core.StateListener
 import nl.jolanrensen.kHomeAssistant.domains.Domain
-import nl.jolanrensen.kHomeAssistant.runAt
+import nl.jolanrensen.kHomeAssistant.runAtInstant
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
-fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChangedNotTo(
+public fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChangedNotTo(
     newState: S?,
     callback: suspend E.() -> Unit
 ): E {
@@ -21,7 +23,7 @@ fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChangedNotTo(
     return this
 }
 
-fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChangedTo(
+public fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChangedTo(
     newState: S?,
     callback: suspend E.() -> Unit
 ): E {
@@ -49,7 +51,7 @@ fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChangedTo(
  * })
  *
  */
-fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChanged(
+public fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChanged(
     callbackWith: (suspend E.(oldState: S?, newState: S?) -> Unit)? = null,
     callbackWithout: (suspend E.() -> Unit)? = null
 ): E {
@@ -76,18 +78,19 @@ fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onStateChanged(
 
 
 
-fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onEntityRemoved(
+public fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onEntityRemoved(
     callback: suspend E.() -> Unit
 ): E = onStateChangedTo(null, callback)
 
-suspend fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.suspendUntilStateChangedTo(
-    newState: S?,
-    timeout: TimeSpan = kHassInstance.instance.timeout
-) = suspendUntilStateChanged({ it == newState }, timeout)
 
-suspend fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.suspendUntilStateChanged(
+public suspend fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.suspendUntilStateChangedTo(
+    newState: S?,
+    timeout: Duration = kHassInstance.instance.timeout
+): Unit = suspendUntilStateChanged({ it == newState }, timeout)
+
+public suspend fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.suspendUntilStateChanged(
     condition: (S?) -> Boolean,
-    timeout: TimeSpan = kHassInstance.instance.timeout
+    timeout: Duration = kHassInstance.instance.timeout
 ) {
     checkEntityExists()
     if (condition(
@@ -119,7 +122,7 @@ suspend fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.suspendUntilStateC
         }
     }, true)
 
-    task = kHassInstance.runAt(DateTimeTz.nowLocal() + timeout) {
+    task = kHassInstance.runAtInstant(Clock.System.now() + timeout) {
         kHassInstance.stateListeners[entityID]?.remove(stateListener)
         continueChannel.send(Unit)
     }
@@ -131,10 +134,10 @@ suspend fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.suspendUntilStateC
     continueChannel.receive()
 }
 
-suspend fun KHomeAssistant.suspendUntilEntityExists(
+public suspend fun KHomeAssistant.suspendUntilEntityExists(
     domain: Domain<*>,
     entityName: String,
-    timeout: TimeSpan = instance.timeout
+    timeout: Duration = instance.timeout
 ) {
     val entityID = "${domain.domainName}.$entityName"
     if (entityID in instance.entityIds) return
@@ -149,7 +152,7 @@ suspend fun KHomeAssistant.suspendUntilEntityExists(
         continueChannel.send(Unit)
     }, true)
 
-    task = runAt(DateTimeTz.nowLocal() + timeout) {
+    task = runAtInstant(Clock.System.now() + timeout) {
         stateListeners[entityID]?.remove(stateListener)
         continueChannel.send(Unit)
     }

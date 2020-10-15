@@ -6,6 +6,7 @@ import nl.jolanrensen.kHomeAssistant.OnOff.*
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
 import nl.jolanrensen.kHomeAssistant.domains.Domain
 import nl.jolanrensen.kHomeAssistant.messages.ResultMessage
+import kotlin.coroutines.CoroutineContext
 
 
 open class ToggleEntity<AttrsType : HassAttributes>(

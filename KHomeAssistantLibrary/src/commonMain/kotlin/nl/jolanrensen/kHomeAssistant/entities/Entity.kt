@@ -1,7 +1,8 @@
 package nl.jolanrensen.kHomeAssistant.entities
 
-import com.soywiz.klock.DateTimeTz
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -52,7 +53,7 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
     open fun checkEntityExists() {
         @Suppress("SimplifyBooleanWithConstants")
         if (entityExists || !(kHassInstance?.loadedInitialStates == true)) return
-        kHassInstance.launch {
+        kHassInstance.scope.launch {
             if (entityID !in kHassInstance.entityIds)
                 throw EntityNotInHassException("The entity_id \"$entityID\" does not exist in your Home Assistant instance.")
             entityExists = true
@@ -177,17 +178,17 @@ open class Entity<StateType : Any, AttrsType : HassAttributes>(
 
     /**
      * Return the last change local time for this entity.
-     * @return a [DateTimeTz] instance
+     * @return a [LocalDateTime] instance
      */
-    val lastChanged: DateTimeTz
-        get() = kHassInstance.getLastChanged(this).local
+    val lastChanged: Instant
+        get() = kHassInstance.getLastChanged(this)
 
     /**
      * Return the last update local time for this entity.
-     * @return a [DateTimeTz] instance
+     * @return a [LocalDateTime] instance
      */
-    val lastUpdated: DateTimeTz
-        get() = kHassInstance.getLastUpdated(this).local
+    val lastUpdated: Instant
+        get() = kHassInstance.getLastUpdated(this)
 
     /**
      * Return the context IDs for this entity.

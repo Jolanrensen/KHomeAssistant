@@ -1,13 +1,16 @@
+@file:OptIn(ExperimentalTime::class)
+
 package examples
 
-import com.soywiz.klock.TimeSpan
-import com.soywiz.klock.seconds
 import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.Switch
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.MotionBinarySensor
 import nl.jolanrensen.kHomeAssistant.domains.sun
 import nl.jolanrensen.kHomeAssistant.entities.ToggleEntity
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.seconds
 
 /**
  * @param kHass the KHomeAssistant context to be passed to the super class (Automation).
@@ -19,7 +22,7 @@ class MotionLights(
     kHass: KHomeAssistant,
     val sensor: MotionBinarySensor.Entity,
     val entityOn: ToggleEntity<*>,
-    val delay: TimeSpan = 60.seconds
+    val delay: Duration = 60.seconds,
 ) : Automation(kHass) {
 
     var task: Task? = null

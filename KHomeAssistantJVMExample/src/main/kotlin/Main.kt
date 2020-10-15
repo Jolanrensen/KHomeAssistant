@@ -1,5 +1,10 @@
-import com.soywiz.klock.seconds
+@file:OptIn(ExperimentalTime::class)
+
+import com.soywiz.korio.async.async
 import examples.BedroomLights
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.delay
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.RunBlocking.runBlocking
@@ -7,6 +12,12 @@ import nl.jolanrensen.kHomeAssistant.domains.MediaPlayer
 import nl.jolanrensen.kHomeAssistant.domains.getValue
 import nl.jolanrensen.kHomeAssistant.domains.input.InputBoolean
 import nl.jolanrensen.kHomeAssistant.runEvery
+import java.util.concurrent.Executors
+import kotlin.reflect.KFunction
+import kotlin.reflect.full.callSuspendBy
+import kotlin.reflect.jvm.reflect
+import kotlin.time.ExperimentalTime
+import kotlin.time.seconds
 
 
 class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
@@ -26,19 +37,18 @@ class TestAutomation(kHass: KHomeAssistant) : Automation(kHass) {
 
     val cast_radio by InputBoolean
 
-
     override suspend fun initialize() {
-        runEvery(5.seconds) {
-            cast_radio.toggle()
-        }
+        println(denon_avrx2200w)
     }
 }
 
+
 fun main() = runBlocking {
     println("running!")
+
     kHomeAssistant.run(
-//        TestAutomation(kHomeAssistant)
-        BedroomLights(kHomeAssistant)
+        TestAutomation(kHomeAssistant)
+//        BedroomLights(kHomeAssistant)
 //        AutoLights(kHomeAssistant)
     ).join()
 }

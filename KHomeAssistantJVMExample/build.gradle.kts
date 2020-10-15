@@ -18,6 +18,7 @@ repositories {
     mavenCentral()
     mavenLocal()
     jcenter()
+    maven(url = "https://kotlin.bintray.com/kotlinx/")
     maven(url = "https://dl.bintray.com/korlibs/korlibs")
 }
 
@@ -26,15 +27,15 @@ dependencies {
 //    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.0.0-RC")
-    implementation("com.soywiz.korlibs.klock:klock-jvm:1.12.1")
+//    implementation("com.soywiz.korlibs.klock:klock-jvm:1.12.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.1.0")
     implementation("com.soywiz.korlibs.korim:korim:1.12.29")
-//    implementation( "com.soywiz.korlibs.klock:klock-jvm:1.10.5")
-//    implementation( "com.soywiz:klock:0.5.0")
 
 //    implementation( "nl.jolanrensen.kHomeAssistant:KHomeAssistantLibrary:0.0.3")
     implementation(project(":KHomeAssistantLibrary"))
 
-//    implementation( "org.jetbrains.kotlin:kotlin-reflect:1.3.72")
+    implementation( "org.jetbrains.kotlin:kotlin-reflect:1.4.10")
+//    implementation(kotlinModule("reflect", "1.4.10"))
 }
 
 application {

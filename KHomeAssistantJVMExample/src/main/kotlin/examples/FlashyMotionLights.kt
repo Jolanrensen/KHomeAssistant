@@ -1,13 +1,16 @@
+@file:OptIn(ExperimentalTime::class)
+
 package examples
 
-import com.soywiz.klock.seconds
-import com.soywiz.korio.async.delay
+import kotlinx.coroutines.delay
 import nl.jolanrensen.kHomeAssistant.Automation
 import nl.jolanrensen.kHomeAssistant.KHomeAssistant
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.domains.binarySensor.MotionBinarySensor
 import nl.jolanrensen.kHomeAssistant.domains.sun
 import nl.jolanrensen.kHomeAssistant.runIn
+import kotlin.time.ExperimentalTime
+import kotlin.time.seconds
 
 class FlashyMotionLights(kHass: KHomeAssistant) : Automation(kHass) {
 

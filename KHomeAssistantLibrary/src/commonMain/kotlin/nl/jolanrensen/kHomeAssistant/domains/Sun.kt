@@ -1,15 +1,16 @@
+@file:OptIn(ExperimentalTime::class)
+
 package nl.jolanrensen.kHomeAssistant.domains
 
-import com.soywiz.klock.DateTimeTz
-import com.soywiz.klock.TimeSpan
-import com.soywiz.klock.parseUtc
+import kotlinx.datetime.LocalDateTime
 import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.entities.*
-import nl.jolanrensen.kHomeAssistant.helper.HASS_DATE_FORMAT_SUN
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 
-class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
-    override val domainName = "sun"
+public class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
+    override val domainName: String = "sun"
 
     /** Making sure Light acts as a singleton. */
     override fun equals(other: Any?) = other is Sun
@@ -60,30 +61,30 @@ class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
         val rising: Boolean
 
         // Helper getter/setters
-        
+
         /** Date and time of the next sun rising (in local time). */
-        val nextRising: DateTimeTz
-            get() = HASS_DATE_FORMAT_SUN.parseUtc(next_rising).local
+        val nextRising: LocalDateTime
+            get() = LocalDateTime.parse(next_rising)
 
         /** Date and time of the next sun setting (in local time). */
-        val nextSetting: DateTimeTz
-            get() = HASS_DATE_FORMAT_SUN.parseUtc(next_setting).local
+        val nextSetting: LocalDateTime
+            get() = LocalDateTime.parse(next_setting)
 
         /** Date and time of the next dawn (in local time). */
-        val nextDawn: DateTimeTz
-            get() = HASS_DATE_FORMAT_SUN.parseUtc(next_dawn).local
+        val nextDawn: LocalDateTime
+            get() = LocalDateTime.parse(next_dawn)
 
         /** Date and time of the next dusk (in local time). */
-        val nextDusk: DateTimeTz
-            get() = HASS_DATE_FORMAT_SUN.parseUtc(next_dusk).local
+        val nextDusk: LocalDateTime
+            get() = LocalDateTime.parse(next_dusk)
 
         /** Date and time of the next solar noon (in local time). */
-        val nextNoon: DateTimeTz
-            get() = HASS_DATE_FORMAT_SUN.parseUtc(next_noon).local
+        val nextNoon: LocalDateTime
+            get() = LocalDateTime.parse(next_noon)
 
         /** Date and time of the next solar midnight (in local time). */
-        val nextMidnight: DateTimeTz
-            get() = HASS_DATE_FORMAT_SUN.parseUtc(next_midnight).local
+        val nextMidnight: LocalDateTime
+            get() = LocalDateTime.parse(next_midnight)
     }
 
     class Entity(
@@ -112,14 +113,19 @@ class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
         // read only
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextRising"))
         override val next_rising: String by attrsDelegate()
+
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextSetting"))
         override val next_setting: String by attrsDelegate()
+
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextDawn"))
         override val next_dawn: String by attrsDelegate()
+
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextDusk"))
         override val next_dusk: String by attrsDelegate()
+
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextNoon"))
         override val next_noon: String by attrsDelegate()
+
         @Deprecated("You can use the typed version", replaceWith = ReplaceWith("nextMidnight"))
         override val next_midnight: String by attrsDelegate()
         override val elevation: Float by attrsDelegate()
@@ -144,7 +150,7 @@ class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
 
         /** Schedule something to execute each day at sunrise.
          * @see runEveryDayAtSunrise */
-        suspend fun onSunrise(offset: TimeSpan = TimeSpan.ZERO, callback: suspend Entity.() -> Unit): Entity {
+        suspend fun onSunrise(offset: Duration = Duration.ZERO, callback: suspend Entity.() -> Unit): Entity {
             kHassInstance.runEveryDayAtSunrise {
                 callback(this)
             }
@@ -153,7 +159,7 @@ class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
 
         /** Schedule something to execute each day at sunset.
          * @see runEveryDayAtSunset */
-        suspend fun onSunset(offset: TimeSpan = TimeSpan.ZERO, callback: suspend Entity.() -> Unit): Entity {
+        suspend fun onSunset(offset: Duration = Duration.ZERO, callback: suspend Entity.() -> Unit): Entity {
             kHassInstance.runEveryDayAtSunset(offset) {
                 callback(this)
             }
@@ -162,7 +168,7 @@ class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
 
         /** Schedule something to execute each day at dawn.
          * @see runEveryDayAtDawn */
-        suspend fun onDawn(offset: TimeSpan = TimeSpan.ZERO, callback: suspend Entity.() -> Unit): Entity {
+        suspend fun onDawn(offset: Duration = Duration.ZERO, callback: suspend Entity.() -> Unit): Entity {
             kHassInstance.runEveryDayAtDawn(offset) {
                 callback(this)
             }
@@ -171,7 +177,7 @@ class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
 
         /** Schedule something to execute each day at dusk.
          * @see runEveryDayAtDusk */
-        suspend fun onDusk(offset: TimeSpan = TimeSpan.ZERO, callback: suspend Entity.() -> Unit): Entity {
+        suspend fun onDusk(offset: Duration = Duration.ZERO, callback: suspend Entity.() -> Unit): Entity {
             kHassInstance.runEveryDayAtDusk(offset) {
                 callback(this)
             }
@@ -180,7 +186,7 @@ class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
 
         /** Schedule something to execute each day at noon.
          * @see runEveryDayAtNoon */
-        suspend fun onNoon(offset: TimeSpan = TimeSpan.ZERO, callback: suspend Entity.() -> Unit): Entity {
+        suspend fun onNoon(offset: Duration = Duration.ZERO, callback: suspend Entity.() -> Unit): Entity {
             kHassInstance.runEveryDayAtNoon(offset) {
                 callback(this)
             }
@@ -189,7 +195,7 @@ class Sun(override val kHassInstance: KHomeAssistant) : Domain<Sun.Entity> {
 
         /** Schedule something to execute each day at midnight.
          * @see runEveryDayAtMidnight */
-        suspend fun onMidnight(offset: TimeSpan = TimeSpan.ZERO, callback: suspend Entity.() -> Unit): Entity {
+        suspend fun onMidnight(offset: Duration = Duration.ZERO, callback: suspend Entity.() -> Unit): Entity {
             kHassInstance.runEveryDayAtMidnight(offset) {
                 callback(this)
             }

@@ -1,6 +1,6 @@
 package nl.jolanrensen.kHomeAssistant
 
-abstract class Automation(kHass: KHomeAssistant) : KHomeAssistant by kHass {
+public abstract class Automation(kHass: KHomeAssistant) : KHomeAssistant by kHass {
 
     open val automationName: String
         get() = this::class.simpleName.toString()

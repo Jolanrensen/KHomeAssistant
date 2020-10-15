@@ -1,26 +1,30 @@
+@file:OptIn(ExperimentalTime::class)
+
 package nl.jolanrensen.kHomeAssistant.core
 
-import com.soywiz.klock.DateTime
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.datetime.Clock
 import nl.jolanrensen.kHomeAssistant.RepeatedTask
 import nl.jolanrensen.kHomeAssistant.helper.PriorityQueue
 import nl.jolanrensen.kHomeAssistant.helper.priorityQueueOf
+import kotlin.time.ExperimentalTime
 
 /**
  * Scheduler used by [KHomeAssistantInstance] to schedule and execute tasks at certain times.
  * @param kHomeAssistant the [KHomeAssistantInstance] instance
  */
+@OptIn(ExperimentalTime::class)
 class Scheduler(private val kHomeAssistant: KHomeAssistantInstance) {
     /**
      * Returns a new instance of the scheduler job.
      * The scheduler stops itself when there are no tasks left in
      * [scheduledRepeatedTasks]. If there is are tasks, it waits until it's time to execute the first (and is cancelable
      * doing this), then it executes the task and reschedules it.*/
-    private fun getNewSchedulerJob(): Job = kHomeAssistant.launch {
+    private fun getNewSchedulerJob(): Job = kHomeAssistant.scope.launch {
         while (scheduledRepeatedTasks.isNotEmpty()) {
             // Get next scheduled task in the future
             val next = scheduledRepeatedTasksLock.withLock {
@@ -29,7 +33,7 @@ class Scheduler(private val kHomeAssistant: KHomeAssistantInstance) {
             } ?: break // break if there are no tasks left
 
             // Suspend until it's time to execute the next task (can be canceled here)
-            delay((next.scheduledNextExecution - DateTime.now()).millisecondsLong.also {
+            delay((next.scheduledNextExecution - Clock.System.now()).also {
                 kHomeAssistant.debugPrintln("Waiting for $it milliseconds until the next scheduled execution")
             })
 
@@ -39,7 +43,7 @@ class Scheduler(private val kHomeAssistant: KHomeAssistantInstance) {
                 }) continue
 
             // remove it from the schedule and execute
-            kHomeAssistant.launch { next.callback() }
+            kHomeAssistant.scope.launch { next.callback() }
 
             // set the last execution time
             next.lastExecutionScheduledExecutionTime = next.scheduledNextExecution

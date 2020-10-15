@@ -1,14 +1,10 @@
 package examples
 
-import com.soywiz.klock.Time
-import nl.jolanrensen.kHomeAssistant.Automation
-import nl.jolanrensen.kHomeAssistant.KHomeAssistant
-import nl.jolanrensen.kHomeAssistant.automation
+import nl.jolanrensen.kHomeAssistant.*
 import nl.jolanrensen.kHomeAssistant.domains.Light
 import nl.jolanrensen.kHomeAssistant.entities.turnOff
-import nl.jolanrensen.kHomeAssistant.runEveryDayAt
 
-class TurnOffAllLightsAt(kHass: KHomeAssistant, private val time: Time) : Automation(kHass) {
+class TurnOffAllLightsAt(kHass: KHomeAssistant, private val time: TimeOfDay) : Automation(kHass) {
 
     override suspend fun initialize() {
         runEveryDayAt(time) {
@@ -21,7 +17,7 @@ class TurnOffAllLightsAt(kHass: KHomeAssistant, private val time: Time) : Automa
 }
 
 // functional variant
-fun turnOffAllLightsAt(kHass: KHomeAssistant, time: Time): Automation = automation(kHass, "TurnOffAllLightsAt") {
+fun turnOffAllLightsAt(kHass: KHomeAssistant, time: TimeOfDay): Automation = automation(kHass, "TurnOffAllLightsAt") {
     runEveryDayAt(time) {
         entities  // get all entities
             .filter { it.domainName == Light.domainName }  // filter to get only the lights

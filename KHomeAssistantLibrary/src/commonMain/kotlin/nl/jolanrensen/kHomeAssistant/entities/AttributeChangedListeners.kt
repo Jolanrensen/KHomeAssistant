@@ -1,13 +1,15 @@
+@file:OptIn(ExperimentalTime::class)
+
 package nl.jolanrensen.kHomeAssistant.entities
 
-import com.soywiz.klock.DateTimeTz
-import com.soywiz.klock.TimeSpan
-import com.soywiz.klock.seconds
 import kotlinx.coroutines.channels.Channel
+import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonElement
 import nl.jolanrensen.kHomeAssistant.Task
 import nl.jolanrensen.kHomeAssistant.core.StateListener
-import nl.jolanrensen.kHomeAssistant.runAt
+import nl.jolanrensen.kHomeAssistant.runAtInstant
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 /**
  * Creates a listener executed when any attribute of the entity changes.
@@ -22,8 +24,8 @@ import nl.jolanrensen.kHomeAssistant.runAt
  * @param callback the block of code to execute when any attribute has changed
  * @return the entity
  */
-fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributesChanged(
-    callback: suspend E.() -> Unit
+public fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributesChanged(
+    callback: suspend E.() -> Unit,
 ): E {
     checkEntityExists()
     kHassInstance.stateListeners
@@ -61,10 +63,10 @@ fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributesChanged(
  * @param callbackWithout the block of code to execute when any attribute has changed. Don't provide [callbackWith] in conjunction with this.
  * @return the entity
  */
-fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributeChanged(
+public fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributeChanged(
     attribute: String,
     callbackWith: (suspend E.(oldValue: JsonElement?, newValue: JsonElement?) -> Unit)? = null,
-    callbackWithout: (suspend E.() -> Unit)? = null
+    callbackWithout: (suspend E.() -> Unit)? = null,
 ): E {
     if (callbackWith != null && callbackWithout != null || callbackWith == null && callbackWithout == null)
         throw IllegalArgumentException("Exactly one of callbackWith and callbackWithout need to be provided")
@@ -117,10 +119,10 @@ fun <H : HassAttributes, S : Any, E : Entity<S, H>> E.onAttributeChanged(
  * @param callbackWithout the block of code to execute when any attribute has changed. Don't provide [callbackWith] in conjunction with this.
  * @return the entity
  */
-fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChanged(
+public fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChanged(
     attribute: Attribute<A>,
     callbackWith: (suspend E.(oldValue: A?, newValue: A?) -> Unit)? = null,
-    callbackWithout: (suspend E.() -> Unit)? = null
+    callbackWithout: (suspend E.() -> Unit)? = null,
 ): E {
     if (callbackWith != null && callbackWithout != null || callbackWith == null && callbackWithout == null)
         throw IllegalArgumentException("Exactly one of callbackWith and callbackWithout need to be provided")
@@ -178,10 +180,10 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChang
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChangedTo(
+public fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChangedTo(
     attribute: Attribute<A>,
     newAttributeValue: A,
-    callback: suspend E.() -> Unit
+    callback: suspend E.() -> Unit,
 ): E = onAttributeChanged(attribute) {
     if (attribute.get() == newAttributeValue)
         callback()
@@ -212,10 +214,10 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChang
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChangedNotTo(
+public fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChangedNotTo(
     attribute: Attribute<A>,
     newAttributeValue: A,
-    callback: suspend E.() -> Unit
+    callback: suspend E.() -> Unit,
 ): E = onAttributeChanged(attribute) {
     if (attribute.get() != newAttributeValue)
         callback()
@@ -255,10 +257,10 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChang
  * @param callbackWithout the block of code to execute when any attribute has changed. Don't provide [callbackWith] in conjunction with this.
  * @return the entity
  */
-fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChanged(
+public fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChanged(
     attribute: NonSpecificAttribute<E, A>,
     callbackWith: (suspend E.(oldValue: A?, newValue: A?) -> Unit)? = null,
-    callbackWithout: (suspend E.() -> Unit)? = null
+    callbackWithout: (suspend E.() -> Unit)? = null,
 ): E {
     if (callbackWith != null && callbackWithout != null || callbackWith == null && callbackWithout == null)
         throw IllegalArgumentException("Exactly one of callbackWith and callbackWithout need to be provided")
@@ -316,26 +318,26 @@ fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChang
  * @param callback the block of code to execute when any attribute has changed to [newAttributeValue]
  * @return the entity
  */
-fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChangedTo(
+public fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.onAttributeChangedTo(
     attribute: NonSpecificAttribute<E, A>,
     newAttributeValue: A,
-    callback: suspend E.() -> Unit
+    callback: suspend E.() -> Unit,
 ): E = onAttributeChanged(attribute = attribute) {
     if (attribute.get(this) == newAttributeValue)
         callback()
 }
 
 
-suspend fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.suspendUntilAttributeChangedTo(
+public suspend fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.suspendUntilAttributeChangedTo(
     attribute: Attribute<A>,
     newAttributeValue: A,
-    timeout: TimeSpan = kHassInstance.instance.timeout
+    timeout: Duration = kHassInstance.instance.timeout,
 ) = suspendUntilAttributeChanged(attribute, { it == newAttributeValue }, timeout)
 
-suspend fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.suspendUntilAttributeChanged(
+public suspend fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.suspendUntilAttributeChanged(
     attribute: Attribute<A>,
     condition: (A) -> Boolean,
-    timeout: TimeSpan = kHassInstance.instance.timeout
+    timeout: Duration = kHassInstance.instance.timeout,
 ) {
     checkEntityExists()
     if (condition(attribute.get())) return
@@ -353,7 +355,7 @@ suspend fun <H : HassAttributes, A : Any?, S : Any, E : Entity<S, H>> E.suspendU
         }
     }, true)
 
-    task = kHassInstance.runAt(DateTimeTz.nowLocal() + timeout) {
+    task = kHassInstance.runAtInstant(Clock.System.now() + timeout) {
         kHassInstance.stateListeners[entityID]?.remove(stateListener)
         continueChannel.send(Unit)
     }
