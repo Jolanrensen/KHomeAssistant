@@ -12,6 +12,9 @@ Using an IDE like Intellij and the great Kotlin language you can easily verify w
 Plus, if you are familiar with Java or other object based programming languages, you'll quickly feel at home with Kotlin.
 The autocomplete is your friend and the type completion is godsent, so there's much to enjoy.
 
+## Road block
+At the moment the project reached a bit of a roadblock regarding coroutines and the (wrong) use of runBlocking inside getter/setters. Either suspend properties get added to Kotlin (https://youtrack.jetbrains.com/issue/KT-15555) or the way attributes are used needs to be redesigned. I'm keen on making it as easy as possible for the end user so of course I would prefer the former, however, the people at JetBrains haven't shown a lot of motivation to add that feature yet. We'll see....
+
 ## Simple Example
 
 Let's get a quick comparison between an AppDaemon automation and the KHomeAssistant variant, as well as an abbreviated version.
